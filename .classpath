@@ -11,7 +11,7 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry including="**/*.java" kind="src" output="target/test-classes" path="src/test/java">
+	<classpathentry kind="src" output="target/test-classes" path="src/test/java">
 		<attributes>
 			<attribute name="optional" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
@@ -23,6 +23,7 @@
 	<classpathentry kind="src" path="/imglib2-ops"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/JavaLibraries/jmathplot/jmathplot.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/loci/scifio/4.4-SNAPSHOT/scifio-4.4-SNAPSHOT.jar"/>
+	<classpathentry kind="src" path="/paramaxflow-jni"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>

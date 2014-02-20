@@ -16,18 +16,22 @@ import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.algorithm.componenttree.ComponentForest;
+import net.imglib2.converter.Converters;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.ARGBType;
+import net.imglib2.type.numeric.integer.LongType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
+import com.jug.segmentation.GrowthLineSegmentationMagic;
 import com.jug.util.ArgbDrawingUtils;
 import com.jug.util.SimpleFunctionAnalysis;
 import com.jug.util.Util;
+import com.jug.util.converter.RealDoubleNormalizeConverter;
 import com.jug.util.filteredcomponents.FilteredComponent;
 
 /**
@@ -86,6 +90,8 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 								// getGapSeparationValues is called...
 	private GrowthLine parent;
 	private ComponentForest< C > componentTree;
+	private RandomAccessibleInterval< LongType > paramaxflowSumImage; // lazy evaluation -- gets computed when neede first time
+	private long paramaxflowSolutions;
 
 	// -------------------------------------------------------------------------------------
 	// setters and getters
@@ -232,9 +238,33 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 *
 	 * @param img
 	 */
-	public void generateSegmentationHypotheses( final Img< DoubleType > img ) {
+	public void generateSimpleSegmentationHypotheses( final Img< DoubleType > img ) {
 
-		final double[] fkt = getGapSeparationValues( img );
+		final double[] fkt = getSimpleGapSeparationValues( img );
+
+		if ( fkt.length > 0 ) {
+			final RandomAccessibleInterval< DoubleType > raiFkt = new ArrayImgFactory< DoubleType >().create( new int[] { fkt.length }, new DoubleType() );
+			final RandomAccess< DoubleType > ra = raiFkt.randomAccess();
+			for ( int i = 0; i < fkt.length; i++ ) {
+				ra.setPosition( i, 0 );
+				ra.get().set( fkt[ i ] );
+			}
+
+			componentTree = buildTree( raiFkt );
+//			componentTree = FilteredComponentTree.buildComponentTree( raiFkt, new DoubleType(), 3, Long.MAX_VALUE, true );
+//			componentTree = MserComponentTree.buildMserTree( raiFkt, MotherMachine.MIN_GAP_CONTRAST / 2.0, MotherMachine.MIN_CELL_LENGTH, Long.MAX_VALUE, 0.5, 0.33, true );
+		}
+	}
+
+	/**
+	 * Using the imglib2 component tree to find the most stable components
+	 * (bacteria).
+	 *
+	 * @param img
+	 */
+	public void generateAwesomeSegmentationHypotheses( final Img< DoubleType > img ) {
+
+		final double[] fkt = getAwesomeGapSeparationValues( img );
 
 		if ( fkt.length > 0 ) {
 			final RandomAccessibleInterval< DoubleType > raiFkt = new ArrayImgFactory< DoubleType >().create( new int[] { fkt.length }, new DoubleType() );
@@ -326,22 +356,31 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * @param wellPoints
 	 * @return
 	 */
-	public double[] getGapSeparationValues( final Img< DoubleType > img ) {
-		return getGapSeparationValues( img, false );
+	public double[] getSimpleGapSeparationValues( final Img< DoubleType > img ) {
+		return getSimpleGapSeparationValues( img, false );
 	}
 
-	public double[] getGapSeparationValues( final Img< DoubleType > img, final boolean forceRecomputation ) {
+	public double[] getSimpleGapSeparationValues( final Img< DoubleType > img, final boolean forceRecomputation ) {
 		if ( sepValues == null ) {
 			if ( img == null ) return null;
-//			sepValues = getMaxTiltedLineAveragesInRectangleAlongAvgCenter( img );
-			sepValues = getInvertedIntensities( img );
+			sepValues = getMaxTiltedLineAveragesInRectangleAlongAvgCenter( img );
+//			sepValues = getInvertedIntensities( img );
 		}
 		return sepValues;
 	}
 
 	/**
+	 * @param img
+	 * @return
+	 */
+	private double[] getAwesomeGapSeparationValues( final Img< DoubleType > img ) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
 	 * Trying to look there a bit smarter... ;)
-	 *
+	 * 
 	 * @param img
 	 * @param wellPoints
 	 * @return
@@ -513,4 +552,26 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 		return this.getParent().getFrames().indexOf( this );
 	}
 
+	/**
+	 * @return
+	 */
+	public IntervalView< LongType > getParamaxflowSumImage( final IntervalView< DoubleType > viewGLF ) {
+		if ( paramaxflowSumImage == null ) {
+			if ( viewGLF == null ) { return null; }
+//			this.paramaxflowSumImage = GrowthLineSegmentationMagic.returnParamaxflowRegionSums( viewGLF );
+			this.paramaxflowSumImage = GrowthLineSegmentationMagic.returnClassificationBoostedParamaxflowRegionSums( viewGLF );
+			this.paramaxflowSolutions = GrowthLineSegmentationMagic.getNumSolutions();
+		}
+
+		return Views.interval( paramaxflowSumImage, Views.zeroMin( viewGLF ) );
+	}
+
+	public IntervalView< DoubleType > getParamaxflowSumImageDoubleTyped( final IntervalView< DoubleType > viewGLF ) {
+		if ( paramaxflowSumImage == null ) {
+			if ( viewGLF == null ) { return null; }
+			getParamaxflowSumImage( viewGLF );
+		}
+
+		return Views.interval( Converters.convert( paramaxflowSumImage, new RealDoubleNormalizeConverter( this.paramaxflowSolutions ), new DoubleType() ), paramaxflowSumImage );
+	}
 }

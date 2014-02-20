@@ -60,9 +60,9 @@ import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.ops.cursor.FindLocalMaxima;
 import com.jug.ops.cursor.FindLocationAboveThreshold;
 import com.jug.ops.numerictype.VarOfRai;
+import com.jug.segmentation.GrowthLineSegmentationMagic;
 import com.jug.util.DataMover;
 import com.jug.util.DoubleTypeImgLoader;
-
 
 /**
  * @author jug
@@ -190,11 +190,15 @@ public class MotherMachine {
 	 *            muh!
 	 */
 	public static void main( final String[] args ) {
+
 		try {
 
 			final MotherMachine main = new MotherMachine();
 			guiFrame = new JFrame( "Interactive MotherMachine" );
 			main.initMainWindow( guiFrame );
+
+			//TODO do it better
+			GrowthLineSegmentationMagic.setClassifier( "/Users/jug/Dropbox/WorkingData/Repositories/GIT/MotherMachineMvn/src/main/resources/", "BinaryGapClassifier.model" );
 
 			props = main.loadParams();
 			BGREM_TEMPLATE_XMIN = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMIN", Integer.toString( BGREM_TEMPLATE_XMIN ) ) );
@@ -281,6 +285,7 @@ public class MotherMachine {
 					"Please visit 'www.gurobi.com' for further information.\n\n" +
 					ulr.getMessage(),
 					"Gurobi Error?", JOptionPane.ERROR_MESSAGE );
+			ulr.printStackTrace();
 		}
 	}
 
@@ -1236,7 +1241,7 @@ public class MotherMachine {
 			System.out.print( "   Working on GL#" + i + " of " + getGrowthLines().size() + "... " );
 			for ( final GrowthLineFrame glf : gl.getFrames() ) {
 				System.out.print( "." );
-				glf.generateSegmentationHypotheses( imgTemp );
+				glf.generateSimpleSegmentationHypotheses( imgTemp );
 			}
 			System.out.println( " ...done!" );
 		}

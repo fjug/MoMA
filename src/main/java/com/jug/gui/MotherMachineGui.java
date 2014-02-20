@@ -22,6 +22,7 @@ import java.util.Vector;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -107,10 +108,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private Viewer2DCanvas imgCanvasActiveCenter;
 	private Viewer2DCanvas imgCanvasActiveRight;
 
-	private Viewer2DCanvas imgCanvasInactiveLeft;
-	private Viewer2DCanvas imgCanvasInactiveCenter;
-	private Viewer2DCanvas imgCanvasInactiveRight;
-
 	private JSlider sliderGL;
 	private JSlider sliderTime;
 
@@ -127,6 +124,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private JButton btnOptimize;
 	private JButton btnOptimizeAll;
 	private JButton btnOptimizeRemainingAndExport;
+
+	private JCheckBox cbShowParaMaxFlowData;
 
 	// -------------------------------------------------------------------------------------
 	// construction & gui creation
@@ -277,7 +276,23 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * @return
 	 */
 	private JPanel buildSegmentationAndAssignmentView() {
-		final JPanel panelContent = new JPanel( new FlowLayout( FlowLayout.CENTER, 0, 10 ) );
+		final JPanel panelContent = new JPanel( new BorderLayout() );
+
+		final JPanel panelView = new JPanel( new FlowLayout( FlowLayout.CENTER, 0, 10 ) );
+		final JPanel panelOptions = new JPanel( new FlowLayout( FlowLayout.CENTER, 0, 10 ) );
+
+		// =============== panelOptions-part ===================
+		cbShowParaMaxFlowData = new JCheckBox( "show ParaMaxFlow data", false );
+		cbShowParaMaxFlowData.addActionListener( new ActionListener() {
+
+			@Override
+			public void actionPerformed( final ActionEvent e ) {
+				dataToDisplayChanged();
+			}
+		} );
+		panelOptions.add( cbShowParaMaxFlowData );
+
+		// =============== panelView-part ===================
 
 		JPanel panelVerticalHelper;
 		JPanel panelHorizontalHelper;
@@ -297,7 +312,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelVerticalHelper.add( imgCanvasActiveLeft, BorderLayout.CENTER );
 		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
 		panelVerticalHelper.setBackground( Color.BLACK );
-		panelContent.add( panelVerticalHelper );
+		panelView.add( panelVerticalHelper );
 
 		// --- Left assignment viewer (t-1 -> t) -------------
 		panelVerticalHelper = new JPanel( new BorderLayout() );
@@ -306,7 +321,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		if ( ilp != null )
 			leftAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( model.getCurrentTime() - 1 ) );
 		panelVerticalHelper.add( leftAssignmentViewer, BorderLayout.CENTER );
-		panelContent.add( panelVerticalHelper );
+		panelView.add( panelVerticalHelper );
 
 		// --- Center data viewer (t) -------------
 
@@ -320,7 +335,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelVerticalHelper.add( imgCanvasActiveCenter, BorderLayout.CENTER );
 		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 3, 3, 3, 3, Color.RED ) );
 		panelVerticalHelper.setBackground( Color.BLACK );
-		panelContent.add( panelVerticalHelper );
+		panelView.add( panelVerticalHelper );
 
 		// --- Right assignment viewer (t -> t+1) -------------
 		panelVerticalHelper = new JPanel( new BorderLayout() );
@@ -329,7 +344,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		if ( ilp != null )
 			rightAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( model.getCurrentTime() ) );
 		panelVerticalHelper.add( rightAssignmentViewer, BorderLayout.CENTER );
-		panelContent.add( panelVerticalHelper );
+		panelView.add( panelVerticalHelper );
 
 		// ---  Right data viewer (t+1) -------------
 
@@ -343,7 +358,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelVerticalHelper.add( imgCanvasActiveRight, BorderLayout.CENTER );
 		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
 		panelVerticalHelper.setBackground( Color.BLACK );
-		panelContent.add( panelVerticalHelper );
+		panelView.add( panelVerticalHelper );
+
+		panelContent.add( panelView, BorderLayout.CENTER );
+		panelContent.add( panelOptions, BorderLayout.SOUTH );
 
 		return panelContent;
 	}
@@ -375,7 +393,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		plot.removeAllPlots();
 
 		final double[] yMidline = model.getCurrentGLF().getMirroredCenterLineValues( model.mm.getImgTemp() );
-		final double[] ySegmentationData = model.getCurrentGLF().getGapSeparationValues( model.mm.getImgTemp() );
+		final double[] ySegmentationData = model.getCurrentGLF().getSimpleGapSeparationValues( model.mm.getImgTemp() );
 		final double[] yAvg = new double[ yMidline.length ];
 		final double constY = SimpleFunctionAnalysis.getSum( ySegmentationData ) / ySegmentationData.length;
 		for ( int i = 0; i < yAvg.length; i++ )
@@ -511,7 +529,22 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 			final GrowthLineFrame glf = model.getCurrentGLF();
 			viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
-			imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
+
+			if ( cbShowParaMaxFlowData.isSelected() ) {
+				// I will pray for forgiveness... in March... I promise... :(
+				IntervalView< DoubleType > paramaxflowSumImageDoubleTyped = model.getCurrentGLF().getParamaxflowSumImageDoubleTyped( null );
+				if ( paramaxflowSumImageDoubleTyped == null ) {
+					final long left = glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2;
+					final long right = glf.getOffsetX() + GL_WIDTH_TO_SHOW / 2;
+					final long top = 0;
+					final long bottom = model.mm.getImgRaw().max( 1 );
+					final IntervalView< DoubleType > viewCropped = Views.interval( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), new long[] { left, top }, new long[] { right, bottom } );
+					paramaxflowSumImageDoubleTyped = model.getCurrentGLF().getParamaxflowSumImageDoubleTyped( viewCropped );
+				}
+				imgCanvasActiveCenter.setScreenImage( glf, paramaxflowSumImageDoubleTyped );
+			} else {
+				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
+			}
 
 			// - -  assignment-views  - - - - - -
 

@@ -337,7 +337,7 @@ public class GrowthLineTrackingILP {
 	 */
 	public double localCost( final int t, final Component< ?, ? > ctNode ) {
 		//TODO kotz
-		final double[] gapSepFkt = gl.getFrames().get( t ).getGapSeparationValues( null );
+		final double[] gapSepFkt = gl.getFrames().get( t ).getSimpleGapSeparationValues( null );
 		return CostFactory.getSegmentationCost( ctNode, gapSepFkt );
 	}
 
