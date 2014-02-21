@@ -47,6 +47,8 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 	private int dragX;
 	private int dragY;
 
+	private static final int OFFSET_DISPLAY_COSTS = -25;
+
 	public Viewer2DCanvas( final int w, final int h ) {
 		super();
 
@@ -127,9 +129,9 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 				cost = hyp.getCosts();
 			}
 			g.setColor( Color.DARK_GRAY );
-			g.drawString( String.format( "c=%.4f", cost ), 2, this.mousePosY - 9 );
+			g.drawString( String.format( "c=%.4f", cost ), 2, this.mousePosY - OFFSET_DISPLAY_COSTS + 1 );
 			g.setColor( Color.YELLOW.brighter() );
-			g.drawString( String.format( "c=%.4f", cost ), 1, this.mousePosY - 10 );
+			g.drawString( String.format( "c=%.4f", cost ), 1, this.mousePosY - OFFSET_DISPLAY_COSTS );
 		}
 	}
 

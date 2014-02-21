@@ -25,6 +25,7 @@ import net.imglib2.type.numeric.real.DoubleType;
 
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
+import com.jug.MotherMachine;
 import com.jug.lp.costs.CostFactory;
 import com.jug.util.ComponentTreeUtils;
 
@@ -305,7 +306,7 @@ public class GrowthLineTrackingILP {
 			final GrowthLineFrame glf = gl.getFrames().get( t );
 
 			for ( final Component< DoubleType, ? > ctRoot : glf.getComponentTree().roots() ) {
-				recursivelyAddCTNsAsHypotheses( t, ctRoot );
+				recursivelyAddCTNsAsHypotheses( t, ctRoot, glf.isParaMaxFlowComponentTree() );
 			}
 		}
 	}
@@ -319,14 +320,19 @@ public class GrowthLineTrackingILP {
 	 * @param t
 	 *            the time-index the ctNode comes from.
 	 */
-	private void recursivelyAddCTNsAsHypotheses( final int t, final Component< DoubleType, ? > ctNode ) {
+	private void recursivelyAddCTNsAsHypotheses( final int t, final Component< DoubleType, ? > ctNode, final boolean isForParaMaxFlowSumImg ) {
 
-		final double cost = localCost( t, ctNode );
+		double cost;
+		if ( isForParaMaxFlowSumImg ) {
+			cost = localParamaxflowBasedCost( t, ctNode );
+		} else {
+			cost = localIntensityBasedCost( t, ctNode );
+		}
 		nodes.addHypothesis( t, new Hypothesis< Component< DoubleType, ? > >( ctNode, cost ) );
 
 		// do the same for all children
 		for ( final Component< DoubleType, ? > ctChild : ctNode.getChildren() ) {
-			recursivelyAddCTNsAsHypotheses( t, ctChild );
+			recursivelyAddCTNsAsHypotheses( t, ctChild, isForParaMaxFlowSumImg );
 		}
 	}
 
@@ -335,10 +341,21 @@ public class GrowthLineTrackingILP {
 	 * @param ctNode
 	 * @return
 	 */
-	public double localCost( final int t, final Component< ?, ? > ctNode ) {
+	public double localIntensityBasedCost( final int t, final Component< ?, ? > ctNode ) {
 		//TODO kotz
-		final double[] gapSepFkt = gl.getFrames().get( t ).getSimpleGapSeparationValues( null );
-		return CostFactory.getSegmentationCost( ctNode, gapSepFkt );
+		final double[] gapSepFkt = gl.getFrames().get( t ).getSimpleGapSeparationValues( MotherMachine.instance.getImgTemp() );
+		return CostFactory.getIntensitySegmentationCost( ctNode, gapSepFkt );
+	}
+
+	/**
+	 * @param t
+	 * @param ctNode
+	 * @return
+	 */
+	public double localParamaxflowBasedCost( final int t, final Component< ?, ? > ctNode ) {
+		//TODO kotz
+		final double[] gapSepFkt = gl.getFrames().get( t ).getAwesomeGapSeparationValues( MotherMachine.instance.getImgTemp() );
+		return CostFactory.getParamaxflowSegmentationCost( ctNode, gapSepFkt );
 	}
 
 	/**

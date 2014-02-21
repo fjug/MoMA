@@ -21,6 +21,8 @@ import java.util.Vector;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
@@ -120,12 +122,15 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private AssignmentViewer leftAssignmentViewer;
 	private AssignmentViewer rightAssignmentViewer;
 
-	private JButton btnSaveFG;
+	private JButton btnRedoAllHypotheses;
 	private JButton btnOptimize;
 	private JButton btnOptimizeAll;
 	private JButton btnOptimizeRemainingAndExport;
+	private JButton btnSaveFG;
 
 	private JCheckBox cbShowParaMaxFlowData;
+
+	private JLabel lActiveHyps;
 
 	// -------------------------------------------------------------------------------------
 	// construction & gui creation
@@ -202,19 +207,23 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		tabsViews.setSelectedComponent( panelSegmentationAndAssignmentView );
 
 		// --- Controls ----------------------------------
-		btnSaveFG = new JButton( "Save FG" );
-		btnSaveFG.addActionListener( this );
+		btnRedoAllHypotheses = new JButton( "Redo Hyp." );
+		btnRedoAllHypotheses.addActionListener( this );
 		btnOptimize = new JButton( "Optimize" );
+		btnOptimize.addActionListener( this );
 		btnOptimize.addActionListener( this );
 		btnOptimizeAll = new JButton( "Optimize All" );
 		btnOptimizeAll.addActionListener( this );
 		btnOptimizeRemainingAndExport = new JButton( "Opt. Remaining & Export" );
 		btnOptimizeRemainingAndExport.addActionListener( this );
+		btnSaveFG = new JButton( "Save FG" );
+		btnSaveFG.addActionListener( this );
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.RIGHT, 5, 0 ) );
-		panelHorizontalHelper.add( btnSaveFG );
+		panelHorizontalHelper.add( btnRedoAllHypotheses );
 		panelHorizontalHelper.add( btnOptimize );
 		panelHorizontalHelper.add( btnOptimizeAll );
 		panelHorizontalHelper.add( btnOptimizeRemainingAndExport );
+		panelHorizontalHelper.add( btnSaveFG );
 		add( panelHorizontalHelper, BorderLayout.SOUTH );
 
 		// --- Final adding and layout steps -------------
@@ -230,7 +239,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'a' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 's' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'd' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'r' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'o' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( ' ' ), "MMGUI_bindings" );
 
 		this.getActionMap().put( "MMGUI_bindings", new AbstractAction() {
 
@@ -267,6 +278,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				if ( e.getActionCommand().equals( "o" ) ) {
 					btnOptimize.doClick();
 				}
+				if ( e.getActionCommand().equals( "r" ) ) {
+					btnRedoAllHypotheses.doClick();
+				}
+				if ( e.getActionCommand().equals( " " ) ) {
+					cbShowParaMaxFlowData.doClick();
+				}
 			}
 		} );
 	}
@@ -279,10 +296,13 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		final JPanel panelContent = new JPanel( new BorderLayout() );
 
 		final JPanel panelView = new JPanel( new FlowLayout( FlowLayout.CENTER, 0, 10 ) );
-		final JPanel panelOptions = new JPanel( new FlowLayout( FlowLayout.CENTER, 0, 10 ) );
+		final JPanel panelOptions = new JPanel();
+		panelOptions.setLayout(new BoxLayout(panelOptions, BoxLayout.LINE_AXIS));
 
 		// =============== panelOptions-part ===================
-		cbShowParaMaxFlowData = new JCheckBox( "show ParaMaxFlow data", false );
+		lActiveHyps = new JLabel( "Active hyps: simple" );
+		lActiveHyps.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder( 2, 5, 2, 5 ) ) );
+		cbShowParaMaxFlowData = new JCheckBox( "show AWESOME if avlbl", false );
 		cbShowParaMaxFlowData.addActionListener( new ActionListener() {
 
 			@Override
@@ -290,13 +310,13 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				dataToDisplayChanged();
 			}
 		} );
-		final JButton btnExchangeSegHyps = new JButton("redo hyp. gen.");
+		final JButton btnExchangeSegHyps = new JButton( "switch" );
 		btnExchangeSegHyps.addActionListener( new ActionListener() {
 
 			@Override
 			public void actionPerformed( final ActionEvent e ) {
 				final GrowthLineFrame glf = model.getCurrentGLF();
-				if ( cbShowParaMaxFlowData.isSelected() ) {
+				if ( !glf.isParaMaxFlowComponentTree() ) {
 					glf.generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
 				} else {
 					glf.generateSimpleSegmentationHypotheses( model.mm.getImgTemp() );
@@ -304,8 +324,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				dataToDisplayChanged();
 			}
 		} );
+		panelOptions.add( Box.createHorizontalGlue() );
 		panelOptions.add( cbShowParaMaxFlowData );
+		panelOptions.add( Box.createHorizontalGlue() );
 		panelOptions.add( btnExchangeSegHyps );
+		panelOptions.add( lActiveHyps );
+		panelOptions.add( Box.createHorizontalGlue() );
 
 
 		// =============== panelView-part ===================
@@ -449,7 +473,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			while ( ctnLevel.size() > 0 ) {
 				for ( final Component< ?, ? > ctn : ctnLevel ) {
 					addBoxAtIndex( i, ctn, xydxdyCTNBorders, ySegmentationData, level );
-					System.out.print( String.format( "%.4f;\t", ilp.localCost( t, ctn ) ) );
+					System.out.print( String.format( "%.4f;\t", ilp.localIntensityBasedCost( t, ctn ) ) );
 					i++;
 				}
 				ctnLevel = ComponentTreeUtils.getAllChildren( ctnLevel );
@@ -551,20 +575,19 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			final GrowthLineFrame glf = model.getCurrentGLF();
 			viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
 
-			if ( cbShowParaMaxFlowData.isSelected() ) {
-				// I will pray for forgiveness... in March... I promise... :(
-				IntervalView< DoubleType > paramaxflowSumImageDoubleTyped = model.getCurrentGLF().getParamaxflowSumImageDoubleTyped( null );
-				if ( paramaxflowSumImageDoubleTyped == null ) {
-					final long left = glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2;
-					final long right = glf.getOffsetX() + GL_WIDTH_TO_SHOW / 2;
-					final long top = 0;
-					final long bottom = model.mm.getImgRaw().max( 1 );
-					final IntervalView< DoubleType > viewCropped = Views.interval( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), new long[] { left, top }, new long[] { right, bottom } );
-					paramaxflowSumImageDoubleTyped = model.getCurrentGLF().getParamaxflowSumImageDoubleTyped( viewCropped );
-				}
+			final IntervalView< DoubleType > paramaxflowSumImageDoubleTyped = model.getCurrentGLF().getParamaxflowSumImageDoubleTyped( null );
+			if ( paramaxflowSumImageDoubleTyped != null && cbShowParaMaxFlowData.isSelected() ) {
 				imgCanvasActiveCenter.setScreenImage( glf, paramaxflowSumImageDoubleTyped );
 			} else {
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
+			}
+
+			if ( glf.isParaMaxFlowComponentTree() ) {
+				lActiveHyps.setText( "AWESOME" );
+				lActiveHyps.setForeground( Color.red );
+			} else {
+				lActiveHyps.setText( "simple " );
+				lActiveHyps.setForeground( Color.black );
 			}
 
 			// - -  assignment-views  - - - - - -
@@ -648,17 +671,30 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			} );
 			t.start();
 		}
+		if ( e.getSource().equals( btnRedoAllHypotheses ) ) {
+			final int choice = JOptionPane.showOptionDialog( this, "Do you want to reset to AWESOME (but slow to generate) segmentation hypotheses?", "AWESOME but slow?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null );
+			if ( choice == JOptionPane.YES_OPTION ) {
+				activateAwesomeHypotheses();
+			} else if ( choice == JOptionPane.NO_OPTION ) {
+				activateSimpleHypotheses();
+			}
+			dataToDisplayChanged();
+		}
 		if ( e.getSource().equals( btnOptimize ) ) {
 			final Thread t = new Thread( new Runnable() {
 
 				@Override
 				public void run() {
-					if ( true || model.getCurrentGL().getIlp() == null ) {
-						System.out.println( "Generating ILP..." );
-						model.getCurrentGL().generateILP();
-					} else {
-						System.out.println( "Using existing ILP (possibly containing user-defined ground-truth bits)..." );
+					System.out.println( "Filling in simple hypotheses where needed..." );
+					for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
+						if ( glf.getComponentTree() == null ) {
+							glf.generateSimpleSegmentationHypotheses( MotherMachine.instance.getImgTemp() );
+						}
 					}
+
+					System.out.println( "Generating ILP..." );
+					model.getCurrentGL().generateILP();
+
 					System.out.println( "Finding optimal result..." );
 					model.getCurrentGL().runILP();
 					System.out.println( "...done!" );
@@ -768,6 +804,72 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			} );
 			t.start();
 		}
+	}
+
+	/**
+	 * Goes over all glfs of the current gl and activates the simple, intensity
+	 * + comp.tree hypotheses.
+	 */
+	private void activateSimpleHypotheses() {
+		for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
+			System.out.print( "." );
+			glf.generateSimpleSegmentationHypotheses( model.mm.getImgTemp() );
+		}
+		System.out.print( "" );
+	}
+
+	/**
+	 * Goes over all glfs of the current gl and activates the awesome,
+	 * RF-classified + paramaxflow hypotheses.
+	 */
+	private void activateAwesomeHypotheses() {
+//		final int numProcessors = Prefs.getThreads();
+//		final int numThreads = Math.min( model.getCurrentGL().getFrames().size(), numProcessors );
+//		final int numFurtherThreads = ( int ) Math.ceil( ( double ) ( numProcessors - numThreads ) / model.getCurrentGL().getFrames().size() ) + 1;
+//
+//		System.out.println( "Processing " + model.getCurrentGL().getFrames().size() + " GLFs in " + numThreads + " thread(s)...." );
+//
+//		final Thread[] threads = new Thread[ numThreads ];
+//
+//		class ImageProcessingThread extends Thread {
+//
+//			final int numThread;
+//			final int numThreads;
+//
+//			public ImageProcessingThread( final int numThread, final int numThreads ) {
+//				this.numThread = numThread;
+//				this.numThreads = numThreads;
+//			}
+//
+//			@Override
+//			public void run() {
+//
+//				for ( int i = numThread; i < model.getCurrentGL().getFrames().size(); i += numThreads ) {
+//					System.out.print( ":" );
+//					model.getCurrentGL().getFrames().get( i ).generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
+//				}
+//			}
+//		}
+//
+//		// start threads
+//		for ( int i = 0; i < numThreads; i++ ) {
+//			threads[ i ] = new ImageProcessingThread( i, numThreads );
+//			threads[ i ].start();
+//		}
+//
+//		// wait for all threads to terminate
+//		for ( final Thread thread : threads ) {
+//			try {
+//				thread.join();
+//			} catch ( final InterruptedException e ) {}
+//		}
+
+		// OLD SINGLETHREADED VERSION
+		for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
+			System.out.print( ":" );
+			glf.generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
+		}
+		System.out.print( "" );
 	}
 
 }

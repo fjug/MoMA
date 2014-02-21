@@ -26,7 +26,7 @@ public class CostFactory {
 			deltaH = Math.max( 0, deltaH - 0.05 ); // going upwards for up to 5% is for free...
 			power = 5.0;
 		} else { // downward migration
-			power = 7.0;
+			power = 12.0;
 		}
 		deltaH = Math.abs( deltaH );
 		costDeltaH = deltaH * Math.pow( 1 + deltaH, power );
@@ -74,7 +74,7 @@ public class CostFactory {
 	 * @param gapSepFkt
 	 * @return
 	 */
-	public static double getSegmentationCost( final Component< ?, ? > ctNode, final double[] gapSepFkt ) {
+	public static double getIntensitySegmentationCost( final Component< ?, ? > ctNode, final double[] gapSepFkt ) {
 		final Pair< Integer, Integer > segInterval = ComponentTreeUtils.getTreeNodeInterval( ctNode );
 		final int a = segInterval.getA().intValue();
 		final int b = segInterval.getB().intValue();
@@ -109,5 +109,20 @@ public class CostFactory {
 			cost = 100;
 		}
 		return cost;
+	}
+
+	/**
+	 * @param ctNode
+	 * @param gapSepFkt
+	 * @return
+	 */
+	public static double getParamaxflowSegmentationCost( final Component< ?, ? > ctNode, final double[] gapSepFkt ) {
+		final Pair< Integer, Integer > segInterval = ComponentTreeUtils.getTreeNodeInterval( ctNode );
+		final int a = segInterval.getA().intValue();
+		final int b = segInterval.getB().intValue();
+
+		final double min = SimpleFunctionAnalysis.getMin( gapSepFkt, a, b ).b;
+
+		return -0.2 + 1.0 * min; // TOTALLY arbitrary!!!
 	}
 }

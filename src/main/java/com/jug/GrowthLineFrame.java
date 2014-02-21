@@ -22,11 +22,20 @@ import com.jug.util.filteredcomponents.FilteredComponentTree;
 public class GrowthLineFrame extends AbstractGrowthLineFrame< FilteredComponent< DoubleType > > {
 
 	/**
-	 * @see com.jug.AbstractGrowthLineFrame#buildTree(net.imglib2.RandomAccessibleInterval)
+	 * @see com.jug.AbstractGrowthLineFrame#buildIntensityTree(net.imglib2.RandomAccessibleInterval)
 	 */
 	@Override
-	protected ComponentForest< FilteredComponent< DoubleType >> buildTree( final RandomAccessibleInterval< DoubleType > raiFkt ) {
+	protected ComponentForest< FilteredComponent< DoubleType >> buildIntensityTree( final RandomAccessibleInterval< DoubleType > raiFkt ) {
 		return FilteredComponentTree.buildComponentTree( raiFkt, new DoubleType(), 3, Long.MAX_VALUE, true );
+//		return MserComponentTree.buildMserTree( raiFkt, MotherMachine.MIN_GAP_CONTRAST / 2.0, MotherMachine.MIN_CELL_LENGTH, Long.MAX_VALUE, 0.5, 0.33, true );
+	}
+
+	/**
+	 * @see com.jug.AbstractGrowthLineFrame#buildParaMaxFlowSumTree(net.imglib2.RandomAccessibleInterval)
+	 */
+	@Override
+	protected ComponentForest< FilteredComponent< DoubleType >> buildParaMaxFlowSumTree( final RandomAccessibleInterval< DoubleType > raiFkt ) {
+		return FilteredComponentTree.buildComponentTree( raiFkt, new DoubleType(), MotherMachine.MIN_CELL_LENGTH, Long.MAX_VALUE, true );
 //		return MserComponentTree.buildMserTree( raiFkt, MotherMachine.MIN_GAP_CONTRAST / 2.0, MotherMachine.MIN_CELL_LENGTH, Long.MAX_VALUE, 0.5, 0.33, true );
 	}
 

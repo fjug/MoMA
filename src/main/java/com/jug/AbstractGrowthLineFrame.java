@@ -93,6 +93,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 									   // getAwesomeGapSeparationValues is called...
 	private GrowthLine parent;
 	private ComponentForest< C > componentTree;
+	private boolean isParaMaxFlowComponentTree = false;
 	private RandomAccessibleInterval< LongType > paramaxflowSumImage; // lazy evaluation -- gets computed when neede first time
 	private long paramaxflowSolutions;
 
@@ -191,13 +192,26 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * @return a double array containing the image intensities in
 	 *         <code>img</code> at the points given in wellPoints.
 	 */
-	private double[] getInvertedIntensities( final Img< DoubleType > img ) {
+	private double[] getInvertedIntensities( final RandomAccessibleInterval< DoubleType > img, final boolean imgIsPreCropped ) {
 		final double[] ret = new double[ imgLocations.size() ];
 		final RandomAccess< DoubleType > ra = img.randomAccess();
+
+		//here now a trick to make <3d images also comply to the code below
+		IntervalView< DoubleType > ivImg = Views.interval( img, img );
+		for ( int i = 0; i < 3 - img.numDimensions(); i++ ) {
+			ivImg = Views.addDimension( ivImg, 0, 0 );
+		}
+		final RandomAccess< DoubleType > raImg3d = ivImg.randomAccess();
+
 		int i = 0;
-		for ( final Point p : imgLocations ) {
-			ra.setPosition( p );
-			ret[ i++ ] = 1.0 - ra.get().get();
+		for ( final Point p_orig : imgLocations ) {
+			final Point p = new Point( p_orig );
+			if ( imgIsPreCropped ) {
+				p.setPosition( 0, 2 );
+				p.move( MotherMachineGui.GL_WIDTH_TO_SHOW / 2 - getAvgXpos(), 0 );
+			}
+			raImg3d.setPosition( p );
+			ret[ i++ ] = 1.0 - raImg3d.get().get();
 		}
 		return ret;
 	}
@@ -253,7 +267,8 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 				ra.get().set( fkt[ i ] );
 			}
 
-			componentTree = buildTree( raiFkt );
+			isParaMaxFlowComponentTree = false;
+			componentTree = buildIntensityTree( raiFkt );
 //			componentTree = FilteredComponentTree.buildComponentTree( raiFkt, new DoubleType(), 3, Long.MAX_VALUE, true );
 //			componentTree = MserComponentTree.buildMserTree( raiFkt, MotherMachine.MIN_GAP_CONTRAST / 2.0, MotherMachine.MIN_CELL_LENGTH, Long.MAX_VALUE, 0.5, 0.33, true );
 		}
@@ -277,13 +292,16 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 				ra.get().set( fkt[ i ] );
 			}
 
-			componentTree = buildTree( raiFkt );
+			isParaMaxFlowComponentTree = true;
+			componentTree = buildParaMaxFlowSumTree( raiFkt );
 //			componentTree = FilteredComponentTree.buildComponentTree( raiFkt, new DoubleType(), 3, Long.MAX_VALUE, true );
 //			componentTree = MserComponentTree.buildMserTree( raiFkt, MotherMachine.MIN_GAP_CONTRAST / 2.0, MotherMachine.MIN_CELL_LENGTH, Long.MAX_VALUE, 0.5, 0.33, true );
 		}
 	}
 
-	protected abstract ComponentForest< C > buildTree( final RandomAccessibleInterval< DoubleType > raiFkt );
+	protected abstract ComponentForest< C > buildIntensityTree( final RandomAccessibleInterval< DoubleType > raiFkt );
+
+	protected abstract ComponentForest< C > buildParaMaxFlowSumTree( final RandomAccessibleInterval< DoubleType > raiFkt );
 
 	/**
 	 * So far this function is pretty stupid: I traverse the entire component
@@ -391,11 +409,12 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 			paramaxflowSumImageDoubleTyped = getParamaxflowSumImageDoubleTyped( viewCropped );
 		}
 
-		awesomeSepValues = getMaxTiltedLineAveragesInRectangleAlongAvgCenter( paramaxflowSumImageDoubleTyped, true );
+//		awesomeSepValues = getMaxTiltedLineAveragesInRectangleAlongAvgCenter( paramaxflowSumImageDoubleTyped, true );
+//		final double max = SimpleFunctionAnalysis.getMax( awesomeSepValues ).b;
+//		awesomeSepValues = SimpleFunctionAnalysis.flipSign( awesomeSepValues );
+//		awesomeSepValues = SimpleFunctionAnalysis.elementWiseAdd( awesomeSepValues, max );
 
-		final double max = SimpleFunctionAnalysis.getMax( awesomeSepValues ).b;
-		awesomeSepValues = SimpleFunctionAnalysis.flipSign( awesomeSepValues );
-		awesomeSepValues = SimpleFunctionAnalysis.elementWiseAdd( awesomeSepValues, max );
+		awesomeSepValues = getInvertedIntensities( paramaxflowSumImageDoubleTyped, true );
 
 		return awesomeSepValues;
 	}
@@ -636,5 +655,12 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 		}
 
 		return Views.interval( Converters.convert( paramaxflowSumImage, new RealDoubleNormalizeConverter( this.paramaxflowSolutions ), new DoubleType() ), paramaxflowSumImage );
+	}
+
+	/**
+	 * @return the isParaMaxFlowComponentTree
+	 */
+	public boolean isParaMaxFlowComponentTree() {
+		return isParaMaxFlowComponentTree;
 	}
 }

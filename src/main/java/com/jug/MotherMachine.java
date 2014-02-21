@@ -72,6 +72,7 @@ public class MotherMachine {
 	// -------------------------------------------------------------------------------------
 	// statics
 	// -------------------------------------------------------------------------------------
+	public static MotherMachine instance;
 	/**
 	 * Parameter: sigma for gaussian blurring in x-direction of the raw image
 	 * data. Used while searching the growth line centers.
@@ -277,6 +278,8 @@ public class MotherMachine {
 			} );
 
 			System.out.println( " done!" );
+
+			instance = main;
 		}
 		catch ( final UnsatisfiedLinkError ulr ) {
 			JOptionPane.showMessageDialog( MotherMachine.guiFrame,
@@ -711,9 +714,9 @@ public class MotherMachine {
 		resetImgTempToRaw();
 		System.out.println( " done!" );
 
-		System.out.print( "Generating Segmentation Hypotheses..." );
-		generateSegmentationHypotheses();
-		System.out.println( " done!" );
+//		System.out.print( "Generating Segmentation Hypotheses..." );
+//		generateAllSimpleSegmentationHypotheses();
+//		System.out.println( " done!" );
 
 //		System.out.println( "Generating Integer Linear Programs..." );
 //		generateILPs();
@@ -1214,7 +1217,7 @@ public class MotherMachine {
 	 * GrowthLine.findGapHypotheses(Img).
 	 * Note that this function always uses the image data in 'imgTemp'.
 	 */
-	public void generateSegmentationHypotheses() {
+	public void generateAllSimpleSegmentationHypotheses() {
 
 		// ------ GAUSS -----------------------------
 

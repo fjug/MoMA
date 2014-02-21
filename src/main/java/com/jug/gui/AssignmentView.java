@@ -52,7 +52,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	/**
 	 *
 	 */
-	private static final int OFFSET_DISPLAY_COSTS = 10;
+	private static final int OFFSET_DISPLAY_COSTS = -15;
 
 	private static final int HEIGHT_OFFSET = 35;
 
@@ -382,7 +382,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 					} else {
 						g2.setPaint( new Color( 25 / 256f, 65 / 256f, 165 / 256f, 1.0f ).darker().darker() );
 					}
-					g2.drawString( String.format( "c=%.4f", cost ), DISPLAY_COSTS_ABSOLUTE_X, this.mousePosY - OFFSET_DISPLAY_COSTS - this.currentCostLine * LINEHEIGHT_DISPLAY_COSTS );
+					g2.drawString( String.format( "c=%.4f", cost ), DISPLAY_COSTS_ABSOLUTE_X, this.mousePosY + OFFSET_DISPLAY_COSTS - this.currentCostLine * LINEHEIGHT_DISPLAY_COSTS );
 					this.currentCostLine++;
 				}
 				catch ( final GRBException e ) {
