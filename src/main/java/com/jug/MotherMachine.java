@@ -60,7 +60,6 @@ import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.ops.cursor.FindLocalMaxima;
 import com.jug.ops.cursor.FindLocationAboveThreshold;
 import com.jug.ops.numerictype.VarOfRai;
-import com.jug.segmentation.GrowthLineSegmentationMagic;
 import com.jug.util.DataMover;
 import com.jug.util.DoubleTypeImgLoader;
 
@@ -72,6 +71,8 @@ public class MotherMachine {
 	// -------------------------------------------------------------------------------------
 	// statics
 	// -------------------------------------------------------------------------------------
+	public static final String CLASSIFIER_FOLDER = "/Users/jug/Dropbox/WorkingData/Repositories/GIT/MotherMachineMvn/src/main/resources/";
+	public static final String CLASSIFIER_FILE = "BinaryGapClassifier.model";
 	public static MotherMachine instance;
 	/**
 	 * Parameter: sigma for gaussian blurring in x-direction of the raw image
@@ -199,7 +200,7 @@ public class MotherMachine {
 			main.initMainWindow( guiFrame );
 
 			//TODO do it better
-			GrowthLineSegmentationMagic.setClassifier( "/Users/jug/Dropbox/WorkingData/Repositories/GIT/MotherMachineMvn/src/main/resources/", "BinaryGapClassifier.model" );
+//			GrowthLineSegmentationMagic.setClassifier( CLASSIFIER_FOLDER, CLASSIFIER_FILE );
 
 			props = main.loadParams();
 			BGREM_TEMPLATE_XMIN = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMIN", Integer.toString( BGREM_TEMPLATE_XMIN ) ) );

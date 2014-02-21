@@ -25,10 +25,12 @@ import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.integer.LongType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.view.IntervalView;
+import net.imglib2.view.SubsampleIntervalView;
 import net.imglib2.view.Views;
 
 import com.jug.gui.MotherMachineGui;
-import com.jug.segmentation.GrowthLineSegmentationMagic;
+import com.jug.segmentation.ParaMaxFlow;
+import com.jug.segmentation.SilentWekaSegmenter;
 import com.jug.util.ArgbDrawingUtils;
 import com.jug.util.SimpleFunctionAnalysis;
 import com.jug.util.Util;
@@ -640,9 +642,27 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	public IntervalView< LongType > getParamaxflowSumImage( final IntervalView< DoubleType > viewGLF ) {
 		if ( paramaxflowSumImage == null ) {
 			if ( viewGLF == null ) { return null; }
-//			this.paramaxflowSumImage = GrowthLineSegmentationMagic.returnParamaxflowRegionSums( viewGLF );
-			this.paramaxflowSumImage = GrowthLineSegmentationMagic.returnClassificationBoostedParamaxflowRegionSums( viewGLF );
-			this.paramaxflowSolutions = GrowthLineSegmentationMagic.getNumSolutions();
+			final SilentWekaSegmenter gapClassifier = new SilentWekaSegmenter< DoubleType >( MotherMachine.CLASSIFIER_FOLDER, MotherMachine.CLASSIFIER_FILE );
+			final RandomAccessibleInterval< DoubleType > classified = gapClassifier.classifyPixels( viewGLF, true );
+			final long[] min = new long[ classified.numDimensions() ];
+			classified.min( min );
+			min[ 2 ]++;
+			final long[] max = new long[ classified.numDimensions() ];
+			classified.max( max );
+			// TODO: FIXES A BUG IN THE IMGLIB... NEEDS TO BE REMOVED AFTER THE BUG IS REMOVED!!!
+			if ( ( max[ 2 ] - min[ 2 ] + 1 ) % 2 == 1 ) {
+				max[ 2 ]++;
+			}
+			final SubsampleIntervalView< DoubleType > subsampleGapClass = ( SubsampleIntervalView< DoubleType > ) Views.subsample( Views.interval( classified, min, max ), 1, 1, 2 );
+
+			final ParaMaxFlow< DoubleType > paramaxflow = new ParaMaxFlow< DoubleType >( viewGLF, ( true ) ? subsampleGapClass : null, false, -1.0, 0.45, 0.15, 1.0, 1.0, 1.0, 0.10, 0.0, 0.5, 10.0, 0.0, 0.5, 10.0 );
+
+			this.paramaxflowSolutions = paramaxflow.solve( -1000000, 1000000 );
+			this.paramaxflowSumImage = paramaxflow.getRegionsImg();
+
+			// OLD SINGLE THREADED VERSIONS
+//			this.paramaxflowSumImage = GrowthLineSegmentationMagic.returnClassificationBoostedParamaxflowRegionSums( viewGLF );
+//			this.paramaxflowSolutions = GrowthLineSegmentationMagic.getNumSolutions();
 		}
 
 		return Views.interval( paramaxflowSumImage, Views.zeroMin( viewGLF ) );

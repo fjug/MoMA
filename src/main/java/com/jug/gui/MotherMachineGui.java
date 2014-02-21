@@ -3,6 +3,8 @@
  */
 package com.jug.gui;
 
+import ij.Prefs;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -823,52 +825,52 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * RF-classified + paramaxflow hypotheses.
 	 */
 	private void activateAwesomeHypotheses() {
-//		final int numProcessors = Prefs.getThreads();
-//		final int numThreads = Math.min( model.getCurrentGL().getFrames().size(), numProcessors );
-//		final int numFurtherThreads = ( int ) Math.ceil( ( double ) ( numProcessors - numThreads ) / model.getCurrentGL().getFrames().size() ) + 1;
-//
-//		System.out.println( "Processing " + model.getCurrentGL().getFrames().size() + " GLFs in " + numThreads + " thread(s)...." );
-//
-//		final Thread[] threads = new Thread[ numThreads ];
-//
-//		class ImageProcessingThread extends Thread {
-//
-//			final int numThread;
-//			final int numThreads;
-//
-//			public ImageProcessingThread( final int numThread, final int numThreads ) {
-//				this.numThread = numThread;
-//				this.numThreads = numThreads;
-//			}
-//
-//			@Override
-//			public void run() {
-//
-//				for ( int i = numThread; i < model.getCurrentGL().getFrames().size(); i += numThreads ) {
-//					System.out.print( ":" );
-//					model.getCurrentGL().getFrames().get( i ).generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
-//				}
-//			}
-//		}
-//
-//		// start threads
-//		for ( int i = 0; i < numThreads; i++ ) {
-//			threads[ i ] = new ImageProcessingThread( i, numThreads );
-//			threads[ i ].start();
-//		}
-//
-//		// wait for all threads to terminate
-//		for ( final Thread thread : threads ) {
-//			try {
-//				thread.join();
-//			} catch ( final InterruptedException e ) {}
-//		}
+		final int numProcessors = Prefs.getThreads();
+		final int numThreads = Math.min( model.getCurrentGL().getFrames().size(), numProcessors );
+		final int numFurtherThreads = ( int ) Math.ceil( ( double ) ( numProcessors - numThreads ) / model.getCurrentGL().getFrames().size() ) + 1;
+
+		System.out.println( "Processing " + model.getCurrentGL().getFrames().size() + " GLFs in " + numThreads + " thread(s)...." );
+
+		final Thread[] threads = new Thread[ numThreads ];
+
+		class ImageProcessingThread extends Thread {
+
+			final int numThread;
+			final int numThreads;
+
+			public ImageProcessingThread( final int numThread, final int numThreads ) {
+				this.numThread = numThread;
+				this.numThreads = numThreads;
+			}
+
+			@Override
+			public void run() {
+
+				for ( int i = numThread; i < model.getCurrentGL().getFrames().size(); i += numThreads ) {
+					System.out.print( ":" );
+					model.getCurrentGL().getFrames().get( i ).generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
+				}
+			}
+		}
+
+		// start threads
+		for ( int i = 0; i < numThreads; i++ ) {
+			threads[ i ] = new ImageProcessingThread( i, numThreads );
+			threads[ i ].start();
+		}
+
+		// wait for all threads to terminate
+		for ( final Thread thread : threads ) {
+			try {
+				thread.join();
+			} catch ( final InterruptedException e ) {}
+		}
 
 		// OLD SINGLETHREADED VERSION
-		for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
-			System.out.print( ":" );
-			glf.generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
-		}
+//		for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
+//			System.out.print( ":" );
+//			glf.generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
+//		}
 		System.out.print( "" );
 	}
 
