@@ -260,7 +260,7 @@ public class ParaMaxFlow< T extends RealType< T > > {
 		//here now a trick to make <3d images also comply to the code below
 		IntervalView< LongType > ivRet = Views.interval( ret, ret );
 		for ( int i = 0; i < 3 - rai.numDimensions(); i++ ) {
-			ivRet = Views.addDimension( ret, 0, 0 );
+			ivRet = Views.addDimension( ivRet, 0, 0 );
 		}
 		final RandomAccess< LongType > raRet = ivRet.randomAccess();
 
@@ -295,7 +295,7 @@ public class ParaMaxFlow< T extends RealType< T > > {
 		//here now a trick to make <3d images also comply to the code below
 		IntervalView< BitType > ivRet = Views.interval( ret, ret );
 		for ( int i = 0; i < 3 - rai.numDimensions(); i++ ) {
-			ivRet = Views.addDimension( ret, 0, 0 );
+			ivRet = Views.addDimension( ivRet, 0, 0 );
 		}
 		final RandomAccess< BitType > raRet = ivRet.randomAccess();
 
@@ -324,7 +324,7 @@ public class ParaMaxFlow< T extends RealType< T > > {
 		//here now a trick to make <3d images also comply to the code below
 		IntervalView< DoubleType > ivRet = Views.interval( ret, ret );
 		for ( int i = 0; i < 3 - rai.numDimensions(); i++ ) {
-			ivRet = Views.addDimension( ret, 0, 0 );
+			ivRet = Views.addDimension( ivRet, 0, 0 );
 		}
 		final RandomAccess< DoubleType > raRet = ivRet.randomAccess();
 
@@ -371,7 +371,7 @@ public class ParaMaxFlow< T extends RealType< T > > {
 		//here now a trick to make <3d images also comply to the code below
 		IntervalView< DoubleType > ivRet = Views.interval( ret, ret );
 		for ( int i = 0; i < 3 - rai.numDimensions(); i++ ) {
-			ivRet = Views.addDimension( ret, 0, 0 );
+			ivRet = Views.addDimension( ivRet, 0, 0 );
 		}
 		final RandomAccess< DoubleType > raRet = ivRet.randomAccess();
 
@@ -429,7 +429,7 @@ public class ParaMaxFlow< T extends RealType< T > > {
 		//here now a trick to make <3d images also comply to the code below
 		IntervalView< DoubleType > ivRet = Views.interval( ret, ret );
 		for ( int i = 0; i < 3 - rai.numDimensions(); i++ ) {
-			ivRet = Views.addDimension( ret, 0, 0 );
+			ivRet = Views.addDimension( ivRet, 0, 0 );
 		}
 		final RandomAccess< DoubleType > raRet = ivRet.randomAccess();
 

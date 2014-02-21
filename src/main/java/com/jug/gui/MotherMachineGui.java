@@ -62,7 +62,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * Parameter: how many pixels wide is the image containing the selected
 	 * GrowthLine?
 	 */
-	private static final int GL_WIDTH_TO_SHOW = 70;
+	public static final int GL_WIDTH_TO_SHOW = 70;
 
 	// -------------------------------------------------------------------------------------
 	// fields
@@ -290,7 +290,23 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				dataToDisplayChanged();
 			}
 		} );
+		final JButton btnExchangeSegHyps = new JButton("redo hyp. gen.");
+		btnExchangeSegHyps.addActionListener( new ActionListener() {
+
+			@Override
+			public void actionPerformed( final ActionEvent e ) {
+				final GrowthLineFrame glf = model.getCurrentGLF();
+				if ( cbShowParaMaxFlowData.isSelected() ) {
+					glf.generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
+				} else {
+					glf.generateSimpleSegmentationHypotheses( model.mm.getImgTemp() );
+				}
+				dataToDisplayChanged();
+			}
+		} );
 		panelOptions.add( cbShowParaMaxFlowData );
+		panelOptions.add( btnExchangeSegHyps );
+
 
 		// =============== panelView-part ===================
 
@@ -393,12 +409,17 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		plot.removeAllPlots();
 
 		final double[] yMidline = model.getCurrentGLF().getMirroredCenterLineValues( model.mm.getImgTemp() );
-		final double[] ySegmentationData = model.getCurrentGLF().getSimpleGapSeparationValues( model.mm.getImgTemp() );
+		double[] ySegmentationData;
+		if ( cbShowParaMaxFlowData.isSelected() ) {
+			ySegmentationData = model.getCurrentGLF().getAwesomeGapSeparationValues( model.mm.getImgTemp() );
+		} else {
+			ySegmentationData = model.getCurrentGLF().getSimpleGapSeparationValues( model.mm.getImgTemp() );
+		}
 		final double[] yAvg = new double[ yMidline.length ];
 		final double constY = SimpleFunctionAnalysis.getSum( ySegmentationData ) / ySegmentationData.length;
-		for ( int i = 0; i < yAvg.length; i++ )
+		for ( int i = 0; i < yAvg.length; i++ ) {
 			yAvg[ i ] = constY;
-
+		}
 		plot.addLinePlot( "Midline Intensities", new Color( 127, 127, 255 ), yMidline );
 		plot.addLinePlot( "Segmentation data", new Color( 80, 255, 80 ), ySegmentationData );
 		plot.addLinePlot( "avg. fkt-value", new Color( 200, 64, 64 ), yAvg );
@@ -632,7 +653,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 				@Override
 				public void run() {
-					if ( model.getCurrentGL().getIlp() == null ) {
+					if ( true || model.getCurrentGL().getIlp() == null ) {
 						System.out.println( "Generating ILP..." );
 						model.getCurrentGL().generateILP();
 					} else {

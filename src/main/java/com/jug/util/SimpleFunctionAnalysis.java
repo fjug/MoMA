@@ -458,4 +458,17 @@ public class SimpleFunctionAnalysis {
 		Arrays.sort( fktCopy );
 		return fktCopy[ len / 2 ];
 	}
+
+	/**
+	 * @param offset
+	 *            the number that is added to each element of fkt
+	 * @return
+	 */
+	public static double[] elementWiseAdd( final double[] fkt, final double offset ) {
+		final double[] ret = new double[ fkt.length ];
+		for ( int i = 0; i < fkt.length; i++ ) {
+			ret[ i ] = fkt[ i ] + offset;
+		}
+		return ret;
+	}
 }

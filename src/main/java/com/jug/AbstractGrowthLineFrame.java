@@ -27,6 +27,7 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
+import com.jug.gui.MotherMachineGui;
 import com.jug.segmentation.GrowthLineSegmentationMagic;
 import com.jug.util.ArgbDrawingUtils;
 import com.jug.util.SimpleFunctionAnalysis;
@@ -86,8 +87,10 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * GrowthLine.
 	 */
 	private List< Point > imgLocations;
-	private double[] sepValues; // lazy evaluation -- gets computed when
-								// getGapSeparationValues is called...
+	private double[] simpleSepValues; // lazy evaluation -- gets computed when
+									  // getSimpleGapSeparationValues is called...
+	private double[] awesomeSepValues; // lazy evaluation -- gets computed when
+									   // getAwesomeGapSeparationValues is called...
 	private GrowthLine parent;
 	private ComponentForest< C > componentTree;
 	private RandomAccessibleInterval< LongType > paramaxflowSumImage; // lazy evaluation -- gets computed when neede first time
@@ -350,10 +353,9 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	}
 
 	/**
-	 * Trying to look there a bit smarter... ;)
+	 * GapSep guesses based on the intensity image alone
 	 *
 	 * @param img
-	 * @param wellPoints
 	 * @return
 	 */
 	public double[] getSimpleGapSeparationValues( final Img< DoubleType > img ) {
@@ -361,41 +363,85 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	}
 
 	public double[] getSimpleGapSeparationValues( final Img< DoubleType > img, final boolean forceRecomputation ) {
-		if ( sepValues == null ) {
+		if ( simpleSepValues == null ) {
 			if ( img == null ) return null;
-			sepValues = getMaxTiltedLineAveragesInRectangleAlongAvgCenter( img );
+			simpleSepValues = getMaxTiltedLineAveragesInRectangleAlongAvgCenter( img );
 //			sepValues = getInvertedIntensities( img );
 		}
-		return sepValues;
+		return simpleSepValues;
 	}
 
 	/**
+	 * GapSep guesses based on the awesome paramaxflow-sum-image...
+	 *
 	 * @param img
 	 * @return
 	 */
-	private double[] getAwesomeGapSeparationValues( final Img< DoubleType > img ) {
-		// TODO Auto-generated method stub
-		return null;
+	public double[] getAwesomeGapSeparationValues( final Img< DoubleType > img ) {
+		if ( img == null ) return null;
+
+		// I will pray for forgiveness... in March... I promise... :(
+		IntervalView< DoubleType > paramaxflowSumImageDoubleTyped = getParamaxflowSumImageDoubleTyped( null );
+		if ( paramaxflowSumImageDoubleTyped == null ) {
+			final long left = getOffsetX() - MotherMachineGui.GL_WIDTH_TO_SHOW / 2;
+			final long right = getOffsetX() + MotherMachineGui.GL_WIDTH_TO_SHOW / 2;
+			final long top = img.min( 1 );
+			final long bottom = img.max( 1 );
+			final IntervalView< DoubleType > viewCropped = Views.interval( Views.hyperSlice( img, 2, getOffsetZ() ), new long[] { left, top }, new long[] { right, bottom } );
+			paramaxflowSumImageDoubleTyped = getParamaxflowSumImageDoubleTyped( viewCropped );
+		}
+
+		awesomeSepValues = getMaxTiltedLineAveragesInRectangleAlongAvgCenter( paramaxflowSumImageDoubleTyped, true );
+
+		final double max = SimpleFunctionAnalysis.getMax( awesomeSepValues ).b;
+		awesomeSepValues = SimpleFunctionAnalysis.flipSign( awesomeSepValues );
+		awesomeSepValues = SimpleFunctionAnalysis.elementWiseAdd( awesomeSepValues, max );
+
+		return awesomeSepValues;
 	}
 
 	/**
 	 * Trying to look there a bit smarter... ;)
-	 * 
+	 *
 	 * @param img
 	 * @param wellPoints
 	 * @return
 	 */
 	@SuppressWarnings( "unused" )
 	private double[] getMaxTiltedLineAveragesInRectangleAlongAvgCenter( final Img< DoubleType > img ) {
+		return getMaxTiltedLineAveragesInRectangleAlongAvgCenter( img, false );
+	}
+
+	/**
+	 * Trying to look there a bit smarter... ;)
+	 *
+	 * @param img
+	 * @param wellPoints
+	 * @return
+	 */
+	@SuppressWarnings( "unused" )
+	private double[] getMaxTiltedLineAveragesInRectangleAlongAvgCenter( final RandomAccessibleInterval< DoubleType > img, final boolean imgIsPreCropped ) {
 		// special case: growth line does not exist in this frame
 		if ( imgLocations.size() == 0 ) return new double[ 0 ];
 
-		final int centerX = getAvgXpos();
-		final int centerZ = imgLocations.get( 0 ).getIntPosition( 2 );
 		final int maxOffsetX = 9;
 		final int maxOffsetY = 9;
 
-		final RealRandomAccessible< DoubleType > rrImg = Views.interpolate( Views.hyperSlice( img, 2, centerZ ), new NLinearInterpolatorFactory< DoubleType >() );
+		int centerX = getAvgXpos();
+		int centerZ = imgLocations.get( 0 ).getIntPosition( 2 );
+
+		if ( imgIsPreCropped ) {
+			centerX = MotherMachineGui.GL_WIDTH_TO_SHOW / 2;
+			centerZ = 0;
+		}
+
+		//here now a trick to make <3d images also comply to the code below
+		IntervalView< DoubleType > ivImg = Views.interval( img, img );
+		for ( int i = 0; i < 3 - img.numDimensions(); i++ ) {
+			ivImg = Views.addDimension( ivImg, 0, 0 );
+		}
+
+		final RealRandomAccessible< DoubleType > rrImg = Views.interpolate( Views.hyperSlice( ivImg, 2, centerZ ), new NLinearInterpolatorFactory< DoubleType >() );
 		final RealRandomAccess< DoubleType > rraImg = rrImg.realRandomAccess();
 
 		final double[] dIntensity = new double[ imgLocations.size() ]; //  + 1
@@ -456,8 +502,16 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 		long offsetX = 0;
 		long offsetY = 0;
 		if ( view != null ) {
-			offsetX = view.min( 0 );
-			offsetY = view.min( 1 );
+			// Lord, forgive me!
+			if ( view.min( 0 ) == 0 ) {
+				// In case I give the cropped paramaxflow-baby I lost the offset and must do ugly shit...
+				// I promise this is only done because I need to finish the f****** paper!
+				offsetX = -( this.getAvgXpos() - MotherMachineGui.GL_WIDTH_TO_SHOW / 2 );
+				offsetY = view.min( 1 );
+			} else {
+				offsetX = view.min( 0 );
+				offsetY = view.min( 1 );
+			}
 		}
 
 		for ( final Point p : getMirroredImgLocations() ) { // imgLocations
@@ -503,9 +557,18 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 
 		long offsetX = 0;
 		long offsetY = 0;
+
 		if ( view != null ) {
-			offsetX = view.min( 0 );
-			offsetY = view.min( 1 );
+			// Lord, forgive me!
+			if ( view.min( 0 ) == 0 ) {
+				// In case I give the cropped paramaxflow-baby I lost the offset and must do ugly shit...
+				// I promise this is only done because I need to finish the f****** paper!
+				offsetX = -( this.getAvgXpos() - MotherMachineGui.GL_WIDTH_TO_SHOW / 2 );
+				offsetY = view.min( 1 );
+			} else {
+				offsetX = view.min( 0 );
+				offsetY = view.min( 1 );
+			}
 		}
 
 		for ( final Component< DoubleType, ? > ctn : optimalSegmentation ) {
