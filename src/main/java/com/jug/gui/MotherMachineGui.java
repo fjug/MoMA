@@ -40,6 +40,7 @@ import net.imglib2.Localizable;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.algorithm.componenttree.ComponentForest;
 import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.util.ValuePair;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
@@ -125,12 +126,14 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private JButton btnRedoAllHypotheses;
 	private JButton btnOptimize;
 	private JButton btnOptimizeAll;
+	private JButton btnExportFigData;
 	private JButton btnOptimizeRemainingAndExport;
 	private JButton btnSaveFG;
 
 	private JCheckBox cbShowParaMaxFlowData;
 
 	private JLabel lActiveHyps;
+
 
 	// -------------------------------------------------------------------------------------
 	// construction & gui creation
@@ -211,9 +214,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		btnRedoAllHypotheses.addActionListener( this );
 		btnOptimize = new JButton( "Optimize" );
 		btnOptimize.addActionListener( this );
-		btnOptimize.addActionListener( this );
 		btnOptimizeAll = new JButton( "Optimize All" );
 		btnOptimizeAll.addActionListener( this );
+		btnExportFigData = new JButton( "Export FigData" );
+		btnExportFigData.addActionListener( this );
 		btnOptimizeRemainingAndExport = new JButton( "Opt. Remaining & Export" );
 		btnOptimizeRemainingAndExport.addActionListener( this );
 		btnSaveFG = new JButton( "Save FG" );
@@ -222,7 +226,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelHorizontalHelper.add( btnRedoAllHypotheses );
 		panelHorizontalHelper.add( btnOptimize );
 		panelHorizontalHelper.add( btnOptimizeAll );
-		panelHorizontalHelper.add( btnOptimizeRemainingAndExport );
+		panelHorizontalHelper.add( btnExportFigData );
+//		panelHorizontalHelper.add( btnOptimizeRemainingAndExport );
 		panelHorizontalHelper.add( btnSaveFG );
 		add( panelHorizontalHelper, BorderLayout.SOUTH );
 
@@ -277,6 +282,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				}
 				if ( e.getActionCommand().equals( "o" ) ) {
 					btnOptimize.doClick();
+				}
+				if ( e.getActionCommand().equals( "e" ) ) {
+					btnExportFigData.doClick();
 				}
 				if ( e.getActionCommand().equals( "r" ) ) {
 					btnRedoAllHypotheses.doClick();
@@ -712,6 +720,14 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					final int glCount = model.mm.getGrowthLines().size();
 					for ( final GrowthLine gl : model.mm.getGrowthLines() ) {
 						i++;
+
+						System.out.println( "Filling in simple hypotheses where needed..." );
+						for ( final GrowthLineFrame glf : gl.getFrames() ) {
+							if ( glf.getComponentTree() == null ) {
+								glf.generateSimpleSegmentationHypotheses( MotherMachine.instance.getImgTemp() );
+							}
+						}
+
 						System.out.println( String.format( "Generating ILP #%d of %d...", i, glCount ) );
 						gl.generateILP();
 						System.out.println( String.format( "Running ILP #%d of %d...", i, glCount ) );
@@ -722,6 +738,82 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				}
 			} );
 			t.start();
+		}
+		if ( e.getSource().equals( btnExportFigData ) ) {
+			final MotherMachineGui self = this;
+			final Thread t = new Thread( new Runnable() {
+
+				@Override
+				public void run() {
+					final JFileChooser fc = new JFileChooser( MotherMachine.DEFAULT_PATH );
+					fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "csv", "CSV" }, "CVS-file" ) );
+
+					if ( fc.showSaveDialog( self ) == JFileChooser.APPROVE_OPTION ) {
+						File file = fc.getSelectedFile();
+						if ( !file.getAbsolutePath().endsWith( ".csv" ) && !file.getAbsolutePath().endsWith( ".CSV" ) ) {
+							file = new File( file.getAbsolutePath() + ".csv" );
+						}
+						MotherMachine.DEFAULT_PATH = file.getParent();
+
+						final String loadedDataFolder = MotherMachine.props.getProperty( "import_path", "BUG -- could not get property 'import_path' while exporting figure data..." );
+						final int numCurrGL = sliderGL.getValue();
+						final int numGLFs = model.getCurrentGL().getFrames().size();
+						final Vector< Vector< String >> dataToExport = new Vector< Vector< String >>();
+
+						final Vector< String > firstLine = new Vector< String >();
+						firstLine.add( loadedDataFolder );
+						dataToExport.add( firstLine );
+						final Vector< String > secondLine = new Vector< String >();
+						secondLine.add( "" + numCurrGL );
+						secondLine.add( "" + numGLFs );
+						dataToExport.add( secondLine );
+
+						int i = 0;
+						for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
+							final Vector< String > newRow = new Vector< String >();
+							newRow.add( "" + i );
+
+							final int numCells = glf.getSolutionStats_numCells();
+							final Vector< ValuePair< ValuePair< Integer, Integer >, Integer >> data = glf.getSolutionStats_limitsAndRightAssType();
+
+							newRow.add( "" + numCells );
+							for ( final ValuePair< ValuePair< Integer, Integer >, Integer > elem : data ) {
+								final int min = elem.a.a.intValue();
+								final int max = elem.a.b.intValue();
+								final int type = elem.b.intValue();
+								newRow.add( String.format( "%3d, %3d, %3d", min, max, type ) );
+							}
+
+							dataToExport.add( newRow );
+							i++;
+						}
+
+						System.out.println( "Exporting data..." );
+						Writer out = null;
+						try {
+							out = new OutputStreamWriter( new FileOutputStream( file ) );
+
+							for ( final Vector< String > rowInData : dataToExport ) {
+								for ( final String datum : rowInData ) {
+									out.write( datum + ",\t " );
+								}
+								out.write( "\n" );
+							}
+							out.close();
+						} catch ( final FileNotFoundException e1 ) {
+							JOptionPane.showMessageDialog( self, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
+							e1.printStackTrace();
+						} catch ( final IOException e1 ) {
+							JOptionPane.showMessageDialog( self, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
+							e1.printStackTrace();
+						}
+						System.out.println( "...done!" );
+						dataToDisplayChanged();
+					}
+				}
+			} );
+			t.start();
+
 		}
 		if ( e.getSource().equals( btnOptimizeRemainingAndExport ) ) {
 			final MotherMachineGui self = this;

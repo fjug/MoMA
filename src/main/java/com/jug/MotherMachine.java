@@ -41,7 +41,6 @@ import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.algorithm.stats.Normalize;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform2D;
 import net.imglib2.realtransform.RealViews;
@@ -137,7 +136,7 @@ public class MotherMachine {
 	/**
 	 * Properties to configure app (loaded and saved to properties file!).
 	 */
-	private static Properties props;
+	public static Properties props;
 	/**
 	 * Default x-position of the main GUI-window.
 	 * This value will be used if the values in the properties file are not
@@ -256,9 +255,9 @@ public class MotherMachine {
 
 			System.out.print( "Build and show GUI..." );
 			// show loaded and annotated data
-			ImageJFunctions.show( main.imgRaw, "Rotated & cropped raw data" );
-			ImageJFunctions.show( main.imgTemp, "Temporary" );
-			ImageJFunctions.show( main.imgAnnotated, "Annotated ARGB data" );
+//			ImageJFunctions.show( main.imgRaw, "Rotated & cropped raw data" );
+//			ImageJFunctions.show( main.imgTemp, "Temporary" );
+//			ImageJFunctions.show( main.imgAnnotated, "Annotated ARGB data" );
 
 			final MotherMachineGui gui = new MotherMachineGui( new MotherMachineModel( main ) );
 			gui.setVisible( true );

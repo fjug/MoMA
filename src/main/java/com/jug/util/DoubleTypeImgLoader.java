@@ -57,10 +57,11 @@ public class DoubleTypeImgLoader {
 
 		final ImgFactory< DoubleType > imgFactory = new ArrayImgFactory< DoubleType >();
 		final List< Img< DoubleType > > images = new ArrayList< Img< DoubleType > >();
+		final ImgOpener imageOpener = new ImgOpener();
 		for ( int i = 0; i < listOfFiles.length; i++ ) {
 			if ( listOfFiles[ i ].isFile() ) {
 				// System.out.println("Loading file '" + listOfFiles[i].getName() +"' ...");
-				final Img< DoubleType > image = new ImgOpener().openImg( listOfFiles[ i ].getAbsolutePath(), imgFactory, new DoubleType() ).getImg();
+				final Img< DoubleType > image = imageOpener.openImg( listOfFiles[ i ].getAbsolutePath(), imgFactory, new DoubleType() ).getImg();
 				images.add( image );
 			}
 		}

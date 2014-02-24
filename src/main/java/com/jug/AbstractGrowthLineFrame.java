@@ -4,11 +4,16 @@
 package com.jug;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.Vector;
 
+import net.imglib2.Localizable;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
@@ -24,10 +29,13 @@ import net.imglib2.type.Type;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.integer.LongType;
 import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.util.ValuePair;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
 import com.jug.gui.MotherMachineGui;
+import com.jug.lp.AbstractAssignment;
+import com.jug.lp.Hypothesis;
 import com.jug.segmentation.GrowthLineSegmentationMagic;
 import com.jug.util.ArgbDrawingUtils;
 import com.jug.util.SimpleFunctionAnalysis;
@@ -662,5 +670,46 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 */
 	public boolean isParaMaxFlowComponentTree() {
 		return isParaMaxFlowComponentTree;
+	}
+
+	public int getSolutionStats_numCells() {
+		int cells = 0;
+		for ( final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > set : getParent().getIlp().getOptimalRightAssignments( this.getTime() ).values() ) {
+
+			for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> ora : set ) {
+				cells++;
+			}
+		}
+		return cells;
+	}
+
+	public Vector<ValuePair<ValuePair< Integer, Integer >,Integer>> getSolutionStats_limitsAndRightAssType() {
+		final Vector<ValuePair<ValuePair< Integer, Integer >,Integer>> ret = new Vector<ValuePair<ValuePair< Integer, Integer >,Integer>>();
+		for ( final Hypothesis< Component< DoubleType, ? > > hyp : getParent().getIlp().getOptimalRightAssignments( this.getTime() ).keySet() ) {
+
+			final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> aa = getParent().getIlp().getOptimalRightAssignments( this.getTime() ).get( hyp ).iterator().next();
+
+			int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
+			final Iterator< Localizable > componentIterator = hyp.getWrappedHypothesis().iterator();
+			while ( componentIterator.hasNext() ) {
+				final int ypos = componentIterator.next().getIntPosition( 0 );
+				min = Math.min( min, ypos );
+				max = Math.max( max, ypos );
+			}
+
+			ret.add( new ValuePair< ValuePair< Integer, Integer >,Integer> (
+					new ValuePair< Integer, Integer >( new Integer( min ), new Integer( max ) ),
+					new Integer( aa.getType() ) ) );
+		}
+
+		Collections.sort( ret, new Comparator< ValuePair< ValuePair< Integer, Integer >, Integer >>(){
+
+			@Override
+			public int compare( final ValuePair< ValuePair< Integer, Integer >, Integer > o1, final ValuePair< ValuePair< Integer, Integer >, Integer > o2 ) {
+				// TODO Auto-generated method stub
+				return o1.a.a.compareTo( o2.a.a );
+			}
+		} );
+		return ret;
 	}
 }
