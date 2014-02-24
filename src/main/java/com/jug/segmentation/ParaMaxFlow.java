@@ -97,7 +97,11 @@ public class ParaMaxFlow< T extends RealType< T > > {
 		if ( Views.iterable( rai ).size() * rai.numDimensions() > Integer.MAX_VALUE ) { throw new UnsupportedOperationException( "ParaMaxFlow can only operate on Img's with <Integer.MAX_VALUE many binary potentials!" ); }
 
 		this.rai = Views.zeroMin( rai );
-		this.probMap = Views.zeroMin( probMap );
+		if ( probMap == null ) {
+			this.probMap = null;
+		} else {
+			this.probMap = Views.zeroMin( probMap );
+		}
 		this.regionsImg = null;
 
 		this.is3d = is3d;

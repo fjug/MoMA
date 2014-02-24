@@ -124,6 +124,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private AssignmentViewer rightAssignmentViewer;
 
 	private JButton btnRedoAllHypotheses;
+	private JButton btnExchangeSegHyps;
 	private JButton btnOptimize;
 	private JButton btnOptimizeAll;
 	private JButton btnExportFigData;
@@ -246,6 +247,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'd' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'r' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'o' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'e' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( ' ' ), "MMGUI_bindings" );
 
 		this.getActionMap().put( "MMGUI_bindings", new AbstractAction() {
@@ -318,7 +320,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				dataToDisplayChanged();
 			}
 		} );
-		final JButton btnExchangeSegHyps = new JButton( "switch" );
+		btnExchangeSegHyps = new JButton( "switch" );
 		btnExchangeSegHyps.addActionListener( new ActionListener() {
 
 			@Override
@@ -680,13 +682,22 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			t.start();
 		}
 		if ( e.getSource().equals( btnRedoAllHypotheses ) ) {
+
 			final int choice = JOptionPane.showOptionDialog( this, "Do you want to reset to AWESOME (but slow to generate) segmentation hypotheses?", "AWESOME but slow?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null );
-			if ( choice == JOptionPane.YES_OPTION ) {
-				activateAwesomeHypotheses();
-			} else if ( choice == JOptionPane.NO_OPTION ) {
-				activateSimpleHypotheses();
-			}
-			dataToDisplayChanged();
+
+			final Thread t = new Thread( new Runnable() {
+
+				@Override
+				public void run() {
+					if ( choice == JOptionPane.YES_OPTION ) {
+						activateAwesomeHypotheses();
+					} else if ( choice == JOptionPane.NO_OPTION ) {
+						activateSimpleHypotheses();
+					}
+					dataToDisplayChanged();
+				}
+			} );
+			t.start();
 		}
 		if ( e.getSource().equals( btnOptimize ) ) {
 			final Thread t = new Thread( new Runnable() {
@@ -957,11 +968,20 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 //		}
 
 		// OLD SINGLETHREADED VERSION
-		for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
-			System.out.print( ":" );
-			glf.generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
+//		for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
+//			System.out.println( ">>>>> Generating AWESOME hypotheses for GLF #" + glf.getTime() );
+//			glf.generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
+//		}
+//		System.out.print( "" );
+
+		// NEW SINGLETHREADED VERSION
+		for ( int i = this.sliderTime.getMinimum(); i <= this.sliderTime.getMaximum(); i++ ) {
+			sliderTime.setValue( i );
+			if ( model.getCurrentGLF().getAwesomeGapSeparationValues( null ) == null ) {
+				btnExchangeSegHyps.doClick();
+			}
+			dataToDisplayChanged();
 		}
-		System.out.print( "" );
 	}
 
 }

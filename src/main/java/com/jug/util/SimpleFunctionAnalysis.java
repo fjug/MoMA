@@ -196,9 +196,8 @@ public class SimpleFunctionAnalysis {
 		final double valMax = getMax( array, 0, array.length - 1 ).b;
 
 		final double[] ret = new double[ array.length ];
-		int i = 0;
-		for ( final double val : array ) {
-			ret[ i ] = ( val - valMin ) / ( valMax - valMin ) * ( max - min ); // normalized in [0,max-min]
+		for ( int i = 0; i < array.length; i++ ) {
+			ret[ i ] = ( array[ i ] - valMin ) / ( valMax - valMin ) * ( max - min ); // normalized in [0,max-min]
 			ret[ i ] += min; // normalized in [min,max];
 			i++;
 		}
