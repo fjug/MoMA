@@ -655,7 +655,15 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 			}
 			final SubsampleIntervalView< DoubleType > subsampleGapClass = ( SubsampleIntervalView< DoubleType > ) Views.subsample( Views.interval( classified, min, max ), 1, 1, 2 );
 
-			final ParaMaxFlow< DoubleType > paramaxflow = new ParaMaxFlow< DoubleType >( viewGLF, ( true ) ? subsampleGapClass : null, false, -1.0, 0.45, 0.15, 1.0, 1.0, 1.0, 0.10, 0.0, 0.5, 10.0, 0.0, 0.5, 10.0 );
+			final ParaMaxFlow< DoubleType > paramaxflow = new ParaMaxFlow< DoubleType >( 
+					viewGLF, 
+					( true ) ? subsampleGapClass : null, 
+					false, 
+					-1.0, 0.45, 0.15, 
+					1.0, 
+					1.0, 1.0, 0.10, 
+					0.0, 0.5, 10.0, 
+					0.0, 0.5, 10.0 );
 
 			this.paramaxflowSolutions = paramaxflow.solve( -1000000, 1000000 );
 			this.paramaxflowSumImage = paramaxflow.getRegionsImg();

@@ -23,7 +23,7 @@ import com.jug.util.MyUnnormalizedGaussian;
  */
 public class ParaMaxFlow< T extends RealType< T > > {
 
-	Parametric parametric;
+	private final Parametric parametric;
 
 	private final RandomAccessibleInterval< T > rai;
 	private final RandomAccessibleInterval< ? extends RealType > probMap;
@@ -128,7 +128,7 @@ public class ParaMaxFlow< T extends RealType< T > > {
 	/**
 	 * @param rai
 	 */
-	private void buildGraph() {
+	private synchronized void buildGraph() {
 
 		parametric.AddNode( ( int ) Views.iterable( rai ).size() ); // add as many nodes as the input image has pixels
 
@@ -244,7 +244,7 @@ public class ParaMaxFlow< T extends RealType< T > > {
 	    }
 	}
 
-	public long solve( final double lambdaMin, final double lambdaMax ) {
+	public synchronized long solve( final double lambdaMin, final double lambdaMax ) {
 		final long solutions = parametric.Solve( lambdaMin, lambdaMax );
 		System.out.println( " >>>>> ParaMaxFlow solutions found: " + solutions + " <<<<<" );
 		regionsImg = createRegionsImg();
