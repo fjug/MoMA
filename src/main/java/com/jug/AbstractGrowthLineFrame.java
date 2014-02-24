@@ -234,6 +234,19 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	}
 
 	/**
+	 *
+	 */
+	public void sortPoints() {
+		Collections.sort( imgLocations, new Comparator< Point >() {
+
+			@Override
+			public int compare( final Point o1, final Point o2 ) {
+				return new Integer( o1.getIntPosition( 1 ) ).compareTo( new Integer( o2.getIntPosition( 1 ) ) );
+			}
+		} );
+	}
+
+	/**
 	 * Gets a detected center point of a GrowthsLine.
 	 *
 	 * @param idx

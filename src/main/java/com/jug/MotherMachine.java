@@ -1143,6 +1143,12 @@ public class MotherMachine {
 					glFrames.get( x ).addPoint( new Point( pOrig ) );
 				}
 			}
+
+			// sort points
+			for ( final GrowthLineFrame glf : glFrames ) {
+				glf.sortPoints();
+			}
+
 			// add this list of GrowhtLIneFrames to the collection
 			collectionOfFrames.add( glFrames );
 		}
