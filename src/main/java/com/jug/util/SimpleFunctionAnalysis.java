@@ -161,33 +161,37 @@ public class SimpleFunctionAnalysis {
 
 	public static ValuePair< Integer, Double > getLefthandLocalMin( final double[] fktValues, final int idx ) {
 		int i = idx;
-		while ( i > 0 && fktValues[ i ] > fktValues[ i - 1 ] ) {
+		while ( i > 0 && fktValues[ i - 1 ] <= fktValues[ i ] ) {
 			i--;
 		}
+		if ( i > 0 ) i--; // since we really want the min
 		return new ValuePair< Integer, Double >( Integer.valueOf( i ), Double.valueOf( fktValues[ i ] ) );
 	}
 
 	public static ValuePair< Integer, Double > getLefthandLocalMax( final double[] fktValues, final int idx ) {
 		int i = idx;
-		while ( i > 0 && fktValues[ i ] <= fktValues[ i - 1 ] ) {
+		while ( i > 0 && fktValues[ i - 1 ] >= fktValues[ i ] ) {
 			i--;
 		}
+		if ( i > 0 ) i--; // since we really want the max
 		return new ValuePair< Integer, Double >( Integer.valueOf( i ), Double.valueOf( fktValues[ i ] ) );
 	}
 
 	public static ValuePair< Integer, Double > getRighthandLocalMin( final double[] fktValues, final int idx ) {
 		int i = idx;
-		while ( i + 1 < fktValues.length && fktValues[ i + 1 ] < fktValues[ i ] ) {
+		while ( i + 1 < fktValues.length && fktValues[ i ] >= fktValues[ i + 1 ] ) {
 			i++;
 		}
+		if ( i + 1 < fktValues.length ) i++; // since we really want the min
 		return new ValuePair< Integer, Double >( Integer.valueOf( i ), Double.valueOf( fktValues[ i ] ) );
 	}
 
 	public static ValuePair< Integer, Double > getRighthandLocalMax( final double[] fktValues, final int idx ) {
 		int i = idx;
-		while ( i + 1 < fktValues.length && fktValues[ i + 1 ] >= fktValues[ i ] ) {
+		while ( i + 1 < fktValues.length && fktValues[ i ] <= fktValues[ i + 1 ] ) {
 			i++;
 		}
+		if ( i + 1 < fktValues.length ) i++; // since we really want the max
 		return new ValuePair< Integer, Double >( Integer.valueOf( i ), Double.valueOf( fktValues[ i ] ) );
 	}
 
@@ -239,6 +243,24 @@ public class SimpleFunctionAnalysis {
 			sum += fktValues[ i ];
 		}
 		return sum;
+	}
+
+	/**
+	 * @param fktValues
+	 * @return
+	 */
+	public static double getAvg( final double[] fktValues ) {
+		return getSum( fktValues, 0, fktValues.length - 1 ) / fktValues.length;
+	}
+
+	/**
+	 * @param fktValues
+	 * @param from
+	 * @param to
+	 * @return
+	 */
+	public static double getAvg( final double[] fktValues, final int from, final int to ) {
+		return getSum( fktValues, from, to ) / fktValues.length;
 	}
 
 	/**
@@ -470,4 +492,5 @@ public class SimpleFunctionAnalysis {
 		}
 		return ret;
 	}
+
 }

@@ -193,14 +193,15 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	}
 
 	/**
-	 * Reads out all image intensities along the GrowthLine center.
+	 * Reads out all image intensities along the GrowthLine center (green
+	 * pixels).
 	 *
 	 * @param img
 	 *            - an Img.
 	 * @return a double array containing the image intensities in
 	 *         <code>img</code> at the points given in wellPoints.
 	 */
-	private double[] getInvertedIntensities( final RandomAccessibleInterval< DoubleType > img, final boolean imgIsPreCropped ) {
+	private double[] getInvertedIntensitiesAtImgLocations( final RandomAccessibleInterval< DoubleType > img, final boolean imgIsPreCropped ) {
 		final double[] ret = new double[ imgLocations.size() ];
 		final RandomAccess< DoubleType > ra = img.randomAccess();
 
@@ -290,8 +291,6 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 
 			isParaMaxFlowComponentTree = false;
 			componentTree = buildIntensityTree( raiFkt );
-//			componentTree = FilteredComponentTree.buildComponentTree( raiFkt, new DoubleType(), 3, Long.MAX_VALUE, true );
-//			componentTree = MserComponentTree.buildMserTree( raiFkt, MotherMachine.MIN_GAP_CONTRAST / 2.0, MotherMachine.MIN_CELL_LENGTH, Long.MAX_VALUE, 0.5, 0.33, true );
 		}
 	}
 
@@ -315,8 +314,6 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 
 			isParaMaxFlowComponentTree = true;
 			componentTree = buildParaMaxFlowSumTree( raiFkt );
-//			componentTree = FilteredComponentTree.buildComponentTree( raiFkt, new DoubleType(), 3, Long.MAX_VALUE, true );
-//			componentTree = MserComponentTree.buildMserTree( raiFkt, MotherMachine.MIN_GAP_CONTRAST / 2.0, MotherMachine.MIN_CELL_LENGTH, Long.MAX_VALUE, 0.5, 0.33, true );
 		}
 	}
 
@@ -430,12 +427,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 			paramaxflowSumImageDoubleTyped = getParamaxflowSumImageDoubleTyped( viewCropped );
 		}
 
-//		awesomeSepValues = getMaxTiltedLineAveragesInRectangleAlongAvgCenter( paramaxflowSumImageDoubleTyped, true );
-//		final double max = SimpleFunctionAnalysis.getMax( awesomeSepValues ).b;
-//		awesomeSepValues = SimpleFunctionAnalysis.flipSign( awesomeSepValues );
-//		awesomeSepValues = SimpleFunctionAnalysis.elementWiseAdd( awesomeSepValues, max );
-
-		awesomeSepValues = getInvertedIntensities( paramaxflowSumImageDoubleTyped, true );
+		awesomeSepValues = getInvertedIntensitiesAtImgLocations( paramaxflowSumImageDoubleTyped, true );
 
 		return awesomeSepValues;
 	}

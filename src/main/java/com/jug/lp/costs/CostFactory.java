@@ -65,6 +65,7 @@ public class CostFactory {
 			power = 7.0;
 		}
 		costDeltaL = Math.pow( deltaS, power );
+
 		latestCostEvaluation = String.format( "c_d = %.4f^%.1f = %.4f", deltaS, power, costDeltaL );
 		return costDeltaL;
 	}
@@ -121,8 +122,26 @@ public class CostFactory {
 		final int a = segInterval.getA().intValue();
 		final int b = segInterval.getB().intValue();
 
-		final double min = SimpleFunctionAnalysis.getMin( gapSepFkt, a, b ).b;
+		int aReduced = SimpleFunctionAnalysis.getRighthandLocalMin( gapSepFkt, a ).a.intValue();
+		int bReduced = SimpleFunctionAnalysis.getLefthandLocalMin( gapSepFkt, b ).a.intValue();
+		if ( aReduced > bReduced ) {
+			aReduced = bReduced = SimpleFunctionAnalysis.getMin( gapSepFkt, a, b ).a.intValue();
+		}
 
-		return -0.2 + 1.0 * min; // TOTALLY arbitrary!!!
+		final double min = SimpleFunctionAnalysis.getMin( gapSepFkt, a, b ).b;
+		final double maxReduced = SimpleFunctionAnalysis.getMax( gapSepFkt, aReduced, bReduced ).b.doubleValue();
+//		final double avg = SimpleFunctionAnalysis.getAvg( gapSepFkt, a, b );
+		final double segmentLengthInPercentGL = ( b - a ) / ( ( double ) gapSepFkt.length );
+		final double fac = 1.0;
+
+//		double cost = -0.2 + 1.0 * min; // TOTALLY arbitrary!!!
+//		double cost = -.05 +avg - 0.3 * ( b - a ) / gapSepFkt.length; // TOTALLY arbitrary!!!
+		double cost = -( 1.0 - maxReduced ) * segmentLengthInPercentGL * fac;
+		System.out.println( String.format( "-( 1.0 - %.2f ) * %.2f*%.2f = %.2f", maxReduced, segmentLengthInPercentGL, fac, cost ) );
+
+		if ( a > 0 && b - a < MotherMachine.MIN_CELL_LENGTH ) { // if a==0, only a part of the cell is seen!
+			cost = 100;
+		}
+		return cost;
 	}
 }

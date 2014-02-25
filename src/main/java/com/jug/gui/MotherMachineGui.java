@@ -3,8 +3,6 @@
  */
 package com.jug.gui;
 
-import ij.Prefs;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -465,11 +463,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		// ComponentTreeNodes
 		// ------------------
 		if ( ilp != null ) {
-			bla( model.getCurrentGLF().getComponentTree(), ySegmentationData, ilp );
+			dumpCosts( model.getCurrentGLF().getComponentTree(), ySegmentationData, ilp );
 		}
 	}
 
-	private < C extends Component< DoubleType, C > > void bla( final ComponentForest< C > ct, final double[] ySegmentationData, final GrowthLineTrackingILP ilp )
+	private < C extends Component< DoubleType, C > > void dumpCosts( final ComponentForest< C > ct, final double[] ySegmentationData, final GrowthLineTrackingILP ilp )
 	{
 		final int numCTNs = ComponentTreeUtils.countNodes( ct );
 		final double[][] xydxdyCTNBorders = new double[ numCTNs ][ 4 ];
@@ -485,7 +483,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			while ( ctnLevel.size() > 0 ) {
 				for ( final Component< ?, ? > ctn : ctnLevel ) {
 					addBoxAtIndex( i, ctn, xydxdyCTNBorders, ySegmentationData, level );
-					System.out.print( String.format( "%.4f;\t", ilp.localIntensityBasedCost( t, ctn ) ) );
+					if ( cbShowParaMaxFlowData.isSelected() ) {
+						System.out.print( String.format( "%.4f;\t", ilp.localParamaxflowBasedCost( t, ctn ) ) );
+					} else {
+						System.out.print( String.format( "%.4f;\t", ilp.localIntensityBasedCost( t, ctn ) ) );
+					}
 					i++;
 				}
 				ctnLevel = ComponentTreeUtils.getAllChildren( ctnLevel );
@@ -686,34 +688,36 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		if ( e.getSource().equals( btnRedoAllHypotheses ) ) {
 
 			final int choiceAwesome = JOptionPane.showOptionDialog( this, "Do you want to reset to AWESOME (but slow to generate) segmentation hypotheses?", "AWESOME but slow?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null );
-			final int choiceAllGLs = JOptionPane.showOptionDialog( this, "Do generate segmentation hypotheses for ALL GLs?", "For ALL GLs?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null );
-			final JSlider sliderGL = this.sliderGL;
+			if ( choiceAwesome != JOptionPane.CANCEL_OPTION ) {
+				final int choiceAllGLs = JOptionPane.showOptionDialog( this, "Do generate segmentation hypotheses for ALL GLs?", "For ALL GLs?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null );
+				final JSlider sliderGL = this.sliderGL;
 
-			final Thread t = new Thread( new Runnable() {
+				final Thread t = new Thread( new Runnable() {
 
-				@Override
-				public void run() {
-					if ( choiceAllGLs == JOptionPane.YES_OPTION ) {
-						for ( int i = sliderGL.getMinimum(); i <= sliderGL.getMaximum(); i++ ) {
-							sliderGL.setValue( i );
-							dataToDisplayChanged();
+					@Override
+					public void run() {
+						if ( choiceAllGLs == JOptionPane.YES_OPTION ) {
+							for ( int i = sliderGL.getMinimum(); i <= sliderGL.getMaximum(); i++ ) {
+								sliderGL.setValue( i );
+								dataToDisplayChanged();
+								if ( choiceAwesome == JOptionPane.YES_OPTION ) {
+									activateAwesomeHypotheses();
+								} else if ( choiceAwesome == JOptionPane.NO_OPTION ) {
+									activateSimpleHypotheses();
+								}
+							}
+						} else if ( choiceAllGLs == JOptionPane.NO_OPTION ) {
 							if ( choiceAwesome == JOptionPane.YES_OPTION ) {
 								activateAwesomeHypotheses();
 							} else if ( choiceAwesome == JOptionPane.NO_OPTION ) {
 								activateSimpleHypotheses();
 							}
 						}
-					} else if ( choiceAllGLs == JOptionPane.NO_OPTION ) {
-						if ( choiceAwesome == JOptionPane.YES_OPTION ) {
-							activateAwesomeHypotheses();
-						} else if ( choiceAwesome == JOptionPane.NO_OPTION ) {
-							activateSimpleHypotheses();
-						}
+						dataToDisplayChanged();
 					}
-					dataToDisplayChanged();
-				}
-			} );
-			t.start();
+				} );
+				t.start();
+			}
 		}
 		if ( e.getSource().equals( btnOptimize ) ) {
 			final Thread t = new Thread( new Runnable() {
@@ -942,11 +946,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * RF-classified + paramaxflow hypotheses.
 	 */
 	private void activateAwesomeHypotheses() {
-		final int numProcessors = Prefs.getThreads();
+		final int numProcessors = 16; //Prefs.getThreads();
 		final int numThreads = Math.min( model.getCurrentGL().getFrames().size(), numProcessors );
 		final int numFurtherThreads = ( int ) Math.ceil( ( double ) ( numProcessors - numThreads ) / model.getCurrentGL().getFrames().size() ) + 1;
 
-		System.out.println( "Processing " + model.getCurrentGL().getFrames().size() + " GLFs in " + numThreads + " thread(s)...." );
+		System.out.println( "::::::::::::::::::::::: Processing " + model.getCurrentGL().getFrames().size() + " GLFs in " + numThreads + " thread(s)...." );
 
 		final Thread[] threads = new Thread[ numThreads ];
 
@@ -964,7 +968,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			public void run() {
 
 				for ( int i = numThread; i < model.getCurrentGL().getFrames().size(); i += numThreads ) {
-					System.out.print( ":" );
+					System.out.print( ": : : : : : : : : : : : done with GLF#" + i );
 					model.getCurrentGL().getFrames().get( i ).generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
 				}
 			}

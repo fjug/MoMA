@@ -5,7 +5,6 @@ package com.jug.segmentation;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.Prefs;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +57,7 @@ public class SilentWekaSegmenter< T extends NumericType > {
 
 		final List< RandomAccessibleInterval< T >> results = new ArrayList< RandomAccessibleInterval< T >>( raiList );
 
-		final int numProcessors     = Prefs.getThreads();
+		final int numProcessors = 1; //Prefs.getThreads();
 		final int numThreads = Math.min( raiList.size(), numProcessors );
 		final int numFurtherThreads = ( int ) Math.ceil( ( double ) ( numProcessors - numThreads ) / raiList.size() ) + 1;
 

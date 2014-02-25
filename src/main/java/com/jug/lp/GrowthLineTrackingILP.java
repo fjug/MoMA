@@ -40,8 +40,6 @@ public class GrowthLineTrackingILP {
 	// -------------------------------------------------------------------------------------
 	// statics
 	// -------------------------------------------------------------------------------------
-	public static boolean FAST_MODE = false;
-
 	public static int OPTIMIZATION_NEVER_PERFORMED = 0;
 	public static int OPTIMAL = 1;
 	public static int INFEASIBLE = 2;
@@ -54,7 +52,7 @@ public class GrowthLineTrackingILP {
 	public static int ASSIGNMENT_MAPPING = 1;
 	public static int ASSIGNMENT_DIVISION = 2;
 
-	public static final double CUTOFF_COST = 1.0;
+	public static final double CUTOFF_COST = 5.0;
 
 	public static GRBEnv env;
 
@@ -432,8 +430,10 @@ public class GrowthLineTrackingILP {
 
 				if ( !( ComponentTreeUtils.isBelow( to.getWrappedHypothesis(), from.getWrappedHypothesis() ) ) ) {
 
-					if ( !FAST_MODE )
-						cost = 1.0 * ( fromCost + toCost ) + compatibilityCostOfMapping( from, to );
+//					cost = 1.0 * ( fromCost + toCost ) + compatibilityCostOfMapping( from, to );
+//					cost = toCost + compatibilityCostOfMapping( from, to );
+//					cost = 0.9 * fromCost + 0.1 * toCost + compatibilityCostOfMapping( from, to );
+					cost = 0.1 * fromCost + 0.9 * toCost + compatibilityCostOfMapping( from, to );
 
 					if ( cost <= CUTOFF_COST ) {
 						final String name = String.format( "a_%d^MAPPING--(%d,%d)", t, i, j );
@@ -486,7 +486,14 @@ public class GrowthLineTrackingILP {
 		final double costDeltaL = CostFactory.getGrowthCost( sizeFrom, sizeTo, glLength );
 		final double costDeltaV = CostFactory.getIntensityMismatchCost( valueFrom, valueTo );
 
-		final double cost = costDeltaL + costDeltaV + costDeltaH;
+		double cost = costDeltaL + costDeltaV + costDeltaH;
+
+		// Border case bullshit
+		// if the upper cell touches the upper border (then don't count uneven and shrinking)
+		if ( intervalTo.getA().intValue() == 0 ) {
+			cost = costDeltaH + costDeltaV;
+		}
+
 //		System.out.println( String.format( ">>> %f + %f + %f = %f", costDeltaL, costDeltaV, costDeltaH, cost ) );
 		return cost;
 	}
@@ -524,8 +531,9 @@ public class GrowthLineTrackingILP {
 						} else {
 							final double toCost = to.getCosts() + lowerNeighbor.getCosts();
 
-							if ( !FAST_MODE )
-								cost = toCost + compatibilityCostOfDivision( from, to, lowerNeighbor );
+//							cost = 0.9 * fromCost + 0.1 * toCost + compatibilityCostOfDivision( from, to, lowerNeighbor );
+//							cost = toCost + compatibilityCostOfDivision( from, to, lowerNeighbor );
+							cost = 0.1 * fromCost + 0.9 * toCost + compatibilityCostOfMapping( from, to );
 
 							if ( cost <= CUTOFF_COST ) {
 								final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, String.format( "a_%d^DIVISION--(%d,%d)", t, i, j ) );
@@ -583,7 +591,14 @@ public class GrowthLineTrackingILP {
 		final double costDeltaV = CostFactory.getIntensityMismatchCost( valueFrom, valueTo );
 		final double costDeltaS = CostFactory.getUnevenDivisionCost( sizeToU, sizeToL );
 
-		final double cost = costDeltaL + costDeltaV + costDeltaH + costDeltaS;
+		double cost = costDeltaL + costDeltaV + costDeltaH + costDeltaS;
+
+		// Border case bullshit
+		// if the upper cell touches the upper border (then don't count uneven and shrinking)
+		if ( intervalToU.getA().intValue() == 0 ) {
+			cost = costDeltaH + costDeltaV;
+		}
+
 //		System.out.println( String.format( ">>> %f + %f + %f + %f = %f", costDeltaL, costDeltaV, costDeltaH, costDeltaS, cost ) );
 		return cost;
 	}

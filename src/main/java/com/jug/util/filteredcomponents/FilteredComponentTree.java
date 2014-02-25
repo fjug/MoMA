@@ -115,6 +115,46 @@ public final class FilteredComponentTree< T extends Type< T > > implements Compo
 		this.maxComponentSize = maxComponentSize;
 	}
 
+//	@Override
+//	public void emit( final FilteredPartialComponent< T > intermediate )
+//	{
+//		final long size = intermediate.pixelList.size();
+//		if ( size >= minComponentSize && size <= maxComponentSize )
+//		{
+//			int numChildren = 0;
+//			if( intermediate.emittedComponent != null )
+//				++numChildren;
+//			for ( final FilteredPartialComponent< T > c : intermediate.children )
+//				if ( c.emittedComponent != null )
+//					++numChildren;
+//			if ( numChildren == 1 )
+//			{
+//				// update previously emitted node
+//				FilteredComponent< T > component = intermediate.emittedComponent;
+//				if( component == null )
+//					for ( final FilteredPartialComponent< T > c : intermediate.children )
+//						if ( c.emittedComponent != null )
+//							component = c.emittedComponent;
+//				component.update( intermediate );
+//			}
+//			else
+//			{
+//				// create new node
+//				final FilteredComponent< T > component = new FilteredComponent< T >( intermediate );
+//				for ( final FilteredComponent< T > c : component.children )
+//					roots.remove( c );
+//				roots.add( component );
+//				nodes.add( component );
+//			}
+//		}
+//		else
+//		{
+////			for ( final FilteredComponentIntermediate< T > c : intermediate.children )
+////				c.freeForReuse();
+//			intermediate.children.clear();
+//		}
+//	}
+
 	@Override
 	public void emit( final FilteredPartialComponent< T > intermediate )
 	{
@@ -127,17 +167,25 @@ public final class FilteredComponentTree< T extends Type< T > > implements Compo
 			for ( final FilteredPartialComponent< T > c : intermediate.children )
 				if ( c.emittedComponent != null )
 					++numChildren;
+
+			boolean createNewComponent = true;
 			if ( numChildren == 1 )
 			{
-				// update previously emitted node
+				// get previously emitted node
 				FilteredComponent< T > component = intermediate.emittedComponent;
 				if( component == null )
 					for ( final FilteredPartialComponent< T > c : intermediate.children )
 						if ( c.emittedComponent != null )
 							component = c.emittedComponent;
-				component.update( intermediate );
+
+				if ( intermediate.pixelList.size() - component.size() < 3 ) {
+					// update previously emitted node
+					component.update( intermediate );
+					createNewComponent = false;
+				}
 			}
-			else
+
+			if ( createNewComponent )
 			{
 				// create new node
 				final FilteredComponent< T > component = new FilteredComponent< T >( intermediate );
