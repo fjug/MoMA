@@ -42,7 +42,7 @@ public class CostFactory {
 			deltaL = Math.max( 0, deltaL - 0.05 ); // growing up 5% is free
 			power = 4.0;
 		} else { // shrinkage
-			power = 6.0;
+			power = 12.0;
 		}
 		deltaL = Math.abs( deltaL );
 		costDeltaL = deltaL * Math.pow( 1 + deltaL, power );
