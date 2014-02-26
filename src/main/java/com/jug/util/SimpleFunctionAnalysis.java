@@ -160,8 +160,12 @@ public class SimpleFunctionAnalysis {
 	}
 
 	public static ValuePair< Integer, Double > getLefthandLocalMin( final double[] fktValues, final int idx ) {
+		return getLefthandLocalMinOrPlateau( fktValues, idx, 0.0 );
+	}
+
+	public static ValuePair< Integer, Double > getLefthandLocalMinOrPlateau( final double[] fktValues, final int idx, final double plateauDerivativeThreshold ) {
 		int i = idx;
-		while ( i > 0 && fktValues[ i - 1 ] <= fktValues[ i ] ) {
+		while ( i > 0 && fktValues[ i - 1 ] + plateauDerivativeThreshold <= fktValues[ i ] ) {
 			i--;
 		}
 		if ( i > 0 ) i--; // since we really want the min
@@ -178,8 +182,12 @@ public class SimpleFunctionAnalysis {
 	}
 
 	public static ValuePair< Integer, Double > getRighthandLocalMin( final double[] fktValues, final int idx ) {
+		return getRighthandLocalMinOrPlateau( fktValues, idx, 0.0 );
+	}
+
+	public static ValuePair< Integer, Double > getRighthandLocalMinOrPlateau( final double[] fktValues, final int idx, final double plateauDerivativeThreshold ) {
 		int i = idx;
-		while ( i + 1 < fktValues.length && fktValues[ i ] >= fktValues[ i + 1 ] ) {
+		while ( i + 1 < fktValues.length && fktValues[ i ] >= fktValues[ i + 1 ] + plateauDerivativeThreshold ) {
 			i++;
 		}
 		if ( i + 1 < fktValues.length ) i++; // since we really want the min
@@ -260,7 +268,7 @@ public class SimpleFunctionAnalysis {
 	 * @return
 	 */
 	public static double getAvg( final double[] fktValues, final int from, final int to ) {
-		return getSum( fktValues, from, to ) / fktValues.length;
+		return getSum( fktValues, from, to ) / ( to - from + 1 );
 	}
 
 	/**

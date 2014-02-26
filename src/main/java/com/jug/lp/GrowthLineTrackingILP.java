@@ -52,7 +52,7 @@ public class GrowthLineTrackingILP {
 	public static int ASSIGNMENT_MAPPING = 1;
 	public static int ASSIGNMENT_DIVISION = 2;
 
-	public static final double CUTOFF_COST = 5.0;
+	public static final double CUTOFF_COST = 2.0;
 
 	public static GRBEnv env;
 
@@ -391,10 +391,10 @@ public class GrowthLineTrackingILP {
 	 * @throws GRBException
 	 */
 	private void addExitAssignments( final int t, final List< Hypothesis< Component< DoubleType, ? >>> hyps ) throws GRBException {
-		final double cost = 0.0;
+		double cost = 0.0;
 		int i = 0;
 		for ( final Hypothesis< Component< DoubleType, ? >> hyp : hyps ) {
-//			cost = hyp.getCosts();
+			cost = Math.min( 0.0, hyp.getCosts() / 2.0 ); // NOTE: 0 or negative but only hyp/2 to prefer map or div if exists...
 			final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, String.format( "a_%d^EXIT--%d", t, i ) );
 			final List< Hypothesis< Component< DoubleType, ? >>> Hup = LpUtils.getHup( hyp, hyps );
 			final ExitAssignment ea = new ExitAssignment( t, newLPVar, model, nodes, edgeSets, Hup, hyp );
@@ -476,21 +476,25 @@ public class GrowthLineTrackingILP {
 		final Pair< Integer, Integer > intervalFrom = ComponentTreeUtils.getTreeNodeInterval( from.getWrappedHypothesis() );
 		final Pair< Integer, Integer > intervalTo = ComponentTreeUtils.getTreeNodeInterval( to.getWrappedHypothesis() );
 
-		final double oldPos = 0.5 * ( intervalFrom.getB().intValue() + intervalFrom.getA().intValue() );
-		final double newPos = 0.5 * ( intervalTo.getB().intValue() + intervalTo.getA().intValue() );
+		final double oldPosU = intervalFrom.getA().intValue();
+		final double newPosU = intervalTo.getA().intValue();
+		final double oldPosL = intervalFrom.getB().intValue();
+		final double newPosL = intervalTo.getB().intValue();
 
 		final double glLength = gl.get( 0 ).size();
 
 		// Finally the costs are computed...
-		final double costDeltaH = CostFactory.getMigrationCost( oldPos, newPos, glLength );
+		final double costDeltaHU = CostFactory.getMigrationCost( oldPosU, newPosU, glLength );
+		final double costDeltaHL = CostFactory.getMigrationCost( oldPosL, newPosL, glLength );
+		final double costDeltaH = Math.max( costDeltaHL, costDeltaHU );
 		final double costDeltaL = CostFactory.getGrowthCost( sizeFrom, sizeTo, glLength );
 		final double costDeltaV = CostFactory.getIntensityMismatchCost( valueFrom, valueTo );
 
 		double cost = costDeltaL + costDeltaV + costDeltaH;
 
 		// Border case bullshit
-		// if the upper cell touches the upper border (then don't count uneven and shrinking)
-		if ( intervalTo.getA().intValue() == 0 ) {
+		// if the target cell touches the upper or lower border (then don't count uneven and shrinking)
+		if ( intervalTo.getA().intValue() == 0 || intervalTo.getB().intValue() + 1 >= glLength ) {
 			cost = costDeltaH + costDeltaV;
 		}
 
@@ -533,7 +537,7 @@ public class GrowthLineTrackingILP {
 
 //							cost = 0.9 * fromCost + 0.1 * toCost + compatibilityCostOfDivision( from, to, lowerNeighbor );
 //							cost = toCost + compatibilityCostOfDivision( from, to, lowerNeighbor );
-							cost = 0.1 * fromCost + 0.9 * toCost + compatibilityCostOfMapping( from, to );
+							cost = 0.1 * fromCost + 0.9 * toCost + compatibilityCostOfDivision( from, to, lowerNeighbor );
 
 							if ( cost <= CUTOFF_COST ) {
 								final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, String.format( "a_%d^DIVISION--(%d,%d)", t, i, j ) );
@@ -580,13 +584,17 @@ public class GrowthLineTrackingILP {
 		final Pair< Integer, Integer > intervalToU = ComponentTreeUtils.getTreeNodeInterval( toUpper.getWrappedHypothesis() );
 		final Pair< Integer, Integer > intervalToL = ComponentTreeUtils.getTreeNodeInterval( toLower.getWrappedHypothesis() );
 
-		final double oldPos = 0.5 * ( intervalFrom.getB().intValue() + intervalFrom.getA().intValue() );
-		final double newPos = 0.5 * ( intervalToL.getB().intValue() + intervalToU.getA().intValue() );
+		final double oldPosU = intervalFrom.getA().intValue();
+		final double newPosU = intervalToU.getA().intValue();
+		final double oldPosL = intervalFrom.getB().intValue();
+		final double newPosL = intervalToL.getB().intValue();
 
 		final double glLength = gl.get( 0 ).size();
 
 		// Finally the costs are computed...
-		final double costDeltaH = CostFactory.getMigrationCost( oldPos, newPos, glLength );
+		final double costDeltaHU = CostFactory.getMigrationCost( oldPosU, newPosU, glLength );
+		final double costDeltaHL = CostFactory.getMigrationCost( oldPosL, newPosL, glLength );
+		final double costDeltaH = Math.max( costDeltaHL, costDeltaHU );
 		final double costDeltaL = CostFactory.getGrowthCost( sizeFrom, sizeTo, glLength );
 		final double costDeltaV = CostFactory.getIntensityMismatchCost( valueFrom, valueTo );
 		final double costDeltaS = CostFactory.getUnevenDivisionCost( sizeToU, sizeToL );
@@ -594,8 +602,8 @@ public class GrowthLineTrackingILP {
 		double cost = costDeltaL + costDeltaV + costDeltaH + costDeltaS;
 
 		// Border case bullshit
-		// if the upper cell touches the upper border (then don't count uneven and shrinking)
-		if ( intervalToU.getA().intValue() == 0 ) {
+		// if the upper cell touches the upper border or lower one the lower border (then don't count uneven and shrinking)
+		if ( intervalToU.getA().intValue() == 0 || intervalToL.getB().intValue() + 1 >= glLength ) {
 			cost = costDeltaH + costDeltaV;
 		}
 

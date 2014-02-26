@@ -120,7 +120,7 @@ public class MotherMachine {
 	/**
 	 * Prior knowledge: minimal length of detected cells
 	 */
-	public static int MIN_CELL_LENGTH = 25;
+	public static int MIN_CELL_LENGTH = 18;
 	/**
 	 * Prior knowledge: minimal contrast of an gap (also used for MSERs)
 	 */

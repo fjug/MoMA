@@ -101,12 +101,12 @@ public class CostFactory {
 		// Special case: min-value is above average gap-sep-fkt value (happens often at the very top)
 		final double avgFktValue = SimpleFunctionAnalysis.getSum( gapSepFkt ) / ( gapSepFkt.length - 1 );
 //		final double distAboveAvg = Math.max( 0.0, min - avgFktValue );
-		final double medianValue = SimpleFunctionAnalysis.getMedian( gapSepFkt, a, b );
-		final double distAboveAvg = Math.max( 0.0, medianValue - avgFktValue );
+		final double medianSegmentValue = SimpleFunctionAnalysis.getMedian( gapSepFkt, a, b );
+		final double distAboveAvg = Math.max( 0.0, medianSegmentValue - avgFktValue );
 		cost += ( distAboveAvg + 0.05 ) * Math.pow( 1 + ( distAboveAvg + 0.05 ), 8.0 );
 
 		// cell is too small
-		if ( a > 0 && b - a < MotherMachine.MIN_CELL_LENGTH ) { // if a==0, only a part of the cell is seen!
+		if ( a > 0 && b + 1 < gapSepFkt.length && b - a < MotherMachine.MIN_CELL_LENGTH ) { // if a==0 or b==gapSepFkt.len, only a part of the cell is seen!
 			cost = 100;
 		}
 		return cost;
@@ -122,24 +122,29 @@ public class CostFactory {
 		final int a = segInterval.getA().intValue();
 		final int b = segInterval.getB().intValue();
 
-		int aReduced = SimpleFunctionAnalysis.getRighthandLocalMin( gapSepFkt, a ).a.intValue();
-		int bReduced = SimpleFunctionAnalysis.getLefthandLocalMin( gapSepFkt, b ).a.intValue();
+		final double plateauDerivativeThreshold = 0.0000; //some epsilon
+		int aReduced = SimpleFunctionAnalysis.getRighthandLocalMinOrPlateau( gapSepFkt, a, plateauDerivativeThreshold ).a.intValue();
+		int bReduced = SimpleFunctionAnalysis.getLefthandLocalMinOrPlateau( gapSepFkt, b, plateauDerivativeThreshold ).a.intValue();
 		if ( aReduced > bReduced ) {
 			aReduced = bReduced = SimpleFunctionAnalysis.getMin( gapSepFkt, a, b ).a.intValue();
 		}
 
-		final double min = SimpleFunctionAnalysis.getMin( gapSepFkt, a, b ).b;
-		final double maxReduced = SimpleFunctionAnalysis.getMax( gapSepFkt, aReduced, bReduced ).b.doubleValue();
-//		final double avg = SimpleFunctionAnalysis.getAvg( gapSepFkt, a, b );
+		final double avgBottomVal = SimpleFunctionAnalysis.getAvg( gapSepFkt, a, b );
+		double maxReduced = SimpleFunctionAnalysis.getMax( gapSepFkt, aReduced, bReduced ).b.doubleValue();
+		maxReduced = Math.max( maxReduced, avgBottomVal ); // tricky but I like it!
+
 		final double segmentLengthInPercentGL = ( b - a ) / ( ( double ) gapSepFkt.length );
-		final double fac = 1.0;
 
-//		double cost = -0.2 + 1.0 * min; // TOTALLY arbitrary!!!
-//		double cost = -.05 +avg - 0.3 * ( b - a ) / gapSepFkt.length; // TOTALLY arbitrary!!!
-		double cost = -( 1.0 - maxReduced ) * segmentLengthInPercentGL * fac;
-		System.out.println( String.format( "-( 1.0 - %.2f ) * %.2f*%.2f = %.2f", maxReduced, segmentLengthInPercentGL, fac, cost ) );
+		// Special case: min-value is above average gap-sep-fkt value (happens often at the very top)
+		final double avgFktValue = SimpleFunctionAnalysis.getAvg( gapSepFkt );
+		final double distAboveAvg = Math.max( 0.0, avgBottomVal - avgFktValue );
+		final double penaltyHeight = distAboveAvg * Math.pow( 1.0 + distAboveAvg, 5 );
+		final double incentiveHeight = ( 1.0 - maxReduced );
 
-		if ( a > 0 && b - a < MotherMachine.MIN_CELL_LENGTH ) { // if a==0, only a part of the cell is seen!
+		double cost = ( penaltyHeight * segmentLengthInPercentGL ) - ( incentiveHeight * segmentLengthInPercentGL );
+
+		// cell is too small
+		if ( a > 0 && b + 1 < gapSepFkt.length && b - a < MotherMachine.MIN_CELL_LENGTH ) { // if a==0 or b==gapSepFkt.len, only a part of the cell is seen!
 			cost = 100;
 		}
 		return cost;
