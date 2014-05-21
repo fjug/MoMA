@@ -10,7 +10,6 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.view.SubsampleIntervalView;
 import net.imglib2.view.Views;
 
-
 /**
  * @author jug
  */
@@ -30,7 +29,8 @@ public class GrowthLineSegmentationMagic {
 
 		final long[] min = new long[ classified.numDimensions() ];
 		classified.min( min );
-		min[ 2 ]++;
+		// Depending on the class order in our random forest you might need the next line...
+//		min[ 2 ]++; 
 		final long[] max = new long[ classified.numDimensions() ];
 		classified.max( max );
 		// TODO: FIXES A BUG IN THE IMGLIB... NEEDS TO BE REMOVED AFTER THE BUG IS REMOVED!!!
@@ -46,15 +46,7 @@ public class GrowthLineSegmentationMagic {
 	}
 
 	private static RandomAccessibleInterval< LongType > returnParamaxflowBaby( final RandomAccessibleInterval< DoubleType > rai, final boolean withClassificationOfGaps ) {
-		final ParaMaxFlow< DoubleType > paramaxflow = new ParaMaxFlow< DoubleType >(
-				 rai,
-				 ( withClassificationOfGaps ) ? returnClassification( rai ) : null,
-				 false,
-				-1.0, 0.45, 0.15,
-				 1.0,
-				 1.0, 1.0, 0.10,
-				 0.0, 0.5, 10.0,
-				 0.0, 0.5, 10.0 );
+		final ParaMaxFlow< DoubleType > paramaxflow = new ParaMaxFlow< DoubleType >( rai, ( withClassificationOfGaps ) ? returnClassification( rai ) : null, false, -1.0, 0.45, 0.15, 1.0, 1.0, 1.0, 0.10, 0.0, 0.5, 10.0, 0.0, 0.5, 10.0 );
 
 		numSolutions = paramaxflow.solve( -1000000, 1000000 );
 

@@ -4,6 +4,8 @@ package com.jug;
  * Main class for the MotherMachine project.
  */
 
+import gurobi.GRBEnv;
+import gurobi.GRBException;
 import ij.ImageJ;
 
 import java.awt.DisplayMode;
@@ -72,59 +74,73 @@ public class MotherMachine {
 	// statics
 	// -------------------------------------------------------------------------------------
 	public static MotherMachine instance;
+
 	/**
 	 * Parameter: sigma for gaussian blurring in x-direction of the raw image
 	 * data. Used while searching the growth line centers.
 	 */
 	public static double SIGMA_GL_DETECTION_X = 15.0;
+
 	public static double SIGMA_GL_DETECTION_Y = 3.0;
+
 	/**
 	 * Parameter: sigma for gaussian blurring in x-direction of the raw image
 	 * data. Used while searching the gaps between bacteria.
 	 */
 	private static double SIGMA_PRE_SEGMENTATION_X = 0.0; // 3.5;
+
 	private static double SIGMA_PRE_SEGMENTATION_Y = 0.0; // 0.5;
+
 	/**
 	 * Parameter: later border in pixels - well centers detected too close to
 	 * the left and right image border will be neglected. Reason: detection not
 	 * reliable if well is truncated.
 	 */
 	public static int GL_OFFSET_LATERAL = 5;
+
 	/**
 	 * Prior knowledge: hard offset in detected well center lines - will be cut
 	 * of from top.
 	 */
 	public static int GL_OFFSET_TOP = 40;
+
 	/**
 	 * Prior knowledge: hard offset in detected well center lines - will be cut
 	 * of from bottom.
 	 */
 	public static int GL_OFFSET_BOTTOM = 10;
+
 	/**
 	 * Maximum offset in x direction (with respect to growth line center) to
 	 * take the background intensities from that will be subtracted from the
 	 * growth line.
 	 */
 	private static int BGREM_TEMPLATE_XMAX = 35;
+
 	/**
 	 * Minimum offset in x direction (with respect to growth line center) to
 	 * take the background intensities from that will be subtracted from the
 	 * growth line.
 	 */
 	private static int BGREM_TEMPLATE_XMIN = 20;
+
 	/**
 	 * Offsets in +- x direction (with respect to growth line center) where the
 	 * measured background values will be subtracted from.
 	 */
 	private static int BGREM_X_OFFSET = 35;
+
 	/**
 	 * Prior knowledge: minimal length of detected cells
 	 */
 	public static int MIN_CELL_LENGTH = 18;
+
 	/**
 	 * Prior knowledge: minimal contrast of an gap (also used for MSERs)
 	 */
-	public static double MIN_GAP_CONTRAST = 0.02; // This is set to a very low value that will basically not filter anything...
+	public static double MIN_GAP_CONTRAST = 0.02; // This is set to a very low
+													// value that will basically
+													// not filter anything...
 
 	// - - - - - - - - - - - - - -
 	// GUI-WINDOW RELATED STATICS
@@ -133,47 +149,56 @@ public class MotherMachine {
 	 * The <code>JFrame</code> containing the main GUI.
 	 */
 	private static JFrame guiFrame;
+
 	/**
 	 * Properties to configure app (loaded and saved to properties file!).
 	 */
 	public static Properties props;
+
 	/**
-	 * Default x-position of the main GUI-window.
-	 * This value will be used if the values in the properties file are not
-	 * fitting on any of the currently attached screens.
+	 * Default x-position of the main GUI-window. This value will be used if the
+	 * values in the properties file are not fitting on any of the currently
+	 * attached screens.
 	 */
 	private static int DEFAULT_GUI_POS_X = 100;
+
 	/**
 	 * X-position of the main GUI-window. This value will be loaded from and
 	 * stored in the properties file!
 	 */
 	private static int GUI_POS_X;
+
 	/**
-	 * Default y-position of the main GUI-window.
-	 * This value will be used if the values in the properties file are not
-	 * fitting on any of the currently attached screens.
+	 * Default y-position of the main GUI-window. This value will be used if the
+	 * values in the properties file are not fitting on any of the currently
+	 * attached screens.
 	 */
 	private static int DEFAULT_GUI_POS_Y = 100;
+
 	/**
 	 * Y-position of the main GUI-window. This value will be loaded from and
 	 * stored in the properties file!
 	 */
 	private static int GUI_POS_Y;
+
 	/**
 	 * Width (in pixels) of the main GUI-window. This value will be loaded from
 	 * and stored in the properties file!
 	 */
 	private static int GUI_WIDTH = 800;
+
 	/**
 	 * Width (in pixels) of the main GUI-window. This value will be loaded from
 	 * and stored in the properties file!
 	 */
 	private static int GUI_HEIGHT = 630;
+
 	/**
 	 * Width (in pixels) of the console window. This value will be loaded from
 	 * and stored in the properties file!
 	 */
 	private static int GUI_CONSOLE_WIDTH = 600;
+
 	/**
 	 * The path to usually open JFileChoosers at (except for initial load
 	 * dialog).
@@ -184,111 +209,119 @@ public class MotherMachine {
 
 	/**
 	 * PROJECT MAIN
-	 * ============
-	 *
-	 * @param args
+	 * 
+	 * @param arga
 	 *            muh!
 	 */
 	public static void main( final String[] args ) {
 
+		// ******** CHECK GUROBI ********* CHECK GUROBI ********* CHECK GUROBI *********
+		final String jlp = System.getProperty( "java.library.path" );
 		try {
-
-			final MotherMachine main = new MotherMachine();
-			guiFrame = new JFrame( "Interactive MotherMachine" );
-			main.initMainWindow( guiFrame );
-
-			//TODO do it better
-			GrowthLineSegmentationMagic.setClassifier( "/Users/jug/Dropbox/WorkingData/Repositories/GIT/MotherMachineMvn/src/main/resources/", "BinaryGapClassifier.model" );
-
-			props = main.loadParams();
-			BGREM_TEMPLATE_XMIN = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMIN", Integer.toString( BGREM_TEMPLATE_XMIN ) ) );
-			BGREM_TEMPLATE_XMAX = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMAX", Integer.toString( BGREM_TEMPLATE_XMAX ) ) );
-			BGREM_X_OFFSET = Integer.parseInt( props.getProperty( "BGREM_X_OFFSET", Integer.toString( BGREM_X_OFFSET ) ) );
-			GL_OFFSET_BOTTOM = Integer.parseInt( props.getProperty( "GL_OFFSET_BOTTOM", Integer.toString( GL_OFFSET_BOTTOM ) ) );
-			GL_OFFSET_TOP = Integer.parseInt( props.getProperty( "GL_OFFSET_TOP", Integer.toString( GL_OFFSET_TOP ) ) );
-			GL_OFFSET_LATERAL = Integer.parseInt( props.getProperty( "GL_OFFSET_LATERAL", Integer.toString( GL_OFFSET_LATERAL ) ) );
-			MIN_CELL_LENGTH = Integer.parseInt( props.getProperty( "MIN_CELL_LENGTH", Integer.toString( MIN_CELL_LENGTH ) ) );
-			MIN_GAP_CONTRAST = Double.parseDouble( props.getProperty( "MIN_GAP_CONTRAST", Double.toString( MIN_GAP_CONTRAST ) ) );
-			SIGMA_PRE_SEGMENTATION_X = Double.parseDouble( props.getProperty( "SIGMA_PRE_SEGMENTATION_X", Double.toString( SIGMA_PRE_SEGMENTATION_X ) ) );
-			SIGMA_PRE_SEGMENTATION_Y = Double.parseDouble( props.getProperty( "SIGMA_PRE_SEGMENTATION_Y", Double.toString( SIGMA_PRE_SEGMENTATION_Y ) ) );
-			SIGMA_GL_DETECTION_X = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION_X", Double.toString( SIGMA_GL_DETECTION_X ) ) );
-			SIGMA_GL_DETECTION_Y = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION_Y", Double.toString( SIGMA_GL_DETECTION_Y ) ) );
-			DEFAULT_PATH = props.getProperty( "DEFAULT_PATH", DEFAULT_PATH );
-
-			GUI_POS_X = Integer.parseInt( props.getProperty( "GUI_POS_X", Integer.toString( DEFAULT_GUI_POS_X ) ) );
-			GUI_POS_Y = Integer.parseInt( props.getProperty( "GUI_POS_Y", Integer.toString( DEFAULT_GUI_POS_X ) ) );
-			GUI_WIDTH = Integer.parseInt( props.getProperty( "GUI_WIDTH", Integer.toString( GUI_WIDTH ) ) );
-			GUI_HEIGHT = Integer.parseInt( props.getProperty( "GUI_HEIGHT", Integer.toString( GUI_HEIGHT ) ) );
-			GUI_CONSOLE_WIDTH = Integer.parseInt( props.getProperty( "GUI_CONSOLE_WIDTH", Integer.toString( GUI_CONSOLE_WIDTH ) ) );
-			// Iterate over all currently attached monitors and check if sceen position is actually possible,
-			// otherwise fall back to the DEFAULT values and ignore the ones coming from the properties-file.
-			boolean pos_ok = false;
-			final GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-			final GraphicsDevice[] gs = ge.getScreenDevices();
-			for ( int i = 0; i < gs.length; i++ ) {
-				final DisplayMode dm = gs[ i ].getDisplayMode();
-				if ( gs[ i ].getDefaultConfiguration().getBounds().contains( new java.awt.Point( GUI_POS_X, GUI_POS_Y ) ) ) {
-					pos_ok = true;
-				}
-			}
-			// None of the screens contained the top-left window coordinates --> fall back onto default values...
-			if ( !pos_ok ) {
-				GUI_POS_X = DEFAULT_GUI_POS_X;
-				GUI_POS_Y = DEFAULT_GUI_POS_Y;
-			}
-
-			String path = props.getProperty( "import_path", System.getProperty( "user.home" ) );
-			final File fPath = main.showStartupDialog( guiFrame, path );
-			path = fPath.getAbsolutePath();
-			props.setProperty( "import_path", fPath.getAbsolutePath() );
-
-			// Setting up console window and window snapper...
-			main.initConsoleWindow();
-			main.showConsoleWindow();
-			final JFrameSnapper snapper = new JFrameSnapper();
-			snapper.addFrame( main.frameConsoleWindow );
-			snapper.addFrame( guiFrame );
-
-			// ---------------------------------------------------
-			main.processDataFromFolder( path );
-			// ---------------------------------------------------
-
-			System.out.print( "Build and show GUI..." );
-			// show loaded and annotated data
-//			ImageJFunctions.show( main.imgRaw, "Rotated & cropped raw data" );
-//			ImageJFunctions.show( main.imgTemp, "Temporary" );
-//			ImageJFunctions.show( main.imgAnnotated, "Annotated ARGB data" );
-
-			final MotherMachineGui gui = new MotherMachineGui( new MotherMachineModel( main ) );
-			gui.setVisible( true );
-
-			main.ij = new ImageJ();
-			guiFrame.add( gui );
-			guiFrame.setSize( GUI_WIDTH, GUI_HEIGHT );
-			guiFrame.setLocation( GUI_POS_X, GUI_POS_Y );
-			guiFrame.setVisible( true );
-
-			SwingUtilities.invokeLater( new Runnable() {
-
-				@Override
-				public void run() {
-					snapper.snapFrames( main.frameConsoleWindow, guiFrame, JFrameSnapper.EAST );
-				}
-			} );
-
-			System.out.println( " done!" );
-
-			instance = main;
-		}
-		catch ( final UnsatisfiedLinkError ulr ) {
-			JOptionPane.showMessageDialog( MotherMachine.guiFrame,
-					"Could initialize Gurobi.\n" +
-					"You might not have installed Gurobi properly or you miss a valid license.\n" +
-					"Please visit 'www.gurobi.com' for further information.\n\n" +
-					ulr.getMessage(),
-					"Gurobi Error?", JOptionPane.ERROR_MESSAGE );
+			new GRBEnv( "MotherMachineILPs.log" );
+		} catch ( final GRBException e ) {
+			JOptionPane.showMessageDialog( MotherMachine.guiFrame, "Initial Gurobi test threw exception... check your Gruobi setup!\n\nJava library path: " + jlp, "Gurobi Error?", JOptionPane.ERROR_MESSAGE );
+			e.printStackTrace();
+			System.exit( 98 );
+		} catch ( final UnsatisfiedLinkError ulr ) {
+			JOptionPane.showMessageDialog( MotherMachine.guiFrame, "Could initialize Gurobi.\n" + "You might not have installed Gurobi properly or you miss a valid license.\n" + "Please visit 'www.gurobi.com' for further information.\n\n" + ulr.getMessage() + "\nJava library path: " + jlp, "Gurobi Error?", JOptionPane.ERROR_MESSAGE );
+			System.out.println( "\n>>>>> Java library path: " + jlp + "\n" );
 			ulr.printStackTrace();
+			System.exit( 99 );
 		}
+		// ******* END CHECK GUROBI **** END CHECK GUROBI **** END CHECK GUROBI ******** 
+
+		final MotherMachine main = new MotherMachine();
+		main.ij = new ImageJ();
+
+		guiFrame = new JFrame( "Interactive MotherMachine" );
+		main.initMainWindow( guiFrame );
+
+		// TODO do it better
+		GrowthLineSegmentationMagic.setClassifier( "/Users/jug/Dropbox/WorkingData/Repositories/GIT/MotherMachineMvn/src/main/resources/", "BinaryGapClassifier.model" );
+
+		props = main.loadParams();
+		BGREM_TEMPLATE_XMIN = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMIN", Integer.toString( BGREM_TEMPLATE_XMIN ) ) );
+		BGREM_TEMPLATE_XMAX = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMAX", Integer.toString( BGREM_TEMPLATE_XMAX ) ) );
+		BGREM_X_OFFSET = Integer.parseInt( props.getProperty( "BGREM_X_OFFSET", Integer.toString( BGREM_X_OFFSET ) ) );
+		GL_OFFSET_BOTTOM = Integer.parseInt( props.getProperty( "GL_OFFSET_BOTTOM", Integer.toString( GL_OFFSET_BOTTOM ) ) );
+		GL_OFFSET_TOP = Integer.parseInt( props.getProperty( "GL_OFFSET_TOP", Integer.toString( GL_OFFSET_TOP ) ) );
+		GL_OFFSET_LATERAL = Integer.parseInt( props.getProperty( "GL_OFFSET_LATERAL", Integer.toString( GL_OFFSET_LATERAL ) ) );
+		MIN_CELL_LENGTH = Integer.parseInt( props.getProperty( "MIN_CELL_LENGTH", Integer.toString( MIN_CELL_LENGTH ) ) );
+		MIN_GAP_CONTRAST = Double.parseDouble( props.getProperty( "MIN_GAP_CONTRAST", Double.toString( MIN_GAP_CONTRAST ) ) );
+		SIGMA_PRE_SEGMENTATION_X = Double.parseDouble( props.getProperty( "SIGMA_PRE_SEGMENTATION_X", Double.toString( SIGMA_PRE_SEGMENTATION_X ) ) );
+		SIGMA_PRE_SEGMENTATION_Y = Double.parseDouble( props.getProperty( "SIGMA_PRE_SEGMENTATION_Y", Double.toString( SIGMA_PRE_SEGMENTATION_Y ) ) );
+		SIGMA_GL_DETECTION_X = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION_X", Double.toString( SIGMA_GL_DETECTION_X ) ) );
+		SIGMA_GL_DETECTION_Y = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION_Y", Double.toString( SIGMA_GL_DETECTION_Y ) ) );
+		DEFAULT_PATH = props.getProperty( "DEFAULT_PATH", DEFAULT_PATH );
+
+		GUI_POS_X = Integer.parseInt( props.getProperty( "GUI_POS_X", Integer.toString( DEFAULT_GUI_POS_X ) ) );
+		GUI_POS_Y = Integer.parseInt( props.getProperty( "GUI_POS_Y", Integer.toString( DEFAULT_GUI_POS_X ) ) );
+		GUI_WIDTH = Integer.parseInt( props.getProperty( "GUI_WIDTH", Integer.toString( GUI_WIDTH ) ) );
+		GUI_HEIGHT = Integer.parseInt( props.getProperty( "GUI_HEIGHT", Integer.toString( GUI_HEIGHT ) ) );
+		GUI_CONSOLE_WIDTH = Integer.parseInt( props.getProperty( "GUI_CONSOLE_WIDTH", Integer.toString( GUI_CONSOLE_WIDTH ) ) );
+		// Iterate over all currently attached monitors and check if sceen
+		// position is actually possible,
+		// otherwise fall back to the DEFAULT values and ignore the ones
+		// coming from the properties-file.
+		boolean pos_ok = false;
+		final GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+		final GraphicsDevice[] gs = ge.getScreenDevices();
+		for ( int i = 0; i < gs.length; i++ ) {
+			final DisplayMode dm = gs[ i ].getDisplayMode();
+			if ( gs[ i ].getDefaultConfiguration().getBounds().contains( new java.awt.Point( GUI_POS_X, GUI_POS_Y ) ) ) {
+				pos_ok = true;
+			}
+		}
+		// None of the screens contained the top-left window coordinates -->
+		// fall back onto default values...
+		if ( !pos_ok ) {
+			GUI_POS_X = DEFAULT_GUI_POS_X;
+			GUI_POS_Y = DEFAULT_GUI_POS_Y;
+		}
+
+		String path = props.getProperty( "import_path", System.getProperty( "user.home" ) );
+		final File fPath = main.showStartupDialog( guiFrame, path );
+		path = fPath.getAbsolutePath();
+		props.setProperty( "import_path", fPath.getAbsolutePath() );
+
+		// Setting up console window and window snapper...
+		main.initConsoleWindow();
+		main.showConsoleWindow();
+		final JFrameSnapper snapper = new JFrameSnapper();
+		snapper.addFrame( main.frameConsoleWindow );
+		snapper.addFrame( guiFrame );
+
+		// ---------------------------------------------------
+		main.processDataFromFolder( path );
+		// ---------------------------------------------------
+
+		System.out.print( "Build and show GUI..." );
+		// show loaded and annotated data
+		// ImageJFunctions.show( main.imgRaw, "Rotated & cropped raw data"
+		// );
+		// ImageJFunctions.show( main.imgTemp, "Temporary" );
+		// ImageJFunctions.show( main.imgAnnotated, "Annotated ARGB data" );
+
+		final MotherMachineGui gui = new MotherMachineGui( new MotherMachineModel( main ) );
+		gui.setVisible( true );
+
+		guiFrame.add( gui );
+		guiFrame.setSize( GUI_WIDTH, GUI_HEIGHT );
+		guiFrame.setLocation( GUI_POS_X, GUI_POS_Y );
+		guiFrame.setVisible( true );
+
+		SwingUtilities.invokeLater( new Runnable() {
+
+			@Override
+			public void run() {
+				snapper.snapFrames( main.frameConsoleWindow, guiFrame, JFrameSnapper.EAST );
+			}
+		} );
+
+		System.out.println( " done!" );
+
+		instance = main;
 	}
 
 	// -------------------------------------------------------------------------------------
@@ -303,16 +336,16 @@ public class MotherMachine {
 	private double dCorrectedSlope;
 
 	private Img< DoubleType > imgRaw;
+
 	private Img< DoubleType > imgTemp;
+
 	private Img< ARGBType > imgAnnotated;
 
 	/**
-	 * Contains all detected growth line center points.
-	 * The structure goes in line with image data:
-	 * Outermost list: one element per frame (image in stack).
-	 * 2nd list: one element per detected growth-line.
-	 * 3rd list: one element (Point) per location downwards along the growth
-	 * line.
+	 * Contains all detected growth line center points. The structure goes in
+	 * line with image data: Outermost list: one element per frame (image in
+	 * stack). 2nd list: one element per detected growth-line. 3rd list: one
+	 * element (Point) per location downwards along the growth line.
 	 */
 	private List< List< List< Point >>> glCenterPoints;
 
@@ -330,6 +363,7 @@ public class MotherMachine {
 	 * Frame hosting the console output.
 	 */
 	private JFrame frameConsoleWindow;
+
 	/**
 	 * TextArea hosting the console output within the JFrame frameConsoleWindow.
 	 */
@@ -397,6 +431,7 @@ public class MotherMachine {
 	public void setGrowthLines( final List< GrowthLine > growthLines ) {
 		this.growthLines = growthLines;
 	}
+
 	// -------------------------------------------------------------------------------------
 	// methods
 	// -------------------------------------------------------------------------------------
@@ -407,7 +442,7 @@ public class MotherMachine {
 	 */
 	private void initConsoleWindow() {
 		frameConsoleWindow = new JFrame( "MotherMachine Console Window" );
-//		frameConsoleWindow.setResizable( false );
+		// frameConsoleWindow.setResizable( false );
 		consoleWindowTextArea = new JTextArea();
 
 		final int centerX = ( int ) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2;
@@ -492,31 +527,33 @@ public class MotherMachine {
 	/**
 	 * Initializes the MotherMachine main app. This method contains platform
 	 * specific code like setting icons, etc.
-	 *
+	 * 
 	 * @param guiFrame
 	 *            the JFrame containing the MotherMachine.
 	 */
 	private void initMainWindow( final JFrame guiFrame ) {
-		guiFrame.addWindowListener(new WindowAdapter(){
+		guiFrame.addWindowListener( new WindowAdapter() {
+
 			@Override
-			public void windowClosing(final WindowEvent we) {
+			public void windowClosing( final WindowEvent we ) {
 				saveParams();
-				System.exit(0);
+				System.exit( 0 );
 			}
 		} );
-//		final java.net.URL url = MotherMachine.class.getResource( "gui/media/IconMotherMachine128.png" );
-//		final Toolkit kit = Toolkit.getDefaultToolkit();
-//		final Image img = kit.createImage( url );
-//		if ( !OSValidator.isMac() ) {
-//			guiFrame.setIconImage( img );
-//		}
-//		if ( OSValidator.isMac() ) {
-//			Application.getApplication().setDockIconImage( img );
-//		}
+		// final java.net.URL url = MotherMachine.class.getResource(
+		// "gui/media/IconMotherMachine128.png" );
+		// final Toolkit kit = Toolkit.getDefaultToolkit();
+		// final Image img = kit.createImage( url );
+		// if ( !OSValidator.isMac() ) {
+		// guiFrame.setIconImage( img );
+		// }
+		// if ( OSValidator.isMac() ) {
+		// Application.getApplication().setDockIconImage( img );
+		// }
 	}
 
 	/**
-	 *
+	 * 
 	 * @param guiFrame
 	 *            parent frame
 	 * @param path
@@ -535,7 +572,7 @@ public class MotherMachine {
 			final String title = "MotherMachine Start Dialog";
 			decision = JOptionPane.showConfirmDialog( guiFrame, message, title, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE );
 		}
-		if (decision == JOptionPane.YES_OPTION) {
+		if ( decision == JOptionPane.YES_OPTION ) {
 			return new File( path );
 		} else {
 			return showFolderChooser( guiFrame, parentFolder );
@@ -543,9 +580,9 @@ public class MotherMachine {
 	}
 
 	/**
-	 * Shows a JFileChooser set up to accept the selection of folders.
-	 * If 'cancel' is pressed this method terminates the MotherMachine app.
-	 *
+	 * Shows a JFileChooser set up to accept the selection of folders. If
+	 * 'cancel' is pressed this method terminates the MotherMachine app.
+	 * 
 	 * @param guiFrame
 	 *            parent frame
 	 * @param path
@@ -582,7 +619,7 @@ public class MotherMachine {
 	/**
 	 * Loads the file 'mm.properties' and returns an instance of
 	 * {@link Properties} containing the key-value pairs found in that file.
-	 *
+	 * 
 	 * @return instance of {@link Properties} containing the key-value pairs
 	 *         found in that file.
 	 */
@@ -595,8 +632,7 @@ public class MotherMachine {
 		try {
 			final File f = new File( "mm.properties" );
 			is = new FileInputStream( f );
-		}
-		catch ( final Exception e ) {
+		} catch ( final Exception e ) {
 			is = null;
 		}
 
@@ -608,8 +644,7 @@ public class MotherMachine {
 
 			// Try loading properties from the file (if found)
 			props.load( is );
-		}
-		catch ( final Exception e ) {
+		} catch ( final Exception e ) {
 			System.out.println( "No properties file 'mm.properties' found in current path or classpath... I will create one!" );
 		}
 
@@ -617,10 +652,9 @@ public class MotherMachine {
 	}
 
 	/**
-	 * Saves a file 'mm.properties' in the current folder.
-	 * This file contains all MotherMachine specific properties as key-value
-	 * pairs.
-	 *
+	 * Saves a file 'mm.properties' in the current folder. This file contains
+	 * all MotherMachine specific properties as key-value pairs.
+	 * 
 	 * @param props
 	 *            an instance of {@link Properties} containing all key-value
 	 *            pairs used by the MotherMachine.
@@ -657,8 +691,7 @@ public class MotherMachine {
 			props.setProperty( "GUI_CONSOLE_WIDTH", Integer.toString( GUI_CONSOLE_WIDTH ) );
 
 			props.store( out, "MotherMachine properties" );
-		}
-		catch ( final Exception e ) {
+		} catch ( final Exception e ) {
 			e.printStackTrace();
 		}
 	}
@@ -668,7 +701,7 @@ public class MotherMachine {
 	 * extracts growth lines, subtracts background, builds segmentation
 	 * hypothesis and a Markov random field for tracking. Finally it even solves
 	 * this model using Gurobi and reads out the MAP.
-	 *
+	 * 
 	 * @param path
 	 *            the folder to be processed.
 	 */
@@ -693,8 +726,7 @@ public class MotherMachine {
 		resetImgAnnotatedLike( getImgRaw() );
 		try {
 			DataMover.convertAndCopy( getImgRaw(), getImgAnnotated() );
-		}
-		catch ( final Exception e ) {
+		} catch ( final Exception e ) {
 			// conversion might not be supported
 			e.printStackTrace();
 		}
@@ -713,31 +745,30 @@ public class MotherMachine {
 		resetImgTempToRaw();
 		System.out.println( " done!" );
 
-//		System.out.print( "Generating Segmentation Hypotheses..." );
-//		generateAllSimpleSegmentationHypotheses();
-//		System.out.println( " done!" );
+		// System.out.print( "Generating Segmentation Hypotheses..." );
+		// generateAllSimpleSegmentationHypotheses();
+		// System.out.println( " done!" );
 
-//		System.out.println( "Generating Integer Linear Programs..." );
-//		generateILPs();
-//		System.out.println( " done!" );
-//
-//		System.out.println( "Running Integer Linear Programs..." );
-//		runILPs();
-//		System.out.println( " done!" );
+		// System.out.println( "Generating Integer Linear Programs..." );
+		// generateILPs();
+		// System.out.println( " done!" );
+		//
+		// System.out.println( "Running Integer Linear Programs..." );
+		// runILPs();
+		// System.out.println( " done!" );
 	}
 
 	/**
 	 * Loads all files contained in the given folder that end on '.tif' into an
 	 * image stack and assigns it to imgRaw.
-	 *
+	 * 
 	 * @param folder
 	 *            string containing a sequence of '.tif' files.
 	 */
 	public void loadTiffSequence( final String folder ) {
 		try {
 			imgRaw = DoubleTypeImgLoader.loadStackOfTiffsFromFolder( folder );
-		}
-		catch ( final Exception e ) {
+		} catch ( final Exception e ) {
 			e.printStackTrace();
 		}
 	}
@@ -760,7 +791,7 @@ public class MotherMachine {
 	 * Rotates the whole stack (each Z-slize) in order to vertically align the
 	 * wells seen in the micrographs come from the MotherMachine. Note: This is
 	 * NOT done in-place! The returned <code>Img</code> in newly created!
-	 *
+	 * 
 	 * @param img
 	 *            - the 3d <code>Img</code> to be straightened.
 	 * @return the straightened <code>Img</code>. (Might be larger to avoid
@@ -839,7 +870,7 @@ public class MotherMachine {
 	 * Note: each cropped z-slize will be renormalized to [0,1]. Precondition:
 	 * given <code>Img</code> should be rotated such that the seen wells are
 	 * axis parallel.
-	 *
+	 * 
 	 * @param img
 	 *            - the streightened 3d <code>Img</code> that should be cropped
 	 *            down to contain only the ROI.
@@ -919,7 +950,7 @@ public class MotherMachine {
 	/**
 	 * Simple but effective method to subtract uneven illumination from the
 	 * growth-line data.
-	 *
+	 * 
 	 * @param img
 	 *            DoubleType image stack.
 	 */
@@ -970,7 +1001,7 @@ public class MotherMachine {
 
 	/**
 	 * Adds all intensity values of row i in view to rowSums[i].
-	 *
+	 * 
 	 * @param view
 	 * @param rowSums
 	 */
@@ -987,7 +1018,7 @@ public class MotherMachine {
 
 	/**
 	 * Removes the value values[i] from all columns in row i of the given view.
-	 *
+	 * 
 	 * @param view
 	 * @param values
 	 */
@@ -1001,20 +1032,19 @@ public class MotherMachine {
 	}
 
 	/**
-	 * Estimates the centers of the growth lines given in 'imgTemp'.
-	 * The found center lines are computed by a linear regression of growth line
-	 * center estimates.
-	 * Those estimates are obtained by convolving the image with a Gaussian
-	 * (parameterized by SIGMA_GL_DETECTION_*) and looking for local maxima in
-	 * that image.
-	 *
-	 * This function operates on 'imgTemp' and sets 'glCenterPoints' as
-	 * well as 'growthLines'.
+	 * Estimates the centers of the growth lines given in 'imgTemp'. The found
+	 * center lines are computed by a linear regression of growth line center
+	 * estimates. Those estimates are obtained by convolving the image with a
+	 * Gaussian (parameterized by SIGMA_GL_DETECTION_*) and looking for local
+	 * maxima in that image.
+	 * 
+	 * This function operates on 'imgTemp' and sets 'glCenterPoints' as well as
+	 * 'growthLines'.
 	 */
 	private void findGrowthLines() {
 
 		this.setGrowthLines( new ArrayList< GrowthLine >() );
-		this.glCenterPoints = new ArrayList< List<List<Point>>>();
+		this.glCenterPoints = new ArrayList< List< List< Point >>>();
 
 		List< List< Point > > frameWellCenters;
 
@@ -1026,11 +1056,9 @@ public class MotherMachine {
 		sigmas[ 1 ] = SIGMA_GL_DETECTION_Y;
 		try {
 			Gauss3.gauss( sigmas, Views.extendMirrorDouble( imgTemp ), imgTemp );
-		}
-		catch ( final IncompatibleTypeException e ) {
+		} catch ( final IncompatibleTypeException e ) {
 			e.printStackTrace();
 		}
-
 
 		// ------ FIND AND FILTER MAXIMA -------------
 
@@ -1054,7 +1082,8 @@ public class MotherMachine {
 			}
 
 			// Delete detected points that are too high or too low
-			// (and use this sweep to compute 'maxWellCenterIdx' and 'maxWellCenters')
+			// (and use this sweep to compute 'maxWellCenterIdx' and
+			// 'maxWellCenters')
 			int maxWellCenters = 0;
 			int maxWellCentersIdx = 0;
 			for ( int y = 0; y < frameWellCenters.size(); y++ ) {
@@ -1076,22 +1105,26 @@ public class MotherMachine {
 			final List< GrowthLineFrame > glFrames = new ArrayList< GrowthLineFrame >();
 
 			final Point pOrig = new Point( 3 );
-			pOrig.setPosition( frameIdx, 2 ); 	// location in original Img (will
+			pOrig.setPosition( frameIdx, 2 ); // location in original Img (will
 												// be recovered step by step)
 
 			// start at the row containing the maximum number of well centers
 			// (see above for the code that found maxWellCenter*)
 			pOrig.setPosition( maxWellCentersIdx, 1 );
 			for ( int x = 0; x < maxWellCenters; x++ ) {
-				glFrames.add( new GrowthLineFrame() ); // add one GLF for each found column
+				glFrames.add( new GrowthLineFrame() ); // add one GLF for each
+														// found column
 				final Point p = frameWellCenters.get( maxWellCentersIdx ).get( x );
 				pOrig.setPosition( p.getLongPosition( 0 ), 0 );
 				glFrames.get( x ).addPoint( new Point( pOrig ) );
 			}
-			// now go backwards from 'maxWellCenterIdx' and find the right assignment in case
-			// a different number of wells was found (going forwards comes below!)
+			// now go backwards from 'maxWellCenterIdx' and find the right
+			// assignment in case
+			// a different number of wells was found (going forwards comes
+			// below!)
 			for ( int y = maxWellCentersIdx - 1; y >= 0; y-- ) {
-				pOrig.setPosition( y, 1 ); // location in orig. Img (2nd of 3 steps)
+				pOrig.setPosition( y, 1 ); // location in orig. Img (2nd of 3
+											// steps)
 
 				final List< Point > maximaPerImgRow = frameWellCenters.get( y );
 				if ( maximaPerImgRow.size() == 0 ) {
@@ -1115,7 +1148,8 @@ public class MotherMachine {
 					glFrames.get( x ).addPoint( new Point( pOrig ) );
 				}
 			}
-			// now go forward from 'maxWellCenterIdx' and find the right assignment in case
+			// now go forward from 'maxWellCenterIdx' and find the right
+			// assignment in case
 			// a different number of wells was found
 			for ( int y = maxWellCentersIdx + 1; y < frameWellCenters.size(); y++ ) {
 				pOrig.setPosition( y, 1 ); // location in original Img (2nd of 3
@@ -1153,7 +1187,8 @@ public class MotherMachine {
 			collectionOfFrames.add( glFrames );
 		}
 
-		// ------ SORT GrowthLineFrames FROM collectionOfFrames INTO this.growthLines -------------
+		// ------ SORT GrowthLineFrames FROM collectionOfFrames INTO
+		// this.growthLines -------------
 		int maxGLsPerFrame = 0;
 		int maxGLsPerFrameIdx = 0;
 		for ( int i = 0; i < collectionOfFrames.size(); i++ ) {
@@ -1171,7 +1206,8 @@ public class MotherMachine {
 		// go backwards from there and prepand into GL
 		for ( int j = maxGLsPerFrameIdx - 1; j >= 0; j-- ) {
 			final int deltaL = maxGLsPerFrame - collectionOfFrames.get( j ).size();
-			int offset = 0;  // here we would like to have the shift to consider when copying GLFrames into GLs
+			int offset = 0; // here we would like to have the shift to consider
+							// when copying GLFrames into GLs
 			double minDist = Double.MAX_VALUE;
 			for ( int i = 0; i <= deltaL; i++ ) {
 				double dist = collectionOfFrames.get( maxGLsPerFrameIdx ).get( i ).getAvgXpos();
@@ -1188,7 +1224,8 @@ public class MotherMachine {
 		// go forwards and append into GL
 		for ( int j = maxGLsPerFrameIdx + 1; j < collectionOfFrames.size(); j++ ) {
 			final int deltaL = maxGLsPerFrame - collectionOfFrames.get( j ).size();
-			int offset = 0;  // here we would like to have the shift to consider when copying GLFrames into GLs
+			int offset = 0; // here we would like to have the shift to consider
+							// when copying GLFrames into GLs
 			double minDist = Double.MAX_VALUE;
 			for ( int i = 0; i <= deltaL; i++ ) {
 				double dist = collectionOfFrames.get( maxGLsPerFrameIdx ).get( i ).getAvgXpos();
@@ -1219,8 +1256,8 @@ public class MotherMachine {
 
 	/**
 	 * Iterates over all found GrowthLines and evokes
-	 * GrowthLine.findGapHypotheses(Img).
-	 * Note that this function always uses the image data in 'imgTemp'.
+	 * GrowthLine.findGapHypotheses(Img). Note that this function always uses
+	 * the image data in 'imgTemp'.
 	 */
 	public void generateAllSimpleSegmentationHypotheses() {
 
@@ -1234,8 +1271,7 @@ public class MotherMachine {
 			sigmas[ 1 ] = SIGMA_PRE_SEGMENTATION_Y;
 			try {
 				Gauss3.gauss( sigmas, Views.extendMirrorDouble( imgTemp ), imgTemp );
-			}
-			catch ( final IncompatibleTypeException e ) {
+			} catch ( final IncompatibleTypeException e ) {
 				e.printStackTrace();
 			}
 		}
@@ -1260,23 +1296,24 @@ public class MotherMachine {
 	 * optimization-related structures used to compute the optimal tracking.
 	 */
 	private void generateILPs() {
-//		for ( final GrowthLine gl : getGrowthLines() ) {
-//			gl.generateILP();
-//		}
-//		getGrowthLines().get( 0 ).generateILP();
+		// for ( final GrowthLine gl : getGrowthLines() ) {
+		// gl.generateILP();
+		// }
+		// getGrowthLines().get( 0 ).generateILP();
 	}
 
 	/**
 	 * Runs all the generated ILPs.
 	 */
 	private void runILPs() {
-//		int i = 0;
-//		for ( final GrowthLine gl : getGrowthLines() ) {
-//			System.out.println( " > > > > > Starting LP for GL# " + i + " < < < < < " );
-//			gl.runILP();
-//			i++;
-//		}
-//		getGrowthLines().get( 0 ).runILP();
+		// int i = 0;
+		// for ( final GrowthLine gl : getGrowthLines() ) {
+		// System.out.println( " > > > > > Starting LP for GL# " + i +
+		// " < < < < < " );
+		// gl.runILP();
+		// i++;
+		// }
+		// getGrowthLines().get( 0 ).runILP();
 	}
 
 }
