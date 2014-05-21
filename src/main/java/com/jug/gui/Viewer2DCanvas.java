@@ -13,7 +13,7 @@ import javax.swing.event.MouseInputListener;
 
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.converter.RealARGBConverter;
-import net.imglib2.display.projector.Projector2D;
+import net.imglib2.display.projector.IterableIntervalProjector2D;
 import net.imglib2.display.screenimage.awt.ARGBScreenImage;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.real.DoubleType;
@@ -32,7 +32,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 
 	private final int w;
 	private final int h;
-	private Projector2D projector;
+	private IterableIntervalProjector2D< ?, ? > projector;
 	private ARGBScreenImage screenImage;
 	private IntervalView< DoubleType > view;
 	private GrowthLineFrame glf;
@@ -75,7 +75,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 	 */
 	public void setScreenImage( final GrowthLineFrame glf, final IntervalView< DoubleType > viewImg ) {
 		setEmptyScreenImage();
-		this.projector = new Projector2D< DoubleType, ARGBType >( 0, 1, viewImg, screenImage, new RealARGBConverter< DoubleType >( 0, 1 ) );
+		this.projector = new IterableIntervalProjector2D< DoubleType, ARGBType >( 0, 1, viewImg, screenImage, new RealARGBConverter< DoubleType >( 0, 1 ) );
 		this.view = viewImg;
 		this.glf = glf;
 		this.repaint();

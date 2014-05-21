@@ -17,7 +17,7 @@ import net.imglib2.type.Type;
  *
  * @author Tobias Pietzsch
  */
-final class FilteredPartialComponent< T extends Type< T > > implements PartialComponent< T >
+final class FilteredPartialComponent< T extends Type< T > > implements PartialComponent< T, FilteredPartialComponent< T > >
 {
 	/**
 	 * Threshold value of the connected component.
@@ -77,11 +77,10 @@ final class FilteredPartialComponent< T extends Type< T > > implements PartialCo
 	}
 
 	@Override
-	public void merge( final PartialComponent< T > component )
+	public void merge( final FilteredPartialComponent< T > component )
 	{
-		final FilteredPartialComponent< T > c = ( FilteredPartialComponent< T > ) component;
-		pixelList.merge( c.pixelList );
-		children.add( c );
+		pixelList.merge( component.pixelList );
+		children.add( component );
 	}
 
 	@Override
