@@ -96,9 +96,9 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 */
 	private List< Point > imgLocations;
 	private double[] simpleSepValues; // lazy evaluation -- gets computed when
-									  // getSimpleGapSeparationValues is called...
+										// getSimpleGapSeparationValues is called...
 	private double[] awesomeSepValues; // lazy evaluation -- gets computed when
-									   // getAwesomeGapSeparationValues is called...
+										// getAwesomeGapSeparationValues is called...
 	private GrowthLine parent;
 	private ComponentForest< C > componentTree;
 	private boolean isParaMaxFlowComponentTree = false;
@@ -195,7 +195,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	/**
 	 * Reads out all image intensities along the GrowthLine center (green
 	 * pixels).
-	 *
+	 * 
 	 * @param img
 	 *            - an Img.
 	 * @return a double array containing the image intensities in
@@ -227,7 +227,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 
 	/**
 	 * Adds a detected center point to a GrowthsLineFrame.
-	 *
+	 * 
 	 * @param point
 	 */
 	public void addPoint( final Point point ) {
@@ -249,7 +249,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 
 	/**
 	 * Gets a detected center point of a GrowthsLine.
-	 *
+	 * 
 	 * @param idx
 	 *            - index of the Point to be returned.
 	 */
@@ -274,7 +274,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	/**
 	 * Using the imglib2 component tree to find the most stable components
 	 * (bacteria).
-	 *
+	 * 
 	 * @param img
 	 */
 	public void generateSimpleSegmentationHypotheses( final Img< DoubleType > img ) {
@@ -297,7 +297,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	/**
 	 * Using the imglib2 component tree to find the most stable components
 	 * (bacteria).
-	 *
+	 * 
 	 * @param img
 	 */
 	public void generateAwesomeSegmentationHypotheses( final Img< DoubleType > img ) {
@@ -326,7 +326,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * tree, put each node in a priority queue, take then the numComponents
 	 * first elements out of it, put them in a ArrayList and give them back to
 	 * the caller. Efficiency: O(turbo-puke) !!
-	 *
+	 * 
 	 * @param numComponents
 	 * @return null, if there are less components in the tree then the callee
 	 *         requested
@@ -390,7 +390,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 
 	/**
 	 * GapSep guesses based on the intensity image alone
-	 *
+	 * 
 	 * @param img
 	 * @return
 	 */
@@ -409,7 +409,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 
 	/**
 	 * GapSep guesses based on the awesome paramaxflow-sum-image...
-	 *
+	 * 
 	 * @param img
 	 * @return
 	 */
@@ -429,12 +429,18 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 
 		awesomeSepValues = getInvertedIntensitiesAtImgLocations( paramaxflowSumImageDoubleTyped, true );
 
+		// special case: simple value is better then trained random forest: leave some simple value in there and it might help to divide at right spots
+		final double percSimpleToStay = 0.2;
+		for ( int i = 0; i < Math.min( simpleSepValues.length, awesomeSepValues.length ); i++ ) {
+			awesomeSepValues[ i ] = percSimpleToStay * simpleSepValues[ i ] + ( 1.0 - percSimpleToStay ) * awesomeSepValues[ i ];
+		}
+
 		return awesomeSepValues;
 	}
 
 	/**
 	 * Trying to look there a bit smarter... ;)
-	 *
+	 * 
 	 * @param img
 	 * @param wellPoints
 	 * @return
@@ -446,7 +452,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 
 	/**
 	 * Trying to look there a bit smarter... ;)
-	 *
+	 * 
 	 * @param img
 	 * @param wellPoints
 	 * @return
@@ -510,7 +516,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	/**
 	 * Draws the GrowthLine center line into the given annotation
 	 * <code>Img</code>.
-	 *
+	 * 
 	 * @param img
 	 *            the Img to draw into.
 	 */
@@ -521,7 +527,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	/**
 	 * Draws the GrowthLine center line into the given annotation
 	 * <code>Img</code>.
-	 *
+	 * 
 	 * @param img
 	 *            the Img to draw into.
 	 * @param view
@@ -558,7 +564,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	/**
 	 * Draws the optimal segmentation (determined by the solved ILP) into the
 	 * given <code>Img</code>.
-	 *
+	 * 
 	 * @param img
 	 *            the Img to draw into.
 	 * @param optimalSegmentation
@@ -573,7 +579,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	/**
 	 * Draws the optimal segmentation (determined by the solved ILP) into the
 	 * given <code>Img</code>.
-	 *
+	 * 
 	 * @param img
 	 *            the Img to draw into.
 	 * @param view
@@ -688,8 +694,8 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 		return cells;
 	}
 
-	public Vector<ValuePair<ValuePair< Integer, Integer >,Integer>> getSolutionStats_limitsAndRightAssType() {
-		final Vector<ValuePair<ValuePair< Integer, Integer >,Integer>> ret = new Vector<ValuePair<ValuePair< Integer, Integer >,Integer>>();
+	public Vector< ValuePair< ValuePair< Integer, Integer >, Integer >> getSolutionStats_limitsAndRightAssType() {
+		final Vector< ValuePair< ValuePair< Integer, Integer >, Integer >> ret = new Vector< ValuePair< ValuePair< Integer, Integer >, Integer >>();
 		for ( final Hypothesis< Component< DoubleType, ? > > hyp : getParent().getIlp().getOptimalRightAssignments( this.getTime() ).keySet() ) {
 
 			final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> aa = getParent().getIlp().getOptimalRightAssignments( this.getTime() ).get( hyp ).iterator().next();
@@ -702,12 +708,10 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 				max = Math.max( max, ypos );
 			}
 
-			ret.add( new ValuePair< ValuePair< Integer, Integer >,Integer> (
-					new ValuePair< Integer, Integer >( new Integer( min ), new Integer( max ) ),
-					new Integer( aa.getType() ) ) );
+			ret.add( new ValuePair< ValuePair< Integer, Integer >, Integer >( new ValuePair< Integer, Integer >( new Integer( min ), new Integer( max ) ), new Integer( aa.getType() ) ) );
 		}
 
-		Collections.sort( ret, new Comparator< ValuePair< ValuePair< Integer, Integer >, Integer >>(){
+		Collections.sort( ret, new Comparator< ValuePair< ValuePair< Integer, Integer >, Integer >>() {
 
 			@Override
 			public int compare( final ValuePair< ValuePair< Integer, Integer >, Integer > o1, final ValuePair< ValuePair< Integer, Integer >, Integer > o2 ) {

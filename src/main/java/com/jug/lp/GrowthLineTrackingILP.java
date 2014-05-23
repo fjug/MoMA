@@ -29,7 +29,6 @@ import com.jug.MotherMachine;
 import com.jug.lp.costs.CostFactory;
 import com.jug.util.ComponentTreeUtils;
 
-
 /**
  * @author jug
  */
@@ -64,28 +63,22 @@ public class GrowthLineTrackingILP {
 	public GRBModel model;
 	private int status;
 
-	public final AssignmentsAndHypotheses<
- AbstractAssignment< Hypothesis< Component< DoubleType, ? > > >, Hypothesis< Component< DoubleType, ? > > > nodes =
-				new AssignmentsAndHypotheses<
- AbstractAssignment< Hypothesis< Component< DoubleType, ? > > >, Hypothesis< Component< DoubleType, ? > > >();
-	public final HypothesisNeighborhoods<
- Hypothesis< Component< DoubleType, ? > >, AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > edgeSets = new HypothesisNeighborhoods< Hypothesis< Component< DoubleType, ? > >, AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > >();
+	public final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > >, Hypothesis< Component< DoubleType, ? > > > nodes = new AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > >, Hypothesis< Component< DoubleType, ? > > >();
+	public final HypothesisNeighborhoods< Hypothesis< Component< DoubleType, ? > >, AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > edgeSets = new HypothesisNeighborhoods< Hypothesis< Component< DoubleType, ? > >, AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > >();
 
 	private int pbcId = 0;
-
 
 	// -------------------------------------------------------------------------------------
 	// construction
 	// -------------------------------------------------------------------------------------
-	public GrowthLineTrackingILP(final GrowthLine gl) {
+	public GrowthLineTrackingILP( final GrowthLine gl ) {
 		this.gl = gl;
 
 		// Setting static stuff (this IS ugly!)
 		if ( env == null ) {
 			try {
 				env = new GRBEnv( "MotherMachineILPs.log" );
-			}
-			catch ( final GRBException e ) {
+			} catch ( final GRBException e ) {
 				System.out.println( "GrowthLineTrackingILP::env could not be initialized!" );
 				e.printStackTrace();
 			}
@@ -93,8 +86,7 @@ public class GrowthLineTrackingILP {
 
 		try {
 			model = new GRBModel( env );
-		}
-		catch ( final GRBException e ) {
+		} catch ( final GRBException e ) {
 			System.out.println( "GrowthLineTrackingILP::model could not be initialized!" );
 			e.printStackTrace();
 		}
@@ -163,8 +155,7 @@ public class GrowthLineTrackingILP {
 			model.update();
 //			System.out.println( "Constraints added: " + model.getConstrs().length );
 
-		}
-		catch ( final GRBException e ) {
+		} catch ( final GRBException e ) {
 			System.out.println( "Could not fill data into GrowthLineTrackingILP!" );
 			e.printStackTrace();
 		}
@@ -174,7 +165,7 @@ public class GrowthLineTrackingILP {
 	/**
 	 * Writes the FactorGraph corresponding to the optimization problem of the
 	 * given growth-line into a file.
-	 *
+	 * 
 	 * @throws IOException
 	 */
 	public void exportFG( final File file ) {
@@ -201,19 +192,17 @@ public class GrowthLineTrackingILP {
 				assmt.setVarId( var_id );
 
 				double cost = 0.0;
-				if (assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_MAPPING) {
+				if ( assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ) {
 					fgFile.addVarComment( "- - MAPPING (var: " + var_id + ") - - - - - " );
 					fgFile.addFktComment( "- - MAPPING (var: " + var_id + ") - - - - - " );
 					final MappingAssignment ma = ( MappingAssignment ) assmt;
 					cost = ma.getSourceHypothesis().getCosts() + ma.getDestinationHypothesis().getCosts();
-				} else
-				if (assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION) {
+				} else if ( assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION ) {
 					fgFile.addVarComment( "- - DIVISION (var: " + var_id + ") - - - - - " );
 					fgFile.addFktComment( "- - DIVISION (var: " + var_id + ") - - - - - " );
 					final DivisionAssignment da = ( DivisionAssignment ) assmt;
 					cost = da.getSourceHypothesis().getCosts() + da.getUpperDesinationHypothesis().getCosts() + da.getLowerDesinationHypothesis().getCosts();
-				} else
-				if (assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_EXIT) {
+				} else if ( assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_EXIT ) {
 					fgFile.addVarComment( "- - EXIT (var: " + var_id + ") - - - - - " );
 					fgFile.addFktComment( "- - EXIT (var: " + var_id + ") - - - - - " );
 					final ExitAssignment ea = ( ExitAssignment ) assmt;
@@ -312,7 +301,7 @@ public class GrowthLineTrackingILP {
 	/**
 	 * Adds all hypothesis given by the nodes in the component tree to
 	 * <code>nodes</code>.
-	 *
+	 * 
 	 * @param ctNode
 	 *            a node in a <code>ComponentTree</code>.
 	 * @param t
@@ -361,7 +350,7 @@ public class GrowthLineTrackingILP {
 	 * available segmentation-hypothesis, and enumerates all potentially
 	 * interesting assignments using the <code>addXXXAsignment(...)</code>
 	 * methods.
-	 *
+	 * 
 	 * @throws GRBException
 	 */
 	private void enumerateAndAddAssignments() throws GRBException {
@@ -382,7 +371,7 @@ public class GrowthLineTrackingILP {
 	 * assigned by the solver iff all active segmentation hypotheses above one
 	 * that has an active exit-assignment are also assigned with an
 	 * exit-assignment.
-	 *
+	 * 
 	 * @param t
 	 *            the time-point.
 	 * @param hyps
@@ -406,7 +395,7 @@ public class GrowthLineTrackingILP {
 
 	/**
 	 * Add a mapping-assignment to a bunch of segmentation hypotheses.
-	 *
+	 * 
 	 * @param t
 	 *            the time-point from which the <code>curHyps</code> originate.
 	 * @param curHyps
@@ -457,7 +446,7 @@ public class GrowthLineTrackingILP {
 	/**
 	 * Computes the compatibility-mapping-costs between the two given
 	 * hypothesis.
-	 *
+	 * 
 	 * @param from
 	 *            the segmentation hypothesis from which the mapping originates.
 	 * @param to
@@ -506,7 +495,7 @@ public class GrowthLineTrackingILP {
 	 * Add a division-assignment to a bunch of segmentation hypotheses. Note
 	 * that this function also looks for suitable pairs of hypothesis in
 	 * nxtHyps, since division-assignments naturally need two right-neighbors.
-	 *
+	 * 
 	 * @param t
 	 *            the time-point from which the <code>curHyps</code> originate.
 	 * @param curHyps
@@ -559,7 +548,7 @@ public class GrowthLineTrackingILP {
 	/**
 	 * Computes the compatibility-mapping-costs between the two given
 	 * hypothesis.
-	 *
+	 * 
 	 * @param from
 	 *            the segmentation hypothesis from which the mapping originates.
 	 * @param to
@@ -602,9 +591,16 @@ public class GrowthLineTrackingILP {
 		double cost = costDeltaL + costDeltaV + costDeltaH + costDeltaS;
 
 		// Border case bullshit
-		// if the upper cell touches the upper border or lower one the lower border (then don't count uneven and shrinking)
+		// if the upper cell touches the upper border or lower one the lower border (then don't count shrinking and be nicer to uneven)
 		if ( intervalToU.getA().intValue() == 0 || intervalToL.getB().intValue() + 1 >= glLength ) {
-			cost = costDeltaH + costDeltaV;
+			// In case the upper fuck is not smaller then 2/3 of the lower one
+			if ( ( 1.0 * sizeToU ) / ( 1.0 * sizeToL ) > 0.66 ) {
+				// don't count uneven div cost
+				cost = costDeltaH + costDeltaV;
+			} else {
+				// otherwise do just leave out shrinking cost - yeah!
+				cost = costDeltaH + costDeltaV + costDeltaS;
+			}
 		}
 
 //		System.out.println( String.format( ">>> %f + %f + %f + %f = %f", costDeltaL, costDeltaV, costDeltaH, costDeltaS, cost ) );
@@ -621,9 +617,9 @@ public class GrowthLineTrackingILP {
 	 * Those path-blocking constraints ensure, that only 0 or 1 of the
 	 * segmentation hypothesis along such a path can be chosen during the convex
 	 * optimization.
-	 *
+	 * 
 	 * @throws GRBException
-	 *
+	 * 
 	 */
 	public void addPathBlockingConstraint() throws GRBException {
 		// For each time-point
@@ -648,7 +644,7 @@ public class GrowthLineTrackingILP {
 	 * Those path-blocking constraints ensure, that only 0 or 1 of the
 	 * segmentation hypothesis along such a path can be chosen during the convex
 	 * optimization.
-	 *
+	 * 
 	 * @param ctRoot
 	 * @param pbcId
 	 * @param t
@@ -688,7 +684,7 @@ public class GrowthLineTrackingILP {
 	}
 
 	/**
-	 *
+	 * 
 	 * @param ctNode
 	 * @param t
 	 * @param functions
@@ -786,23 +782,18 @@ public class GrowthLineTrackingILP {
 			// - - - - - - - - - - - - - - - - - - - - -
 			if ( model.get( GRB.IntAttr.Status ) == GRB.Status.OPTIMAL ) {
 				status = OPTIMAL;
-			} else
-			if ( model.get( GRB.IntAttr.Status ) == GRB.Status.INFEASIBLE ) {
+			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.INFEASIBLE ) {
 				status = INFEASIBLE;
-			} else
-			if ( model.get( GRB.IntAttr.Status ) == GRB.Status.UNBOUNDED ) {
+			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.UNBOUNDED ) {
 				status = UNBOUNDED;
-			} else
-			if ( model.get( GRB.IntAttr.Status ) == GRB.Status.SUBOPTIMAL ) {
+			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.SUBOPTIMAL ) {
 				status = SUBOPTIMAL;
-			} else
-			if ( model.get( GRB.IntAttr.Status ) == GRB.Status.NUMERIC ) {
+			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.NUMERIC ) {
 				status = NUMERIC;
 			} else {
 				status = LIMIT_REACHED;
 			}
-		}
-		catch ( final GRBException e ) {
+		} catch ( final GRBException e ) {
 			System.out.println( "Could not run the generated ILP!" );
 			e.printStackTrace();
 		}
@@ -813,7 +804,7 @@ public class GrowthLineTrackingILP {
 	 * conflicting component-tree-nodes.
 	 * Calling this function makes only sense if the <code>run</code>-method was
 	 * called and the convex optimizer could find a optimal feasible solution.
-	 *
+	 * 
 	 * @param t
 	 *            the time-point at which to look for the optimal segmentation.
 	 * @return a list of <code>ComponentTreeNodes</code> that correspond to the
@@ -836,7 +827,7 @@ public class GrowthLineTrackingILP {
 	 * the gap-separation function of the corresponding GLF.
 	 * Calling this function makes only sense if the <code>run</code>-method was
 	 * called and the convex optimizer could find a optimal feasible solution.
-	 *
+	 * 
 	 * @param t
 	 *            the time-point at which to look for the optimal segmentation.
 	 * @param gapSepYPos
@@ -862,7 +853,7 @@ public class GrowthLineTrackingILP {
 	 * conflicting segmentation hypothesis.
 	 * Calling this function makes only sense if the <code>run</code>-method was
 	 * called and the convex optimizer could find a optimal feasible solution.
-	 *
+	 * 
 	 * @param t
 	 *            the time-point at which to look for the optimal segmentation.
 	 * @return a list of <code>Hypothesis< Component< DoubleType, ? > ></code>
@@ -887,8 +878,7 @@ public class GrowthLineTrackingILP {
 				if ( aa != null ) {
 					ret.add( hyp );
 				}
-			}
-			catch ( final GRBException e ) {
+			} catch ( final GRBException e ) {
 				System.err.println( "It could not be determined of a certain assignment was choosen during the convex optimization!" );
 				e.printStackTrace();
 			}
@@ -903,7 +893,7 @@ public class GrowthLineTrackingILP {
 	 * coming in from the left (from t-1).
 	 * Calling this function makes only sense if the <code>run</code>-method was
 	 * called and the convex optimizer could find a optimal feasible solution.
-	 *
+	 * 
 	 * @param t
 	 *            the time at which to look for active left-assignments.
 	 *            Values for t make only sense if <code>>=1</code> and
@@ -930,8 +920,7 @@ public class GrowthLineTrackingILP {
 					oneElemSet.add( ola );
 					ret.put( hyp, oneElemSet );
 				}
-			}
-			catch ( final GRBException e ) {
+			} catch ( final GRBException e ) {
 				System.err.println( "An optimal left assignment could not be determined!" );
 				e.printStackTrace();
 			}
@@ -948,7 +937,7 @@ public class GrowthLineTrackingILP {
 	 * cell. The ILP is set up such that only 1 such assignment can be chosen by
 	 * the convex optimizer during the computation of the optimal MAP
 	 * assignment.
-	 *
+	 * 
 	 * @return the optimal (choosen by the convex optimizer) assignment
 	 *         describing the most likely data interpretation (MAP) towards the
 	 *         previous time-point.
@@ -964,7 +953,7 @@ public class GrowthLineTrackingILP {
 	 * going towards the right (to t+1).
 	 * Calling this function makes only sense if the <code>run</code>-method was
 	 * called and the convex optimizer could find a optimal feasible solution.
-	 *
+	 * 
 	 * @param t
 	 *            the time at which to look for active right-assignments.
 	 *            Values for t make only sense if <code>>=0</code> and
@@ -993,8 +982,7 @@ public class GrowthLineTrackingILP {
 					oneElemSet.add( ora );
 					ret.put( hyp, oneElemSet );
 				}
-			}
-			catch ( final GRBException e ) {
+			} catch ( final GRBException e ) {
 				System.err.println( "An optimal right assignment could not be determined!" );
 				e.printStackTrace();
 			}
@@ -1011,7 +999,7 @@ public class GrowthLineTrackingILP {
 	 * cell. The ILP is set up such that only 1 such assignment can be chosen by
 	 * the convex optimizer during the computation of the optimal MAP
 	 * assignment.
-	 *
+	 * 
 	 * @return the optimal (choosen by the convex optimizer) assignment
 	 *         describing the most likely data interpretation (MAP) towards the
 	 *         next time-point.
@@ -1026,7 +1014,7 @@ public class GrowthLineTrackingILP {
 	 * This method is thought to be called given a set that can only contain at
 	 * max 1 active assignment. (It will always and exclusively return the first
 	 * active assignment in the iteration order of the given set!)
-	 *
+	 * 
 	 * @return the one (first) active assignment in the given set of
 	 *         assignments. (An assignment is active iff the binary ILP variable
 	 *         associated with the assignment was set to 1 by the convex
@@ -1048,7 +1036,7 @@ public class GrowthLineTrackingILP {
 	 * An assignment in inactive, when it was NOT chosen by the ILP.
 	 * Only those assignments are collected that are left-edges from one of the
 	 * currently chosen (optimal) segmentation-hypotheses.
-	 *
+	 * 
 	 * @param t
 	 *            the time at which to look for inactive left-assignments.
 	 *            Values for t make only sense if <code>>=1</code> and
@@ -1083,8 +1071,7 @@ public class GrowthLineTrackingILP {
 						}
 					}
 				}
-			}
-			catch ( final GRBException e ) {
+			} catch ( final GRBException e ) {
 				System.err.println( "Gurobi problem at getInactiveLeftAssignments(t)!" );
 				e.printStackTrace();
 			}
@@ -1099,7 +1086,7 @@ public class GrowthLineTrackingILP {
 	 * An assignment in inactive, when it was NOT chosen by the ILP.
 	 * Only those assignments are collected that are right-edges from one of the
 	 * currently chosen (optimal) segmentation-hypotheses.
-	 *
+	 * 
 	 * @param t
 	 *            the time at which to look for inactive right-assignments.
 	 *            Values for t make only sense if <code>>=0</code> and
@@ -1134,8 +1121,7 @@ public class GrowthLineTrackingILP {
 						}
 					}
 				}
-			}
-			catch ( final GRBException e ) {
+			} catch ( final GRBException e ) {
 				System.err.println( "Gurobi problem at getInactiveRightAssignments(t)!" );
 				e.printStackTrace();
 			}
@@ -1148,7 +1134,7 @@ public class GrowthLineTrackingILP {
 	 * Collects and returns all left-assignments given the optimal segmentation.
 	 * Only those assignments are collected that are left-edges from one of the
 	 * currently chosen (optimal) segmentation-hypotheses.
-	 *
+	 * 
 	 * @param t
 	 *            the time at which to look for inactive left-assignments.
 	 *            Values for t make only sense if <code>>=1</code> and
@@ -1189,7 +1175,7 @@ public class GrowthLineTrackingILP {
 	 * segmentation.
 	 * Only those assignments are collected that are right-edges from one of the
 	 * currently chosen (optimal) segmentation-hypotheses.
-	 *
+	 * 
 	 * @param t
 	 *            the time at which to look for inactive right-assignments.
 	 *            Values for t make only sense if <code>>=0</code> and

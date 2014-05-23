@@ -60,7 +60,7 @@ public class ParaMaxFlow< T extends RealType< T > > {
 	/**
 	 * Instatiates an instance of <code>Parametric</code>, and builds a graph
 	 * structure corresponding to the given image.
-	 *
+	 * 
 	 * @param rai
 	 *            the image for which the graph in <code>Parametric</code> will
 	 *            be built. This <code>Img</code> must be 1d, 2d, or 3d.
@@ -87,12 +87,7 @@ public class ParaMaxFlow< T extends RealType< T > > {
 	 * @param k3z_mean
 	 * @param k3z_sd
 	 */
-	public ParaMaxFlow( final RandomAccessibleInterval< T > rai, final RandomAccessibleInterval< ? extends RealType > probMap, final boolean is3d,
-						final double k1, final double k1_mean, final double k1_sd,
-						final double k2,
-						final double k3x, final double k3x_mean, final double k3x_sd,
-						final double k3y, final double k3y_mean, final double k3y_sd,
-						final double k3z, final double k3z_mean, final double k3z_sd ) {
+	public ParaMaxFlow( final RandomAccessibleInterval< T > rai, final RandomAccessibleInterval< ? extends RealType > probMap, final boolean is3d, final double k1, final double k1_mean, final double k1_sd, final double k2, final double k3x, final double k3x_mean, final double k3x_sd, final double k3y, final double k3y_mean, final double k3y_sd, final double k3z, final double k3z_mean, final double k3z_sd ) {
 		if ( rai.numDimensions() > 3 ) { throw new UnsupportedOperationException( "ParaMaxFlow does not yet support Img's with >3 dimensions! Sorry..." ); }
 		if ( Views.iterable( rai ).size() * rai.numDimensions() > Integer.MAX_VALUE ) { throw new UnsupportedOperationException( "ParaMaxFlow can only operate on Img's with <Integer.MAX_VALUE many binary potentials!" ); }
 
@@ -176,7 +171,7 @@ public class ParaMaxFlow< T extends RealType< T > > {
 					parametric.AddUnaryTerm( pixelId, 1.0, likelihood );
 				}
 			}
-	    }
+		}
 
 		// for each pixel in input image --> create pairwise terms towards right (x), down (y) and back (z)
 		raImg.setPosition( new long[] { 0, 0, 0 } );	// do I need this?
@@ -194,10 +189,10 @@ public class ParaMaxFlow< T extends RealType< T > > {
 					final double intensity = raImg.get().getRealDouble();
 					pixelId = ( int ) ( z * dims[ 0 ] * dims[ 1 ] + y * dims[ 0 ] + x );
 
-					if ( x+1 < dims[0] ) {
-						raImg.move( 1,0 );
+					if ( x + 1 < dims[ 0 ] ) {
+						raImg.move( 1, 0 );
 						final double intensity_next = raImg.get().getRealDouble();
-						raImg.move( -1,0 );
+						raImg.move( -1, 0 );
 
 						double diff = Math.abs( intensity - intensity_next );
 						if ( diff < eps ) diff = eps;
@@ -208,12 +203,12 @@ public class ParaMaxFlow< T extends RealType< T > > {
 						}
 
 						final long xNeighborId = pixelId + 1;
-						parametric.AddPairwiseTerm( pixelId, xNeighborId, 0.0, cost, cost, 0.0); // add term with costs E00, E01, E10, and E11,
+						parametric.AddPairwiseTerm( pixelId, xNeighborId, 0.0, cost, cost, 0.0 ); // add term with costs E00, E01, E10, and E11,
 					}
-					if ( y+1 < dims[1] ) {
-						raImg.move( 1,1 );
+					if ( y + 1 < dims[ 1 ] ) {
+						raImg.move( 1, 1 );
 						final double intensity_next = raImg.get().getRealDouble();
-						raImg.move( -1,1 );
+						raImg.move( -1, 1 );
 
 						double diff = Math.abs( intensity - intensity_next );
 						if ( diff < eps ) diff = eps;
@@ -224,10 +219,10 @@ public class ParaMaxFlow< T extends RealType< T > > {
 						}
 
 						final long yNeighborId = pixelId + dims[ 0 ];
-						parametric.AddPairwiseTerm( pixelId, yNeighborId, 0.0, cost, cost, 0.0); // add term with costs E00, E01, E10, and E11,
+						parametric.AddPairwiseTerm( pixelId, yNeighborId, 0.0, cost, cost, 0.0 ); // add term with costs E00, E01, E10, and E11,
 					}
 					// connect in z-direction ONLY if is3d==TRUE!!!
-					if ( is3d && z+1 < dims[2] ) {
+					if ( is3d && z + 1 < dims[ 2 ] ) {
 						raImg.move( 1, 2 );
 						final double intensity_next = raImg.get().getRealDouble();
 						raImg.move( -1, 2 );
@@ -245,7 +240,7 @@ public class ParaMaxFlow< T extends RealType< T > > {
 					}
 				}
 			}
-	    }
+		}
 	}
 
 	public long solve( final double lambdaMin, final double lambdaMax ) {
@@ -460,10 +455,10 @@ public class ParaMaxFlow< T extends RealType< T > > {
 			}
 
 			final double intensity = raImg.get().getRealDouble();
-			if ( y+1 < dims[1] ) {
-				raImg.move( 1,1 );
+			if ( y + 1 < dims[ 1 ] ) {
+				raImg.move( 1, 1 );
 				final double intensity_next = raImg.get().getRealDouble();
-				raImg.move( -1,1 );
+				raImg.move( -1, 1 );
 
 				double diff = Math.abs( intensity - intensity_next );
 				if ( diff < eps ) diff = eps;
