@@ -10,7 +10,6 @@ import com.jug.MotherMachine;
 import com.jug.util.ComponentTreeUtils;
 import com.jug.util.SimpleFunctionAnalysis;
 
-
 /**
  * @author jug
  */
@@ -24,7 +23,7 @@ public class CostFactory {
 		double costDeltaH = 0.0;
 		if ( deltaH > 0 ) { // upward migration
 			deltaH = Math.max( 0, deltaH - 0.05 ); // going upwards for up to 5% is for free...
-			power = 5.0;
+			power = 3.0; //was 5.0 on Saturday
 		} else { // downward migration
 			power = 12.0;
 		}
@@ -51,10 +50,16 @@ public class CostFactory {
 	}
 
 	public static double getIntensityMismatchCost( final double oldIntensity, final double newIntensity ) {
-		final double deltaV = Math.abs( oldIntensity - newIntensity ); // change in intensity value of the two CTNs.
-		final double costDeltaV = 0.0 * deltaV;
-		latestCostEvaluation = String.format( "c_v = 0.0 * %.4f = %.4f", deltaV, costDeltaV );
-		return costDeltaV;
+		final double deltaV = Math.max( 0.0, newIntensity - oldIntensity ); // nur heller werden wird bestraft!
+		final double power = 1.0;
+		final double freeUntil = 0.1;
+		double costDeltaV = 0.0;
+		if ( deltaV > freeUntil ) { // significant jump
+			costDeltaV = deltaV * Math.pow( 1.0 + ( deltaV - freeUntil ), power );
+		}
+//		latestCostEvaluation = String.format( "c_v = %.4f * %.4f^%.1f = %.4f", deltaV, 1 + deltaV, power, costDeltaV );
+		latestCostEvaluation = String.format( "c_v = 0.0" );
+		return 0.0 * costDeltaV;
 	}
 
 	public static double getUnevenDivisionCost( final double sizeFirstChild, final double sizeSecondChild ) {

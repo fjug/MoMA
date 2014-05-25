@@ -20,6 +20,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,7 @@ import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
+import loci.formats.gui.ExtensionFileFilter;
 import net.imglib2.Cursor;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessible;
@@ -142,6 +144,20 @@ public class MotherMachine {
 	public static double MIN_GAP_CONTRAST = 0.02; // This is set to a very low
 													// value that will basically
 													// not filter anything...
+	/**
+	 * When using the learned classification boosted paramaxflow segmentation,
+	 * how much of the midline data obtained by the 'simple' linescan +
+	 * component tree segmentation should mix in? Rational: if the
+	 * classification is flat, the original (simple) mehod might still offer
+	 * some modulation!
+	 */
+	public static double SEGMENTATION_MIX_SIMPLE_INTO_AWESOME = 0.25;
+
+	/**
+	 * String pointing at the weka-segmenter model file that should be used for
+	 * classification.
+	 */
+	public static String CLASSIFIER_MODEL_FILE = "src/main/resources/BinaryGapClassifier.model";
 
 	// - - - - - - - - - - - - - -
 	// GUI-WINDOW RELATED STATICS
@@ -206,6 +222,23 @@ public class MotherMachine {
 	 */
 	public static String DEFAULT_PATH = System.getProperty( "user.home" );
 
+	/**
+	 * The path to save ground truth and time statistics to (yes, we write
+	 * papers!).
+	 */
+	public static String STATS_OUTPUT_PATH = DEFAULT_PATH;
+
+	/**
+	 * If true there will be speed and success stats be logged into fileForStats
+	 */
+	public static boolean logStats;
+
+	/**
+	 * If logStats==true there will be speed and success stats be logged into
+	 * this OutputStreamWriter.
+	 */
+	public static OutputStreamWriter fileWriterForStats;
+
 	// ====================================================================================================================
 
 	/**
@@ -238,9 +271,6 @@ public class MotherMachine {
 		guiFrame = new JFrame( "Interactive MotherMachine" );
 		main.initMainWindow( guiFrame );
 
-		// TODO do it better
-		GrowthLineSegmentationMagic.setClassifier( "/Users/jug/Dropbox/WorkingData/Repositories/GIT/MotherMachineMvn/src/main/resources/", "BinaryGapClassifier.model" );
-
 		props = main.loadParams();
 		BGREM_TEMPLATE_XMIN = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMIN", Integer.toString( BGREM_TEMPLATE_XMIN ) ) );
 		BGREM_TEMPLATE_XMAX = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMAX", Integer.toString( BGREM_TEMPLATE_XMAX ) ) );
@@ -254,6 +284,9 @@ public class MotherMachine {
 		SIGMA_PRE_SEGMENTATION_Y = Double.parseDouble( props.getProperty( "SIGMA_PRE_SEGMENTATION_Y", Double.toString( SIGMA_PRE_SEGMENTATION_Y ) ) );
 		SIGMA_GL_DETECTION_X = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION_X", Double.toString( SIGMA_GL_DETECTION_X ) ) );
 		SIGMA_GL_DETECTION_Y = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION_Y", Double.toString( SIGMA_GL_DETECTION_Y ) ) );
+		SEGMENTATION_MIX_SIMPLE_INTO_AWESOME = Double.parseDouble( props.getProperty( "SEGMENTATION_MIX_SIMPLE_INTO_AWESOME", Double.toString( SEGMENTATION_MIX_SIMPLE_INTO_AWESOME ) ) );
+		CLASSIFIER_MODEL_FILE = props.getProperty( "CLASSIFIER_MODEL_FILE", CLASSIFIER_MODEL_FILE );
+		STATS_OUTPUT_PATH = props.getProperty( "STATS_OUTPUT_PATH", STATS_OUTPUT_PATH );
 		DEFAULT_PATH = props.getProperty( "DEFAULT_PATH", DEFAULT_PATH );
 
 		GUI_POS_X = Integer.parseInt( props.getProperty( "GUI_POS_X", Integer.toString( DEFAULT_GUI_POS_X ) ) );
@@ -539,6 +572,11 @@ public class MotherMachine {
 			@Override
 			public void windowClosing( final WindowEvent we ) {
 				saveParams();
+				if ( fileWriterForStats != null ) {
+					try {
+						fileWriterForStats.close();
+					} catch ( final IOException e ) {}
+				}
 				System.exit( 0 );
 			}
 		} );
@@ -558,27 +596,51 @@ public class MotherMachine {
 	 * 
 	 * @param guiFrame
 	 *            parent frame
-	 * @param path
+	 * @param datapath
 	 *            path to be suggested to open
 	 * @return
 	 */
-	private File showStartupDialog( final JFrame guiFrame, final String path ) {
+	private File showStartupDialog( final JFrame guiFrame, final String datapath ) {
 
-		final String parentFolder = path.substring( 0, path.lastIndexOf( File.separatorChar ) );
+		File file = null;
+		final String parentFolder = datapath.substring( 0, datapath.lastIndexOf( File.separatorChar ) );
+
+		// DATA TO BE LOADED --- DATA TO BE LOADED --- DATA TO BE LOADED --- DATA TO BE LOADED
 
 		int decision = 0;
-		if ( path.equals( System.getProperty( "user.home" ) ) ) {
+		if ( datapath.equals( System.getProperty( "user.home" ) ) ) {
 			decision = JOptionPane.NO_OPTION;
 		} else {
-			final String message = "Should the MotherMachine be opened with the data found in:\n" + path + "\n\nIn case you want to choose a folder please select 'No'...";
-			final String title = "MotherMachine Start Dialog";
+			final String message = "Should the MotherMachine be opened with the data found in:\n" + datapath + "\n\nIn case you want to choose a folder please select 'No'...";
+			final String title = "MotherMachine Data Folder Selection";
 			decision = JOptionPane.showConfirmDialog( guiFrame, message, title, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE );
 		}
 		if ( decision == JOptionPane.YES_OPTION ) {
-			return new File( path );
+			file = new File( datapath );
 		} else {
-			return showFolderChooser( guiFrame, parentFolder );
+			file = showFolderChooser( guiFrame, parentFolder );
 		}
+
+		// CLASSIFIER TO BE LOADED --- CLASSIFIER TO BE LOADED --- CLASSIFIER TO BE LOADED 
+
+		final String message = "Should this classifier be used:\n" + CLASSIFIER_MODEL_FILE + "\n\nIn case you want to choose a different one, please select 'No'...";
+		final String title = "MotherMachine Classifier Selection";
+		decision = JOptionPane.showConfirmDialog( guiFrame, message, title, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE );
+		if ( decision == JOptionPane.YES_OPTION ) {
+			GrowthLineSegmentationMagic.setClassifier( CLASSIFIER_MODEL_FILE, "" );
+		} else {
+			final JFileChooser fc = new JFileChooser( CLASSIFIER_MODEL_FILE );
+			fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "model", "MODEL" }, "weka model file" ) );
+
+			if ( fc.showOpenDialog( this.guiFrame ) == JFileChooser.APPROVE_OPTION ) {
+				CLASSIFIER_MODEL_FILE = fc.getSelectedFile().getAbsolutePath();
+				GrowthLineSegmentationMagic.setClassifier( CLASSIFIER_MODEL_FILE, "" );
+			} else {
+				GrowthLineSegmentationMagic.setClassifier( CLASSIFIER_MODEL_FILE, "" );
+			}
+		}
+
+		return file;
 	}
 
 	/**
@@ -678,6 +740,9 @@ public class MotherMachine {
 			props.setProperty( "SIGMA_PRE_SEGMENTATION_Y", Double.toString( SIGMA_PRE_SEGMENTATION_Y ) );
 			props.setProperty( "SIGMA_GL_DETECTION_X", Double.toString( SIGMA_GL_DETECTION_X ) );
 			props.setProperty( "SIGMA_GL_DETECTION_Y", Double.toString( SIGMA_GL_DETECTION_Y ) );
+			props.setProperty( "SEGMENTATION_MIX_SIMPLE_INTO_AWESOME", Double.toString( SEGMENTATION_MIX_SIMPLE_INTO_AWESOME ) );
+			props.setProperty( "CLASSIFIER_MODEL_FILE", CLASSIFIER_MODEL_FILE );
+			props.setProperty( "STATS_OUTPUT_PATH", STATS_OUTPUT_PATH );
 			props.setProperty( "DEFAULT_PATH", DEFAULT_PATH );
 
 			final java.awt.Point loc = guiFrame.getLocation();
@@ -1316,6 +1381,27 @@ public class MotherMachine {
 		// i++;
 		// }
 		// getGrowthLines().get( 0 ).runILP();
+	}
+
+	/**
+	 * @param string
+	 */
+	private static long lastStatsPrintingTime = 0;
+
+	public static void writeIntoStatsFile( final String string ) {
+		if ( fileWriterForStats != null ) {
+			final long currTime = System.currentTimeMillis();
+			try {
+				fileWriterForStats.write( "" + ( currTime - lastStatsPrintingTime ) + ", \t" );
+				lastStatsPrintingTime = currTime;
+				fileWriterForStats.write( "" + string + "\n" );
+				fileWriterForStats.flush();
+			} catch ( final IOException e ) {
+				System.out.println( "Statistics log could not be written to..." );
+			}
+		} else {
+			System.out.println( "Statistics log requested, but no fileWriter proveded!" );
+		}
 	}
 
 }

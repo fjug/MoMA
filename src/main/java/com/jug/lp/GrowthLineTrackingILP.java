@@ -483,6 +483,9 @@ public class GrowthLineTrackingILP {
 
 		// Border case bullshit
 		// if the target cell touches the upper or lower border (then don't count uneven and shrinking)
+		// (It is not super obvious why this should be true for bottom ones... some data has shitty 
+		// contrast at bottom, hence we trick this condition in here not to loose the mother -- which would 
+		// mean to loose all future tracks!!!)
 		if ( intervalTo.getA().intValue() == 0 || intervalTo.getB().intValue() + 1 >= glLength ) {
 			cost = costDeltaH + costDeltaV;
 		}
@@ -591,10 +594,10 @@ public class GrowthLineTrackingILP {
 		double cost = costDeltaL + costDeltaV + costDeltaH + costDeltaS;
 
 		// Border case bullshit
-		// if the upper cell touches the upper border or lower one the lower border (then don't count shrinking and be nicer to uneven)
+		// if the upper cell touches the upper border (then don't count shrinking and be nicer to uneven)
 		if ( intervalToU.getA().intValue() == 0 || intervalToL.getB().intValue() + 1 >= glLength ) {
-			// In case the upper fuck is not smaller then 2/3 of the lower one
-			if ( ( 1.0 * sizeToU ) / ( 1.0 * sizeToL ) > 0.66 ) {
+			// In case the upper cell is still at least like 1/2 in
+			if ( ( 1.0 * sizeToU ) / ( 1.0 * sizeToL ) > 0.5 ) {
 				// don't count uneven div cost
 				cost = costDeltaH + costDeltaV;
 			} else {

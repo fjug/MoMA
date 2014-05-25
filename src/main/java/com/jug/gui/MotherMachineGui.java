@@ -34,6 +34,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileFilter;
 
 import loci.formats.gui.ExtensionFileFilter;
 import net.imglib2.Localizable;
@@ -127,7 +128,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private JButton btnExchangeSegHyps;
 	private JButton btnOptimize;
 	private JButton btnOptimizeAll;
-	private JButton btnExportFigData;
+	private JButton btnExportTracking;
+	private JButton btnGenerateAllStats;
 	private JButton btnOptimizeRemainingAndExport;
 	private JButton btnSaveFG;
 
@@ -135,13 +137,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 	private JLabel lActiveHyps;
 
-
 	// -------------------------------------------------------------------------------------
 	// construction & gui creation
 	// -------------------------------------------------------------------------------------
 	/**
 	 * Construction
-	 *
+	 * 
 	 * @param mmm
 	 *            the MotherMachineModel to show
 	 */
@@ -217,8 +218,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		btnOptimize.addActionListener( this );
 		btnOptimizeAll = new JButton( "Optimize All" );
 		btnOptimizeAll.addActionListener( this );
-		btnExportFigData = new JButton( "Export FigData" );
-		btnExportFigData.addActionListener( this );
+		btnExportTracking = new JButton( "Export Tracks" );
+		btnExportTracking.addActionListener( this );
+		btnGenerateAllStats = new JButton( "Gen. All Stats" );
+		btnGenerateAllStats.addActionListener( this );
 		btnOptimizeRemainingAndExport = new JButton( "Opt. Remaining & Export" );
 		btnOptimizeRemainingAndExport.addActionListener( this );
 		btnSaveFG = new JButton( "Save FG" );
@@ -227,9 +230,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelHorizontalHelper.add( btnRedoAllHypotheses );
 		panelHorizontalHelper.add( btnOptimize );
 		panelHorizontalHelper.add( btnOptimizeAll );
-		panelHorizontalHelper.add( btnExportFigData );
+		panelHorizontalHelper.add( btnExportTracking );
+		panelHorizontalHelper.add( btnGenerateAllStats );
 //		panelHorizontalHelper.add( btnOptimizeRemainingAndExport );
-		panelHorizontalHelper.add( btnSaveFG );
+//		panelHorizontalHelper.add( btnSaveFG );
 		add( panelHorizontalHelper, BorderLayout.SOUTH );
 
 		// --- Final adding and layout steps -------------
@@ -286,7 +290,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					btnOptimize.doClick();
 				}
 				if ( e.getActionCommand().equals( "e" ) ) {
-					btnExportFigData.doClick();
+					btnExportTracking.doClick();
 				}
 				if ( e.getActionCommand().equals( "r" ) ) {
 					btnRedoAllHypotheses.doClick();
@@ -307,7 +311,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		final JPanel panelView = new JPanel( new FlowLayout( FlowLayout.CENTER, 0, 10 ) );
 		final JPanel panelOptions = new JPanel();
-		panelOptions.setLayout(new BoxLayout(panelOptions, BoxLayout.LINE_AXIS));
+		panelOptions.setLayout( new BoxLayout( panelOptions, BoxLayout.LINE_AXIS ) );
 
 		// =============== panelOptions-part ===================
 		lActiveHyps = new JLabel( "Active hyps: simple" );
@@ -340,7 +344,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelOptions.add( btnExchangeSegHyps );
 		panelOptions.add( lActiveHyps );
 		panelOptions.add( Box.createHorizontalGlue() );
-
 
 		// =============== panelView-part ===================
 
@@ -467,8 +470,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		}
 	}
 
-	private < C extends Component< DoubleType, C > > void dumpCosts( final ComponentForest< C > ct, final double[] ySegmentationData, final GrowthLineTrackingILP ilp )
-	{
+	private < C extends Component< DoubleType, C > > void dumpCosts( final ComponentForest< C > ct, final double[] ySegmentationData, final GrowthLineTrackingILP ilp ) {
 		final int numCTNs = ComponentTreeUtils.countNodes( ct );
 		final double[][] xydxdyCTNBorders = new double[ numCTNs ][ 4 ];
 		final int t = sliderTime.getValue();
@@ -535,7 +537,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	// -------------------------------------------------------------------------------------
 	// getters and setters
 	// -------------------------------------------------------------------------------------
-
 
 	// -------------------------------------------------------------------------------------
 	// methods
@@ -701,14 +702,14 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 								sliderGL.setValue( i );
 								dataToDisplayChanged();
 								if ( choiceAwesome == JOptionPane.YES_OPTION ) {
-									activateAwesomeHypotheses();
+									activateAwesomeHypothesesForCurrentGL();
 								} else if ( choiceAwesome == JOptionPane.NO_OPTION ) {
 									activateSimpleHypotheses();
 								}
 							}
 						} else if ( choiceAllGLs == JOptionPane.NO_OPTION ) {
 							if ( choiceAwesome == JOptionPane.YES_OPTION ) {
-								activateAwesomeHypotheses();
+								activateAwesomeHypothesesForCurrentGL();
 							} else if ( choiceAwesome == JOptionPane.NO_OPTION ) {
 								activateSimpleHypotheses();
 							}
@@ -770,7 +771,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			} );
 			t.start();
 		}
-		if ( e.getSource().equals( btnExportFigData ) ) {
+		if ( e.getSource().equals( btnExportTracking ) ) {
 			final MotherMachineGui self = this;
 			final Thread t = new Thread( new Runnable() {
 
@@ -786,65 +787,204 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 						}
 						MotherMachine.DEFAULT_PATH = file.getParent();
 
-						final String loadedDataFolder = MotherMachine.props.getProperty( "import_path", "BUG -- could not get property 'import_path' while exporting figure data..." );
-						final int numCurrGL = sliderGL.getValue();
-						final int numGLFs = model.getCurrentGL().getFrames().size();
-						final Vector< Vector< String >> dataToExport = new Vector< Vector< String >>();
-
-						final Vector< String > firstLine = new Vector< String >();
-						firstLine.add( loadedDataFolder );
-						dataToExport.add( firstLine );
-						final Vector< String > secondLine = new Vector< String >();
-						secondLine.add( "" + numCurrGL );
-						secondLine.add( "" + numGLFs );
-						dataToExport.add( secondLine );
-
-						int i = 0;
-						for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
-							final Vector< String > newRow = new Vector< String >();
-							newRow.add( "" + i );
-
-							final int numCells = glf.getSolutionStats_numCells();
-							final Vector< ValuePair< ValuePair< Integer, Integer >, Integer >> data = glf.getSolutionStats_limitsAndRightAssType();
-
-							newRow.add( "" + numCells );
-							for ( final ValuePair< ValuePair< Integer, Integer >, Integer > elem : data ) {
-								final int min = elem.a.a.intValue();
-								final int max = elem.a.b.intValue();
-								final int type = elem.b.intValue();
-								newRow.add( String.format( "%3d, %3d, %3d", min, max, type ) );
-							}
-
-							dataToExport.add( newRow );
-							i++;
-						}
-
-						System.out.println( "Exporting data..." );
-						Writer out = null;
-						try {
-							out = new OutputStreamWriter( new FileOutputStream( file ) );
-
-							for ( final Vector< String > rowInData : dataToExport ) {
-								for ( final String datum : rowInData ) {
-									out.write( datum + ",\t " );
-								}
-								out.write( "\n" );
-							}
-							out.close();
-						} catch ( final FileNotFoundException e1 ) {
-							JOptionPane.showMessageDialog( self, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
-							e1.printStackTrace();
-						} catch ( final IOException e1 ) {
-							JOptionPane.showMessageDialog( self, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
-							e1.printStackTrace();
-						}
-						System.out.println( "...done!" );
+						exportTracks( file );
 						dataToDisplayChanged();
 					}
 				}
 			} );
 			t.start();
 
+		}
+		if ( e.getSource().equals( btnGenerateAllStats ) ) {
+			final MotherMachineGui self = this;
+			final Thread t = new Thread( new Runnable() {
+
+				@Override
+				public void run() {
+
+					// READ GL RANGE TO WORK ON
+					// ------------------------
+					int firstGLtoProcess = 0;
+					int lastGLtoProcess = ( MotherMachine.instance.getGrowthLines().size() - 1 );
+					boolean doSimple = false;
+					boolean doAwesome = false;
+
+					boolean done = false;
+					while ( !done ) {
+						try {
+							firstGLtoProcess = Integer.parseInt( JOptionPane.showInputDialog( "Number of first GL to be processed:", "" + firstGLtoProcess ) );
+							done = true;
+						} catch ( final NumberFormatException e ) {
+							done = false;
+						}
+					}
+					done = false;
+					while ( !done ) {
+						try {
+							lastGLtoProcess = Integer.parseInt( JOptionPane.showInputDialog( "Number of last GL to be processed:", "" + lastGLtoProcess ) );
+							done = true;
+						} catch ( final NumberFormatException e ) {
+							done = false;
+						}
+					}
+					done = false;
+					while ( !done ) {
+						final String choice = JOptionPane.showInputDialog( "Process simple ('S'), awesome ('A'), or both ('B')?", "B" );
+						if ( choice.equals( "S" ) || choice.equals( "B" ) ) {
+							done = true;
+							doSimple = true;
+						}
+						if ( choice.equals( "A" ) || choice.equals( "B" ) ) {
+							done = true;
+							doAwesome = true;
+						}
+					}
+
+					// READ OUTPUT FOLDER TO SAVE STATS TO
+					// -----------------------------------
+					final JFileChooser chooser = new JFileChooser( new File( MotherMachine.STATS_OUTPUT_PATH ).getParent() );
+					chooser.setDialogTitle( "Select output folder..." );
+					chooser.setFileFilter( new FileFilter() {
+
+						@Override
+						public final boolean accept( final File file ) {
+							return file.isDirectory();
+						}
+
+						@Override
+						public String getDescription() {
+							return "We only take directories";
+						}
+					} );
+					chooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+					chooser.setAcceptAllFileFilterUsed( false );
+
+					String foldername = "";
+					if ( chooser.showSaveDialog( self ) == JFileChooser.APPROVE_OPTION ) {
+						foldername = chooser.getSelectedFile().getAbsolutePath();
+						MotherMachine.STATS_OUTPUT_PATH = foldername;
+
+						if ( !foldername.endsWith( "/" ) ) {
+							foldername += '/';
+						}
+
+						MotherMachine.logStats = true;
+						// --------------------------------------------------------------------------------
+						// Simple segmentation
+						// --------------------------------------------------------------------------------
+						if ( doSimple ) {
+							try {
+								if ( MotherMachine.fileWriterForStats != null ) {
+									MotherMachine.fileWriterForStats.close();
+								}
+								MotherMachine.fileWriterForStats = new OutputStreamWriter( new FileOutputStream( foldername + "stats_simple_" + firstGLtoProcess + "-" + lastGLtoProcess + ".csv" ) );
+							} catch ( final FileNotFoundException e1 ) {
+								JOptionPane.showMessageDialog( self, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
+								e1.printStackTrace();
+								return;
+							} catch ( final IOException e1 ) {
+								JOptionPane.showMessageDialog( self, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
+								e1.printStackTrace();
+								return;
+							}
+
+							System.out.println( "SIMPLE\n======" );
+							MotherMachine.writeIntoStatsFile( "SIMPLE SEGMENTATION" );
+							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
+								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
+								for ( final GrowthLineFrame glf : gl.getFrames() ) {
+									System.out.print( "." );
+									glf.generateSimpleSegmentationHypotheses( MotherMachine.instance.getImgTemp() );
+								}
+								System.out.println( "" );
+								MotherMachine.writeIntoStatsFile( "GL" + i + ": done" );
+							}
+
+							// ILP building
+							MotherMachine.writeIntoStatsFile( "ILP GENERATION" );
+							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
+								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
+								gl.generateILP();
+								MotherMachine.writeIntoStatsFile( "GL" + i + ": done" );
+								System.out.println( "GL" + i + "'s ILP is set up." );
+							}
+
+							// Optimization
+							MotherMachine.writeIntoStatsFile( "OPTIMIZATION" );
+							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
+								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
+								gl.runILP();
+								MotherMachine.writeIntoStatsFile( "GL" + i + ": done" );
+								System.out.println( "Optimum found for GL " + i );
+							}
+
+							// Export results
+							MotherMachine.writeIntoStatsFile( "EXPORTING TRACKS" );
+							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
+								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
+								final File outfile = new File( foldername + "gl" + i + "_simple.csv" );
+								model.setCurrentGL( i );
+								exportTracks( outfile );
+							}
+						}
+
+						// --------------------------------------------------------------------------------
+						// Awesome segmentation
+						// --------------------------------------------------------------------------------
+						if ( doAwesome ) {
+							try {
+								if ( MotherMachine.fileWriterForStats != null ) {
+									MotherMachine.fileWriterForStats.close();
+								}
+								MotherMachine.fileWriterForStats = new OutputStreamWriter( new FileOutputStream( foldername + "stats_awesome_" + firstGLtoProcess + "-" + lastGLtoProcess + ".csv" ) );
+							} catch ( final FileNotFoundException e1 ) {
+								JOptionPane.showMessageDialog( self, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
+								e1.printStackTrace();
+								return;
+							} catch ( final IOException e1 ) {
+								JOptionPane.showMessageDialog( self, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
+								e1.printStackTrace();
+								return;
+							}
+
+							System.out.println( "\nAWESOME\n=======" );
+							MotherMachine.writeIntoStatsFile( "AWESOME SEGMENTATION" );
+							activateAwesomeHypotheses( firstGLtoProcess, lastGLtoProcess );
+
+							// ILP building
+							MotherMachine.writeIntoStatsFile( "ILP GENERATION" );
+							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
+								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
+								gl.generateILP();
+								MotherMachine.writeIntoStatsFile( "GL" + i + ": done" );
+								System.out.println( "GL" + i + "'s ILP is set up." );
+							}
+
+							// Optimization
+							MotherMachine.writeIntoStatsFile( "OPTIMIZATION" );
+							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
+								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
+								gl.runILP();
+								MotherMachine.writeIntoStatsFile( "GL" + i + ": done" );
+								System.out.println( "Optimum found for GL " + i );
+							}
+
+							// Export results
+							MotherMachine.writeIntoStatsFile( "EXPORTING TRACKS" );
+							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
+								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
+								final File outfile = new File( foldername + "gl" + i + "_awesome.csv" );
+								model.setCurrentGL( i );
+								exportTracks( outfile );
+							}
+						}
+
+						// STOP LOGGING (IS THAT USED ANYWHERE EXCEPT HERE ANYWAYS?)
+						MotherMachine.logStats = false;
+					}
+				}
+			} );
+			t.start();
 		}
 		if ( e.getSource().equals( btnOptimizeRemainingAndExport ) ) {
 			final MotherMachineGui self = this;
@@ -901,8 +1041,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 									out.write( datum + ", " );
 									try {
 										lastValue = Integer.parseInt( datum );
-									}
-									catch ( final NumberFormatException nfe ) {
+									} catch ( final NumberFormatException nfe ) {
 										lastValue = 0;
 									}
 								}
@@ -911,12 +1050,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 							}
 							out.write( "\nTotal cell count:, " + totalCellCount );
 							out.close();
-						}
-						catch ( final FileNotFoundException e1 ) {
+						} catch ( final FileNotFoundException e1 ) {
 							JOptionPane.showMessageDialog( self, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
 							e1.printStackTrace();
-						}
-						catch ( final IOException e1 ) {
+						} catch ( final IOException e1 ) {
 							JOptionPane.showMessageDialog( self, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
 							e1.printStackTrace();
 						}
@@ -938,19 +1075,42 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			System.out.print( "." );
 			glf.generateSimpleSegmentationHypotheses( model.mm.getImgTemp() );
 		}
-		System.out.print( "" );
+		System.out.println( "" );
 	}
 
 	/**
 	 * Goes over all glfs of the current gl and activates the awesome,
 	 * RF-classified + paramaxflow hypotheses.
 	 */
-	private void activateAwesomeHypotheses() {
+	private void activateAwesomeHypotheses( final int firstGLtoProcess, final int lastGLtoProcess ) {
+		for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
+			final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
+			activateAwesomeHypothesesForGL( gl );
+			MotherMachine.writeIntoStatsFile( "GL" + i + ": done" );
+		}
+	}
+
+	/**
+	 * Goes over all glfs of the current gl and activates the awesome,
+	 * RF-classified + paramaxflow hypotheses.
+	 */
+	private void activateAwesomeHypothesesForCurrentGL() {
+		activateAwesomeHypothesesForGL( model.getCurrentGL() );
+	}
+
+	/**
+	 * Goes over all glfs of the given gl and activates the awesome,
+	 * RF-classified + paramaxflow hypotheses.
+	 */
+	private void activateAwesomeHypothesesForGL( final GrowthLine gl ) {
+		// Since I am gonna mix simple and AWESOME, I have to also ensure to have the siple ones available
+		if ( MotherMachine.SEGMENTATION_MIX_SIMPLE_INTO_AWESOME > 0.0001 ) {
+			activateSimpleHypotheses();
+		}
+
 		final int numProcessors = 16; //Prefs.getThreads();
 		final int numThreads = Math.min( model.getCurrentGL().getFrames().size(), numProcessors );
 		final int numFurtherThreads = ( int ) Math.ceil( ( double ) ( numProcessors - numThreads ) / model.getCurrentGL().getFrames().size() ) + 1;
-
-		System.out.println( "::::::::::::::::::::::: Processing " + model.getCurrentGL().getFrames().size() + " GLFs in " + numThreads + " thread(s)...." );
 
 		final Thread[] threads = new Thread[ numThreads ];
 
@@ -968,8 +1128,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			public void run() {
 
 				for ( int i = numThread; i < model.getCurrentGL().getFrames().size(); i += numThreads ) {
-					System.out.print( ": : : : : : : : : : : : done with GLF#" + i );
-					model.getCurrentGL().getFrames().get( i ).generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
+					gl.getFrames().get( i ).generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
 				}
 			}
 		}
@@ -1004,4 +1163,64 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 //		}
 	}
 
+	/**
+	 * @param self
+	 * @param file
+	 */
+	public void exportTracks( final File file ) {
+		final String loadedDataFolder = MotherMachine.props.getProperty( "import_path", "BUG -- could not get property 'import_path' while exporting figure data..." );
+		final int numCurrGL = sliderGL.getValue();
+		final int numGLFs = model.getCurrentGL().getFrames().size();
+		final Vector< Vector< String >> dataToExport = new Vector< Vector< String >>();
+
+		final Vector< String > firstLine = new Vector< String >();
+		firstLine.add( loadedDataFolder );
+		dataToExport.add( firstLine );
+		final Vector< String > secondLine = new Vector< String >();
+		secondLine.add( "" + numCurrGL );
+		secondLine.add( "" + numGLFs );
+		dataToExport.add( secondLine );
+
+		int i = 0;
+		for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
+			final Vector< String > newRow = new Vector< String >();
+			newRow.add( "" + i );
+
+			final int numCells = glf.getSolutionStats_numCells();
+			final Vector< ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > >> data = glf.getSolutionStats_limitsAndRightAssType();
+
+			newRow.add( "" + numCells );
+			for ( final ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > > elem : data ) {
+				final int min = elem.a.a.intValue();
+				final int max = elem.a.b.intValue();
+				final int type = elem.b.a.intValue();
+				final int user_touched = elem.b.b.intValue();
+				newRow.add( String.format( "%3d, %3d, %3d, %3d", min, max, type, user_touched ) );
+			}
+
+			dataToExport.add( newRow );
+			i++;
+		}
+
+		System.out.println( "Exporting data..." );
+		Writer out = null;
+		try {
+			out = new OutputStreamWriter( new FileOutputStream( file ) );
+
+			for ( final Vector< String > rowInData : dataToExport ) {
+				for ( final String datum : rowInData ) {
+					out.write( datum + ",\t " );
+				}
+				out.write( "\n" );
+			}
+			out.close();
+		} catch ( final FileNotFoundException e1 ) {
+			JOptionPane.showMessageDialog( this, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
+			e1.printStackTrace();
+		} catch ( final IOException e1 ) {
+			JOptionPane.showMessageDialog( this, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
+			e1.printStackTrace();
+		}
+		System.out.println( "...done!" );
+	}
 }

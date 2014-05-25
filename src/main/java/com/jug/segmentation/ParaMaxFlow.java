@@ -245,7 +245,7 @@ public class ParaMaxFlow< T extends RealType< T > > {
 
 	public long solve( final double lambdaMin, final double lambdaMax ) {
 		final long solutions = parametric.Solve( lambdaMin, lambdaMax );
-		System.out.println( " >>>>> ParaMaxFlow solutions found: " + solutions + " <<<<<" );
+//		System.out.println( " >>>>> ParaMaxFlow solutions found: " + solutions + " <<<<<" );
 		regionsImg = createRegionsImg();
 		return solutions;
 	}

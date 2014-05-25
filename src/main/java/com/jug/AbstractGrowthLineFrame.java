@@ -429,10 +429,13 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 
 		awesomeSepValues = getInvertedIntensitiesAtImgLocations( paramaxflowSumImageDoubleTyped, true );
 
-		// special case: simple value is better then trained random forest: leave some simple value in there and it might help to divide at right spots
-		final double percSimpleToStay = 0.2;
-		for ( int i = 0; i < Math.min( simpleSepValues.length, awesomeSepValues.length ); i++ ) {
-			awesomeSepValues[ i ] = percSimpleToStay * simpleSepValues[ i ] + ( 1.0 - percSimpleToStay ) * awesomeSepValues[ i ];
+		// special case: simple value is better then trained random forest: leave some simple value in there and 
+		// it might help to divide at right spots
+		if ( MotherMachine.SEGMENTATION_MIX_SIMPLE_INTO_AWESOME > 0.00001 ) {
+			final double percSimpleToStay = MotherMachine.SEGMENTATION_MIX_SIMPLE_INTO_AWESOME;
+			for ( int i = 0; i < Math.min( simpleSepValues.length, awesomeSepValues.length ); i++ ) {
+				awesomeSepValues[ i ] = percSimpleToStay * simpleSepValues[ i ] + ( 1.0 - percSimpleToStay ) * awesomeSepValues[ i ];
+			}
 		}
 
 		return awesomeSepValues;
@@ -694,8 +697,8 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 		return cells;
 	}
 
-	public Vector< ValuePair< ValuePair< Integer, Integer >, Integer >> getSolutionStats_limitsAndRightAssType() {
-		final Vector< ValuePair< ValuePair< Integer, Integer >, Integer >> ret = new Vector< ValuePair< ValuePair< Integer, Integer >, Integer >>();
+	public Vector< ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > >> getSolutionStats_limitsAndRightAssType() {
+		final Vector< ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > >> ret = new Vector< ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > >>();
 		for ( final Hypothesis< Component< DoubleType, ? > > hyp : getParent().getIlp().getOptimalRightAssignments( this.getTime() ).keySet() ) {
 
 			final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> aa = getParent().getIlp().getOptimalRightAssignments( this.getTime() ).get( hyp ).iterator().next();
@@ -708,14 +711,13 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 				max = Math.max( max, ypos );
 			}
 
-			ret.add( new ValuePair< ValuePair< Integer, Integer >, Integer >( new ValuePair< Integer, Integer >( new Integer( min ), new Integer( max ) ), new Integer( aa.getType() ) ) );
+			ret.add( new ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > >( new ValuePair< Integer, Integer >( new Integer( min ), new Integer( max ) ), new ValuePair< Integer, Integer >( new Integer( aa.getType() ), new Integer( ( aa.isGroundTruth() || aa.isGroundUntruth() ) ? 1 : 0 ) ) ) );
 		}
 
-		Collections.sort( ret, new Comparator< ValuePair< ValuePair< Integer, Integer >, Integer >>() {
+		Collections.sort( ret, new Comparator< ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > >>() {
 
 			@Override
-			public int compare( final ValuePair< ValuePair< Integer, Integer >, Integer > o1, final ValuePair< ValuePair< Integer, Integer >, Integer > o2 ) {
-				// TODO Auto-generated method stub
+			public int compare( final ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > > o1, final ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > > o2 ) {
 				return o1.a.a.compareTo( o2.a.a );
 			}
 		} );
