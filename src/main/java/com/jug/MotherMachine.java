@@ -151,7 +151,7 @@ public class MotherMachine {
 	 * classification is flat, the original (simple) mehod might still offer
 	 * some modulation!
 	 */
-	public static double SEGMENTATION_MIX_SIMPLE_INTO_AWESOME = 0.25;
+	public static double SEGMENTATION_MIX_CT_INTO_PMFRF = 0.25;
 
 	/**
 	 * String pointing at the weka-segmenter model file that should be used for
@@ -284,7 +284,7 @@ public class MotherMachine {
 		SIGMA_PRE_SEGMENTATION_Y = Double.parseDouble( props.getProperty( "SIGMA_PRE_SEGMENTATION_Y", Double.toString( SIGMA_PRE_SEGMENTATION_Y ) ) );
 		SIGMA_GL_DETECTION_X = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION_X", Double.toString( SIGMA_GL_DETECTION_X ) ) );
 		SIGMA_GL_DETECTION_Y = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION_Y", Double.toString( SIGMA_GL_DETECTION_Y ) ) );
-		SEGMENTATION_MIX_SIMPLE_INTO_AWESOME = Double.parseDouble( props.getProperty( "SEGMENTATION_MIX_SIMPLE_INTO_AWESOME", Double.toString( SEGMENTATION_MIX_SIMPLE_INTO_AWESOME ) ) );
+		SEGMENTATION_MIX_CT_INTO_PMFRF = Double.parseDouble( props.getProperty( "SEGMENTATION_MIX_CT_INTO_PMFRF", Double.toString( SEGMENTATION_MIX_CT_INTO_PMFRF ) ) );
 		CLASSIFIER_MODEL_FILE = props.getProperty( "CLASSIFIER_MODEL_FILE", CLASSIFIER_MODEL_FILE );
 		STATS_OUTPUT_PATH = props.getProperty( "STATS_OUTPUT_PATH", STATS_OUTPUT_PATH );
 		DEFAULT_PATH = props.getProperty( "DEFAULT_PATH", DEFAULT_PATH );
@@ -740,7 +740,7 @@ public class MotherMachine {
 			props.setProperty( "SIGMA_PRE_SEGMENTATION_Y", Double.toString( SIGMA_PRE_SEGMENTATION_Y ) );
 			props.setProperty( "SIGMA_GL_DETECTION_X", Double.toString( SIGMA_GL_DETECTION_X ) );
 			props.setProperty( "SIGMA_GL_DETECTION_Y", Double.toString( SIGMA_GL_DETECTION_Y ) );
-			props.setProperty( "SEGMENTATION_MIX_SIMPLE_INTO_AWESOME", Double.toString( SEGMENTATION_MIX_SIMPLE_INTO_AWESOME ) );
+			props.setProperty( "SEGMENTATION_MIX_CT_INTO_PMFRF", Double.toString( SEGMENTATION_MIX_CT_INTO_PMFRF ) );
 			props.setProperty( "CLASSIFIER_MODEL_FILE", CLASSIFIER_MODEL_FILE );
 			props.setProperty( "STATS_OUTPUT_PATH", STATS_OUTPUT_PATH );
 			props.setProperty( "DEFAULT_PATH", DEFAULT_PATH );

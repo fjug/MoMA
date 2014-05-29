@@ -431,8 +431,8 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 
 		// special case: simple value is better then trained random forest: leave some simple value in there and 
 		// it might help to divide at right spots
-		if ( MotherMachine.SEGMENTATION_MIX_SIMPLE_INTO_AWESOME > 0.00001 ) {
-			final double percSimpleToStay = MotherMachine.SEGMENTATION_MIX_SIMPLE_INTO_AWESOME;
+		if ( MotherMachine.SEGMENTATION_MIX_CT_INTO_PMFRF > 0.00001 ) {
+			final double percSimpleToStay = MotherMachine.SEGMENTATION_MIX_CT_INTO_PMFRF;
 			for ( int i = 0; i < Math.min( simpleSepValues.length, awesomeSepValues.length ); i++ ) {
 				awesomeSepValues[ i ] = percSimpleToStay * simpleSepValues[ i ] + ( 1.0 - percSimpleToStay ) * awesomeSepValues[ i ];
 			}

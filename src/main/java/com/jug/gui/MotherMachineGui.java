@@ -314,9 +314,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelOptions.setLayout( new BoxLayout( panelOptions, BoxLayout.LINE_AXIS ) );
 
 		// =============== panelOptions-part ===================
-		lActiveHyps = new JLabel( "Active hyps: simple" );
+		lActiveHyps = new JLabel( "Active hyps: CT" );
 		lActiveHyps.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder( 2, 5, 2, 5 ) ) );
-		cbShowParaMaxFlowData = new JCheckBox( "show AWESOME if avlbl", false );
+		cbShowParaMaxFlowData = new JCheckBox( "show PMFRF if avlbl", false );
 		cbShowParaMaxFlowData.addActionListener( new ActionListener() {
 
 			@Override
@@ -598,10 +598,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			}
 
 			if ( glf.isParaMaxFlowComponentTree() ) {
-				lActiveHyps.setText( "AWESOME" );
+				lActiveHyps.setText( "PMFRF" );
 				lActiveHyps.setForeground( Color.red );
 			} else {
-				lActiveHyps.setText( "simple " );
+				lActiveHyps.setText( "CT " );
 				lActiveHyps.setForeground( Color.black );
 			}
 
@@ -688,7 +688,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		}
 		if ( e.getSource().equals( btnRedoAllHypotheses ) ) {
 
-			final int choiceAwesome = JOptionPane.showOptionDialog( this, "Do you want to reset to AWESOME (but slow to generate) segmentation hypotheses?", "AWESOME but slow?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null );
+			final int choiceAwesome = JOptionPane.showOptionDialog( this, "Do you want to reset to PMFRF segmentations?\n(Otherwise fast CT segments will be built.)", "PMFRF or CT?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null );
 			if ( choiceAwesome != JOptionPane.CANCEL_OPTION ) {
 				final int choiceAllGLs = JOptionPane.showOptionDialog( this, "Do generate segmentation hypotheses for ALL GLs?", "For ALL GLs?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null );
 				final JSlider sliderGL = this.sliderGL;
@@ -725,7 +725,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 				@Override
 				public void run() {
-					System.out.println( "Filling in simple hypotheses where needed..." );
+					System.out.println( "Filling in CT hypotheses where needed..." );
 					for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
 						if ( glf.getComponentTree() == null ) {
 							glf.generateSimpleSegmentationHypotheses( MotherMachine.instance.getImgTemp() );
@@ -753,7 +753,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					for ( final GrowthLine gl : model.mm.getGrowthLines() ) {
 						i++;
 
-						System.out.println( "Filling in simple hypotheses where needed..." );
+						System.out.println( "Filling in CT hypotheses where needed..." );
 						for ( final GrowthLineFrame glf : gl.getFrames() ) {
 							if ( glf.getComponentTree() == null ) {
 								glf.generateSimpleSegmentationHypotheses( MotherMachine.instance.getImgTemp() );
@@ -812,7 +812,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					boolean done = false;
 					while ( !done ) {
 						try {
-							firstGLtoProcess = Integer.parseInt( JOptionPane.showInputDialog( "Number of first GL to be processed:", "" + firstGLtoProcess ) );
+							final String str = JOptionPane.showInputDialog( "Number of first GL to be processed:", "" + firstGLtoProcess );
+							if ( str == null ) return; // User decided to hit cancel!
+							firstGLtoProcess = Integer.parseInt( str );
 							done = true;
 						} catch ( final NumberFormatException e ) {
 							done = false;
@@ -821,7 +823,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					done = false;
 					while ( !done ) {
 						try {
-							lastGLtoProcess = Integer.parseInt( JOptionPane.showInputDialog( "Number of last GL to be processed:", "" + lastGLtoProcess ) );
+							final String str = JOptionPane.showInputDialog( "Number of last GL to be processed:", "" + lastGLtoProcess );
+							if ( str == null ) return; // User decided to hit cancel!
+							lastGLtoProcess = Integer.parseInt( str );
 							done = true;
 						} catch ( final NumberFormatException e ) {
 							done = false;
@@ -829,12 +833,13 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					}
 					done = false;
 					while ( !done ) {
-						final String choice = JOptionPane.showInputDialog( "Process simple ('S'), awesome ('A'), or both ('B')?", "B" );
-						if ( choice.equals( "S" ) || choice.equals( "B" ) ) {
+						final String choice = JOptionPane.showInputDialog( "Process CT ('1'), PMFRF ('2'), or both ('B')?", "B" );
+						if ( choice == null ) return; // User decided to hit cancel!
+						if ( choice.equals( "1" ) || choice.equals( "B" ) ) {
 							done = true;
 							doSimple = true;
 						}
-						if ( choice.equals( "A" ) || choice.equals( "B" ) ) {
+						if ( choice.equals( "2" ) || choice.equals( "B" ) ) {
 							done = true;
 							doAwesome = true;
 						}
@@ -869,8 +874,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 						}
 
 						MotherMachine.logStats = true;
+
 						// --------------------------------------------------------------------------------
-						// Simple segmentation
+						// CT segmentation
 						// --------------------------------------------------------------------------------
 						if ( doSimple ) {
 							try {
@@ -888,8 +894,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 								return;
 							}
 
-							System.out.println( "SIMPLE\n======" );
-							MotherMachine.writeIntoStatsFile( "SIMPLE SEGMENTATION" );
+							System.out.println( "CT\n======" );
+							MotherMachine.writeIntoStatsFile( "CT SEGMENTATION" );
 							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
 								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
 								for ( final GrowthLineFrame glf : gl.getFrames() ) {
@@ -947,8 +953,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 								return;
 							}
 
-							System.out.println( "\nAWESOME\n=======" );
-							MotherMachine.writeIntoStatsFile( "AWESOME SEGMENTATION" );
+							System.out.println( "\nPMFRF\n=======" );
+							MotherMachine.writeIntoStatsFile( "PMFRF SEGMENTATION" );
 							activateAwesomeHypotheses( firstGLtoProcess, lastGLtoProcess );
 
 							// ILP building
@@ -1071,7 +1077,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * + comp.tree hypotheses.
 	 */
 	private void activateSimpleHypotheses() {
-		for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
+		activateSimpleHypothesesForGL( model.getCurrentGL() );
+	}
+
+	private void activateSimpleHypothesesForGL( final GrowthLine gl ) {
+		for ( final GrowthLineFrame glf : gl.getFrames() ) {
 			System.out.print( "." );
 			glf.generateSimpleSegmentationHypotheses( model.mm.getImgTemp() );
 		}
@@ -1103,9 +1113,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * RF-classified + paramaxflow hypotheses.
 	 */
 	private void activateAwesomeHypothesesForGL( final GrowthLine gl ) {
-		// Since I am gonna mix simple and AWESOME, I have to also ensure to have the siple ones available
-		if ( MotherMachine.SEGMENTATION_MIX_SIMPLE_INTO_AWESOME > 0.0001 ) {
-			activateSimpleHypotheses();
+		// Since I am gonna mix CT and PMFRF, I have to also ensure to have the CT ones available
+		if ( MotherMachine.SEGMENTATION_MIX_CT_INTO_PMFRF > 0.0001 ) {
+			activateSimpleHypothesesForGL( gl );
 		}
 
 		final int numProcessors = 16; //Prefs.getThreads();
@@ -1148,7 +1158,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		// OLD SINGLETHREADED VERSION
 //		for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
-//			System.out.println( ">>>>> Generating AWESOME hypotheses for GLF #" + glf.getTime() );
+//			System.out.println( ">>>>> Generating PMFRF hypotheses for GLF #" + glf.getTime() );
 //			glf.generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
 //		}
 //		System.out.print( "" );
