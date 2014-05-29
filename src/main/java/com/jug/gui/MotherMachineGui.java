@@ -883,7 +883,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 								if ( MotherMachine.fileWriterForStats != null ) {
 									MotherMachine.fileWriterForStats.close();
 								}
-								MotherMachine.fileWriterForStats = new OutputStreamWriter( new FileOutputStream( foldername + "stats_simple_" + firstGLtoProcess + "-" + lastGLtoProcess + ".csv" ) );
+								MotherMachine.fileWriterForStats = new OutputStreamWriter( new FileOutputStream( foldername + "stats_CT_" + firstGLtoProcess + "-" + lastGLtoProcess + ".csv" ) );
 							} catch ( final FileNotFoundException e1 ) {
 								JOptionPane.showMessageDialog( self, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
 								e1.printStackTrace();
@@ -928,7 +928,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 							MotherMachine.writeIntoStatsFile( "EXPORTING TRACKS" );
 							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
 								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
-								final File outfile = new File( foldername + "gl" + i + "_simple.csv" );
+								final File outfile = new File( foldername + "gl" + i + "_CT.csv" );
 								model.setCurrentGL( i );
 								exportTracks( outfile );
 							}
@@ -942,7 +942,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 								if ( MotherMachine.fileWriterForStats != null ) {
 									MotherMachine.fileWriterForStats.close();
 								}
-								MotherMachine.fileWriterForStats = new OutputStreamWriter( new FileOutputStream( foldername + "stats_awesome_" + firstGLtoProcess + "-" + lastGLtoProcess + ".csv" ) );
+								MotherMachine.fileWriterForStats = new OutputStreamWriter( new FileOutputStream( foldername + "stats_PMFRF_" + firstGLtoProcess + "-" + lastGLtoProcess + ".csv" ) );
 							} catch ( final FileNotFoundException e1 ) {
 								JOptionPane.showMessageDialog( self, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
 								e1.printStackTrace();
@@ -979,7 +979,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 							MotherMachine.writeIntoStatsFile( "EXPORTING TRACKS" );
 							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
 								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
-								final File outfile = new File( foldername + "gl" + i + "_awesome.csv" );
+								final File outfile = new File( foldername + "gl" + i + "_PMFRF.csv" );
 								model.setCurrentGL( i );
 								exportTracks( outfile );
 							}
