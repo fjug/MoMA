@@ -159,6 +159,19 @@ public class MotherMachine {
 	 */
 	public static String CLASSIFIER_MODEL_FILE = "src/main/resources/BinaryGapClassifier.model";
 
+	/**
+	 * Global switch that turns the use of the weka classifier for paramaxflow
+	 * on or off.
+	 * Default: ON (true)
+	 */
+	public static boolean USE_CLASSIFIER_FOR_PMF = true;
+
+	/**
+	 * One of the test for paper:
+	 * What happens if exit constraints are NOT part of the model?
+	 */
+	public static final boolean DISABLE_EXIT_CONSTRAINTS = false;
+
 	// - - - - - - - - - - - - - -
 	// GUI-WINDOW RELATED STATICS
 	// - - - - - - - - - - - - - -

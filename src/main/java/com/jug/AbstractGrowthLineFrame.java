@@ -662,8 +662,11 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	public IntervalView< LongType > getParamaxflowSumImage( final IntervalView< DoubleType > viewGLF ) {
 		if ( paramaxflowSumImage == null ) {
 			if ( viewGLF == null ) { return null; }
-			this.paramaxflowSumImage = GrowthLineSegmentationMagic.returnParamaxflowRegionSums( viewGLF );
-//			this.paramaxflowSumImage = GrowthLineSegmentationMagic.returnClassificationBoostedParamaxflowRegionSums( viewGLF );
+			if ( !MotherMachine.USE_CLASSIFIER_FOR_PMF ) {
+				this.paramaxflowSumImage = GrowthLineSegmentationMagic.returnParamaxflowRegionSums( viewGLF );
+			} else {
+				this.paramaxflowSumImage = GrowthLineSegmentationMagic.returnClassificationBoostedParamaxflowRegionSums( viewGLF );
+			}
 			this.paramaxflowSolutions = GrowthLineSegmentationMagic.getNumSolutions();
 		}
 

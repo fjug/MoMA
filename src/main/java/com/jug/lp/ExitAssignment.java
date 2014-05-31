@@ -15,6 +15,8 @@ import java.util.List;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.DoubleType;
 
+import com.jug.MotherMachine;
+
 /**
  * @author jug
  */
@@ -30,14 +32,13 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< D
 
 	/**
 	 * Creates an ExitAssignment.
-	 *
+	 * 
 	 * @param nodes
 	 * @param edges
 	 * @param who
 	 * @throws GRBException
 	 */
-	public ExitAssignment(final int t, final GRBVar ilpVariable, final GRBModel model,
- final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > >, Hypothesis< Component< DoubleType, ? > > > nodes, final HypothesisNeighborhoods< Hypothesis< Component< DoubleType, ? > >, AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > edges, final List< Hypothesis< Component< DoubleType, ? >>> Hup, final Hypothesis< Component< DoubleType, ? >> who ) throws GRBException {
+	public ExitAssignment( final int t, final GRBVar ilpVariable, final GRBModel model, final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > >, Hypothesis< Component< DoubleType, ? > > > nodes, final HypothesisNeighborhoods< Hypothesis< Component< DoubleType, ? > >, AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > edges, final List< Hypothesis< Component< DoubleType, ? >>> Hup, final Hypothesis< Component< DoubleType, ? >> who ) throws GRBException {
 		super( GrowthLineTrackingILP.ASSIGNMENT_EXIT, ilpVariable, model );
 		this.Hup = Hup;
 		this.edges = edges;
@@ -69,13 +70,15 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< D
 			}
 		}
 
-		model.addConstr( expr, GRB.LESS_EQUAL, Hup.size(), "dc_" + dcId );
+		if ( !MotherMachine.DISABLE_EXIT_CONSTRAINTS ) {
+			model.addConstr( expr, GRB.LESS_EQUAL, Hup.size(), "dc_" + dcId );
+		}
 		dcId++;
 	}
 
 	/**
 	 * Adds a list of constraints and factors as strings.
-	 *
+	 * 
 	 * @see com.jug.lp.AbstractAssignment#getConstraint()
 	 */
 	@Override
@@ -109,7 +112,7 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< D
 	/**
 	 * Returns the segmentation hypothesis this exit-assignment is associated
 	 * with.
-	 *
+	 * 
 	 * @return the associated segmentation-hypothesis.
 	 */
 	public Hypothesis< Component< DoubleType, ? >> getAssociatedHypothesis() {

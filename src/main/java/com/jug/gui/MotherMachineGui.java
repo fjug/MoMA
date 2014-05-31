@@ -806,8 +806,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					// ------------------------
 					int firstGLtoProcess = 0;
 					int lastGLtoProcess = ( MotherMachine.instance.getGrowthLines().size() - 1 );
-					boolean doSimple = false;
-					boolean doAwesome = false;
 
 					boolean done = false;
 					while ( !done ) {
@@ -832,16 +830,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 						}
 					}
 					done = false;
+					String seg_methods_to_do = "123";
 					while ( !done ) {
-						final String choice = JOptionPane.showInputDialog( "Process CT ('1'), PMFRF ('2'), or both ('B')?", "B" );
-						if ( choice == null ) return; // User decided to hit cancel!
-						if ( choice.equals( "1" ) || choice.equals( "B" ) ) {
+						seg_methods_to_do = JOptionPane.showInputDialog( "Process CT ('1'), PMF ('2'), PMFRF ('3'), or a subset (e.g. '13')?", seg_methods_to_do );
+						if ( seg_methods_to_do == null ) return; // User decided to hit cancel!
+						if ( seg_methods_to_do.matches( "(.*)1(.*)" ) || seg_methods_to_do.matches( "(.*)2(.*)" ) || seg_methods_to_do.matches( "(.*)3(.*)" ) ) {
 							done = true;
-							doSimple = true;
-						}
-						if ( choice.equals( "2" ) || choice.equals( "B" ) ) {
-							done = true;
-							doAwesome = true;
 						}
 					}
 
@@ -878,7 +872,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 						// --------------------------------------------------------------------------------
 						// CT segmentation
 						// --------------------------------------------------------------------------------
-						if ( doSimple ) {
+						if ( seg_methods_to_do.matches( "(.*)1(.*)" ) ) { // 1 == CT
 							try {
 								if ( MotherMachine.fileWriterForStats != null ) {
 									MotherMachine.fileWriterForStats.close();
@@ -935,9 +929,64 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 						}
 
 						// --------------------------------------------------------------------------------
-						// Awesome segmentation
+						// PMF segmentation
 						// --------------------------------------------------------------------------------
-						if ( doAwesome ) {
+						if ( seg_methods_to_do.matches( "(.*)2(.*)" ) ) { // 2 == PMF
+							MotherMachine.USE_CLASSIFIER_FOR_PMF = false;
+
+							try {
+								if ( MotherMachine.fileWriterForStats != null ) {
+									MotherMachine.fileWriterForStats.close();
+								}
+								MotherMachine.fileWriterForStats = new OutputStreamWriter( new FileOutputStream( foldername + "stats_PMF_" + firstGLtoProcess + "-" + lastGLtoProcess + ".csv" ) );
+							} catch ( final FileNotFoundException e1 ) {
+								JOptionPane.showMessageDialog( self, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
+								e1.printStackTrace();
+								return;
+							} catch ( final IOException e1 ) {
+								JOptionPane.showMessageDialog( self, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
+								e1.printStackTrace();
+								return;
+							}
+
+							System.out.println( "\nPMF\n=======" );
+							MotherMachine.writeIntoStatsFile( "PMF SEGMENTATION" );
+							activateAwesomeHypotheses( firstGLtoProcess, lastGLtoProcess );
+
+							// ILP building
+							MotherMachine.writeIntoStatsFile( "ILP GENERATION" );
+							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
+								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
+								gl.generateILP();
+								MotherMachine.writeIntoStatsFile( "GL" + i + ": done" );
+								System.out.println( "GL" + i + "'s ILP is set up." );
+							}
+
+							// Optimization
+							MotherMachine.writeIntoStatsFile( "OPTIMIZATION" );
+							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
+								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
+								gl.runILP();
+								MotherMachine.writeIntoStatsFile( "GL" + i + ": done" );
+								System.out.println( "Optimum found for GL " + i );
+							}
+
+							// Export results
+							MotherMachine.writeIntoStatsFile( "EXPORTING TRACKS" );
+							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
+								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
+								final File outfile = new File( foldername + "gl" + i + "_PMFRF.csv" );
+								model.setCurrentGL( i );
+								exportTracks( outfile );
+							}
+						}
+
+						// --------------------------------------------------------------------------------
+						// PMFRF segmentation
+						// --------------------------------------------------------------------------------
+						if ( seg_methods_to_do.matches( "(.*)3(.*)" ) ) { // 3 == PMFRF
+							MotherMachine.USE_CLASSIFIER_FOR_PMF = true;
+
 							try {
 								if ( MotherMachine.fileWriterForStats != null ) {
 									MotherMachine.fileWriterForStats.close();
