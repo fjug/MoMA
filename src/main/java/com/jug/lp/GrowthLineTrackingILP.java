@@ -4,6 +4,7 @@
 package com.jug.lp;
 
 import gurobi.GRB;
+import gurobi.GRBConstr;
 import gurobi.GRBEnv;
 import gurobi.GRBException;
 import gurobi.GRBLinExpr;
@@ -68,11 +69,16 @@ public class GrowthLineTrackingILP {
 
 	private int pbcId = 0;
 
+	private final GRBConstr[] segmentInFrameCountConstraint;
+
 	// -------------------------------------------------------------------------------------
 	// construction
 	// -------------------------------------------------------------------------------------
 	public GrowthLineTrackingILP( final GrowthLine gl ) {
 		this.gl = gl;
+
+		// Array to hold segment# constraints
+		this.segmentInFrameCountConstraint = new GRBConstr[ gl.size() ];
 
 		// Setting static stuff (this IS ugly!)
 		if ( env == null ) {
@@ -1212,5 +1218,67 @@ public class GrowthLineTrackingILP {
 		}
 
 		return ret;
+	}
+
+	/**
+	 * One of the powerful user interaction constraints.
+	 * This method constraints a frame to contain a given number of segments
+	 * (cells).
+	 * 
+	 * @param t
+	 *            The time-index. Must be in [0,nodes.getNumberOfTimeSteps()-2]
+	 * @param numCells
+	 *            the right hand side of the constraint.
+	 * @throws GRBException
+	 */
+	public void addSegmentsInFrameCountConstraint( final int t, final int numCells ) throws GRBException {
+		final GRBLinExpr expr = new GRBLinExpr();
+
+		final List< Hypothesis< Component< DoubleType, ? >>> hyps = nodes.getHypothesesAt( t );
+		for ( final Hypothesis< Component< DoubleType, ? >> hyp : hyps ) {
+			final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > rightNeighbors = edgeSets.getRightNeighborhood( hyp );
+			for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> assmnt : rightNeighbors ) {
+				expr.addTerm( 1.0, assmnt.getGRBVar() );
+			}
+		}
+
+		segmentInFrameCountConstraint[ t ] = model.addConstr( expr, GRB.EQUAL, numCells, "sifcc_" + t );
+	}
+
+	/**
+	 * Removes an constraint on the number of cells at a given time-point (in
+	 * case such a constraint was ever added).
+	 * 
+	 * @param currentTime
+	 */
+	public void removeSegmentsInFrameCountConstraint( final int currentTime ) {
+		if ( segmentInFrameCountConstraint[ currentTime ] != null ) {
+			try {
+				model.remove( segmentInFrameCountConstraint[ currentTime ] );
+				segmentInFrameCountConstraint[ currentTime ] = null;
+			} catch ( final GRBException e ) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	/**
+	 * Returns the right hand side of the segment-count constraint the given
+	 * time-point.
+	 * 
+	 * @param currentTime
+	 *            time-point index.
+	 * @return the RHS of the constraint if one such constraint is set, -1
+	 *         otherwise.
+	 */
+	public int getSegmentsInFrameCountConstraintRHS( final int currentTime ) {
+		if ( segmentInFrameCountConstraint[ currentTime ] != null ) {
+			try {
+				return ( int ) segmentInFrameCountConstraint[ currentTime ].get( GRB.DoubleAttr.RHS );
+			} catch ( final GRBException e ) {
+				e.printStackTrace();
+			}
+		}
+		return -1;
 	}
 }

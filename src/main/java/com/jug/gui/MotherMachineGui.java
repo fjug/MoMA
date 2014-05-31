@@ -3,6 +3,8 @@
  */
 package com.jug.gui;
 
+import gurobi.GRBException;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -31,7 +33,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
@@ -136,6 +140,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private JCheckBox cbShowParaMaxFlowData;
 
 	private JLabel lActiveHyps;
+
+	private JTextField txtNumCells;
 
 	// -------------------------------------------------------------------------------------
 	// construction & gui creation
@@ -253,6 +259,17 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'o' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'e' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( ' ' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '?' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '0' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '1' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '2' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '3' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '4' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '5' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '6' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '7' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '8' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '9' ), "MMGUI_bindings" );
 
 		this.getActionMap().put( "MMGUI_bindings", new AbstractAction() {
 
@@ -298,6 +315,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				if ( e.getActionCommand().equals( " " ) ) {
 					cbShowParaMaxFlowData.doClick();
 				}
+				if ( e.getActionCommand().equals( "?" ) || e.getActionCommand().equals( "0" ) || e.getActionCommand().equals( "1" ) || e.getActionCommand().equals( "2" ) || e.getActionCommand().equals( "3" ) || e.getActionCommand().equals( "4" ) || e.getActionCommand().equals( "5" ) || e.getActionCommand().equals( "6" ) || e.getActionCommand().equals( "7" ) || e.getActionCommand().equals( "8" ) || e.getActionCommand().equals( "9" ) ) {
+					txtNumCells.requestFocus();
+					txtNumCells.setText( e.getActionCommand() );
+				}
 			}
 		} );
 	}
@@ -314,8 +335,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelOptions.setLayout( new BoxLayout( panelOptions, BoxLayout.LINE_AXIS ) );
 
 		// =============== panelOptions-part ===================
-		lActiveHyps = new JLabel( "Active hyps: CT" );
-		lActiveHyps.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder( 2, 5, 2, 5 ) ) );
 		cbShowParaMaxFlowData = new JCheckBox( "show PMFRF if avlbl", false );
 		cbShowParaMaxFlowData.addActionListener( new ActionListener() {
 
@@ -324,6 +343,39 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				dataToDisplayChanged();
 			}
 		} );
+		final JLabel labelNumCells1 = new JLabel( "I see" );
+		final JLabel labelNumCells2 = new JLabel( "cells!" );
+		txtNumCells = new JTextField( "?", 2 );
+		txtNumCells.setHorizontalAlignment( SwingConstants.CENTER );
+		txtNumCells.setMaximumSize( txtNumCells.getPreferredSize() );
+		txtNumCells.addActionListener( new ActionListener() {
+
+			@Override
+			public void actionPerformed( final ActionEvent e ) {
+				int numCells = 0;
+				final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+				try {
+					numCells = Integer.parseInt( txtNumCells.getText() );
+				} catch ( final NumberFormatException nfe ) {
+					txtNumCells.setText( "?" );
+					ilp.removeSegmentsInFrameCountConstraint( model.getCurrentTime() );
+					ilp.run();
+					dataToDisplayChanged();
+					return;
+				}
+				try {
+					ilp.removeSegmentsInFrameCountConstraint( model.getCurrentTime() );
+					ilp.addSegmentsInFrameCountConstraint( model.getCurrentTime(), numCells );
+					ilp.run();
+					dataToDisplayChanged();
+					sliderTime.requestFocus();
+					// enable deletion of constraints
+				} catch ( final GRBException e1 ) {
+					e1.printStackTrace();
+				}
+			}
+		} );
+
 		btnExchangeSegHyps = new JButton( "switch" );
 		btnExchangeSegHyps.addActionListener( new ActionListener() {
 
@@ -338,8 +390,17 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				dataToDisplayChanged();
 			}
 		} );
+		lActiveHyps = new JLabel( "CT" );
+		lActiveHyps.setHorizontalAlignment( SwingConstants.CENTER );
+		lActiveHyps.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder( 2, 5, 2, 5 ) ) );
+		lActiveHyps.setPreferredSize( new Dimension( 65, lActiveHyps.getPreferredSize().height ) );
+
 		panelOptions.add( Box.createHorizontalGlue() );
 		panelOptions.add( cbShowParaMaxFlowData );
+		panelOptions.add( Box.createHorizontalGlue() );
+		panelOptions.add( labelNumCells1 );
+		panelOptions.add( txtNumCells );
+		panelOptions.add( labelNumCells2 );
 		panelOptions.add( Box.createHorizontalGlue() );
 		panelOptions.add( btnExchangeSegHyps );
 		panelOptions.add( lActiveHyps );
@@ -644,6 +705,14 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		if ( e.getSource().equals( sliderTime ) ) {
 			model.setCurrentGLF( sliderTime.getValue() );
+			if ( model.getCurrentGL().getIlp() != null ) {
+				final int rhs = model.getCurrentGL().getIlp().getSegmentsInFrameCountConstraintRHS( sliderTime.getValue() );
+				if ( rhs == -1 ) {
+					txtNumCells.setText( "?" );
+				} else {
+					txtNumCells.setText( "" + rhs );
+				}
+			}
 		}
 
 		dataToDisplayChanged();
