@@ -58,6 +58,7 @@ import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.Hypothesis;
 import com.jug.util.ComponentTreeUtils;
 import com.jug.util.SimpleFunctionAnalysis;
+import com.jug.util.Util;
 
 /**
  * @author jug
@@ -843,26 +844,41 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		}
 		if ( e.getSource().equals( btnExportTracking ) ) {
 			final MotherMachineGui self = this;
-			final Thread t = new Thread( new Runnable() {
+//			final Thread t = new Thread( new Runnable() {
+//
+//				@Override
+//				public void run() {
+			final JFileChooser fc = new JFileChooser();
+			fc.setSelectedFile( new File( String.format( MotherMachine.DEFAULT_PATH + String.format( "/gl_%02d", sliderGL.getValue() ) ) ) );
+			fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "csv", "CSV" }, "CVS-file" ) );
 
-				@Override
-				public void run() {
-					final JFileChooser fc = new JFileChooser( MotherMachine.DEFAULT_PATH );
-					fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "csv", "CSV" }, "CVS-file" ) );
-
-					if ( fc.showSaveDialog( self ) == JFileChooser.APPROVE_OPTION ) {
-						File file = fc.getSelectedFile();
-						if ( !file.getAbsolutePath().endsWith( ".csv" ) && !file.getAbsolutePath().endsWith( ".CSV" ) ) {
-							file = new File( file.getAbsolutePath() + ".csv" );
-						}
-						MotherMachine.DEFAULT_PATH = file.getParent();
-
-						exportTracks( file );
-						dataToDisplayChanged();
-					}
+			if ( fc.showSaveDialog( self ) == JFileChooser.APPROVE_OPTION ) {
+				File file = fc.getSelectedFile();
+				if ( !file.getAbsolutePath().endsWith( ".csv" ) && !file.getAbsolutePath().endsWith( ".CSV" ) ) {
+					file = new File( file.getAbsolutePath() + ".csv" );
 				}
-			} );
-			t.start();
+				MotherMachine.DEFAULT_PATH = file.getParent();
+
+				exportTracks( file );
+				dataToDisplayChanged();
+			}
+
+			fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "html", "htm" }, "HTML-file" ) );
+
+			if ( fc.showSaveDialog( self ) == JFileChooser.APPROVE_OPTION ) {
+				File file = fc.getSelectedFile();
+				if ( !file.getAbsolutePath().endsWith( ".html" ) && !file.getAbsolutePath().endsWith( ".htm" ) ) {
+					file = new File( file.getAbsolutePath() + ".html" );
+				}
+				MotherMachine.DEFAULT_PATH = file.getParent();
+
+				exportTrackingImagesAndHtml( file );
+				dataToDisplayChanged();
+			}
+
+//				}
+//			} );
+//			t.start();
 
 		}
 		if ( e.getSource().equals( btnGenerateAllStats ) ) {
@@ -1290,6 +1306,82 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 //			}
 //			dataToDisplayChanged();
 //		}
+	}
+
+	/**
+	 * Exports current tracking solution as individual PNG images in the given
+	 * folder.
+	 * 
+	 * @param folder
+	 *            path to folder in which to store PNGs.
+	 */
+	private void exportTrackingImagesAndHtml( final File htmlFileToSaveTo ) {
+		System.out.println( "Exporting tracks as images + html..." );
+
+		final String path = htmlFileToSaveTo.getParent();
+		final String imgpath = path + "/imgs";
+		final File fImgpath = new File( imgpath );
+
+		// create folders to imgs if not exists
+		if ( !fImgpath.exists() && !fImgpath.mkdirs() ) {
+			JOptionPane.showMessageDialog( this, "Saving of HTML canceled! Couldn't create dir: " + fImgpath, "Saving canceled...", JOptionPane.ERROR_MESSAGE );
+			return;
+		}
+
+		Writer out = null;
+		try {
+			out = new OutputStreamWriter( new FileOutputStream( htmlFileToSaveTo ) );
+
+			out.write( "<html>\n" );
+			out.write( "<body>\n" );
+			out.write( "	<table border='0' cellspacing='1' cellpadding='0'>\n" );
+			out.write( "		<tr>\n" );
+
+			String row1 = "";
+			final String nextrow = "		</tr>\n			<tr>\n";
+			String row2 = "";
+
+			for ( int i = 0; i < model.getCurrentGL().size(); i++ ) {
+				this.sliderTime.setValue( i );
+				try {
+					String fn = String.format( "/gl_%02d_glf_%03d.png", model.getCurrentTime(), i );
+					Util.saveImage( Util.getImageOf( this.imgCanvasActiveCenter ), imgpath + fn );
+					row1 += "			<th><font size='+2'>t=" + i + "</font></th>\n";
+					row2 += "			<td><img src='./imgs" + fn + "'></td>\n";
+
+					if ( i < model.getCurrentGL().size() - 1 ) {
+						fn = String.format( "/gl_%02d_assmnts_%03d.png", model.getCurrentTime(), i );
+						Util.saveImage( Util.getImageOf( this.rightAssignmentViewer.getActiveAssignments() ), imgpath + fn );
+						row1 += "			<th></th>\n";
+						row2 += "			<td><img src='./imgs" + fn + "'></td>\n";
+					}
+				} catch ( final IOException e ) {
+					JOptionPane.showMessageDialog( this, "Tracking imagery could not be saved entirely!", "Export Error", JOptionPane.ERROR_MESSAGE );
+					e.printStackTrace();
+					out.close();
+					return;
+				}
+			}
+
+			out.write( row1 );
+			out.write( nextrow );
+			out.write( row2 );
+
+			out.write( "		</tr>\n" );
+			out.write( "	</table>\n" );
+			out.write( "</body>\n" );
+			out.write( "</html>\n" );
+
+			out.close();
+		} catch ( final FileNotFoundException e1 ) {
+			JOptionPane.showMessageDialog( this, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
+			e1.printStackTrace();
+		} catch ( final IOException e1 ) {
+			JOptionPane.showMessageDialog( this, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
+			e1.printStackTrace();
+		}
+		System.out.println( "...done!" );
+
 	}
 
 	/**

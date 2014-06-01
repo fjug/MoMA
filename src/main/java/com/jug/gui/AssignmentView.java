@@ -33,7 +33,6 @@ import com.jug.lp.Hypothesis;
 import com.jug.lp.MappingAssignment;
 import com.jug.util.ComponentTreeUtils;
 
-
 /**
  * @author jug
  */
@@ -98,7 +97,6 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	private MotherMachineGui gui;
 
 	private boolean doFilterGroundTruth = false;
-
 
 	// -------------------------------------------------------------------------------------
 	// construction
@@ -168,7 +166,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	// -------------------------------------------------------------------------------------
 	/**
 	 * Turns of filtering and shows all the given data.
-	 *
+	 * 
 	 * @param data
 	 *            a <code>HashMap</code> containing pairs of segmentation
 	 *            hypothesis at some time-point t and assignments towards t+1.
@@ -184,7 +182,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	/**
 	 * Turns of filtering by type, turns on filtering by cost, and shows all the
 	 * given data.
-	 *
+	 * 
 	 * @param data
 	 *            a <code>HashMap</code> containing pairs of segmentation
 	 *            hypothesis at some time-point t and assignments towards t+1.
@@ -202,7 +200,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 
 	/**
 	 * Turns on filtering by type and shows only the filtered data.
-	 *
+	 * 
 	 * @param data
 	 *            a <code>HashMap</code> containing pairs of segmentation
 	 *            hypothesis at some time-point t and assignments towards t+1.
@@ -213,15 +211,13 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 *            <code>GrowthLineTrackingILP.ASSIGNMENT_EXIT</code>.
 	 */
 	public void display( final HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >> data, final boolean doFilterActive, final int typeToFilter ) {
-		assert ( typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_EXIT ||
-				 typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ||
-				 typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
+		assert ( typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_EXIT || typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_MAPPING || typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
 		this.display( data, doFilterActive, typeToFilter, this.getCostFilterMin(), this.getCostFilterMax() );
 	}
 
 	/**
 	 * Turns on filtering by type and by cost and shows only the filtered data.
-	 *
+	 * 
 	 * @param data
 	 *            a <code>HashMap</code> containing pairs of segmentation
 	 *            hypothesis at some time-point t and assignments towards t+1.
@@ -232,9 +228,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 *            <code>GrowthLineTrackingILP.ASSIGNMENT_EXIT</code>.
 	 */
 	public void display( final HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >> data, final boolean doFilterActive, final int typeToFilter, final double minCostToShow, final double maxCostToShow ) {
-		assert ( typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_EXIT ||
-				 typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ||
-				 typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
+		assert ( typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_EXIT || typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_MAPPING || typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
 		doFilterDataByType = true;
 		this.filterAssignmentType = typeToFilter;
 
@@ -249,7 +243,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	/**
 	 * In this overwritten method we added filtering and calling
 	 * <code>drawAssignment(...)</code>.
-	 *
+	 * 
 	 * @see java.awt.Component#paint(java.awt.Graphics)
 	 */
 	@Override
@@ -266,8 +260,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 					if ( doFilterDataByCost && ( assignment.getCost() < this.getCostFilterMin() || assignment.getCost() > this.getCostFilterMax() ) ) {
 						continue;
 					}
-				}
-				catch ( final GRBException e ) {
+				} catch ( final GRBException e ) {
 					e.printStackTrace();
 				}
 				drawAssignment( g, assignment );
@@ -290,7 +283,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	/**
 	 * Checks the type of assignment we have and call the corresponding drawing
 	 * method.
-	 *
+	 * 
 	 * @param g
 	 * @param assignment
 	 */
@@ -317,7 +310,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 
 	/**
 	 * This methods draws the given mapping-assignment into the component.
-	 *
+	 * 
 	 * @param g
 	 * @param g2
 	 * @param ma
@@ -356,6 +349,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 				this.doAddAsGroundTruth = false;
 				ma.setGroundTruth( !ma.isGroundTruth() );
 				SwingUtilities.invokeLater( new Runnable() {
+
 					@Override
 					public void run() {
 						gui.dataToDisplayChanged();
@@ -384,8 +378,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 					}
 					g2.drawString( String.format( "c=%.4f", cost ), DISPLAY_COSTS_ABSOLUTE_X, this.mousePosY + OFFSET_DISPLAY_COSTS - this.currentCostLine * LINEHEIGHT_DISPLAY_COSTS );
 					this.currentCostLine++;
-				}
-				catch ( final GRBException e ) {
+				} catch ( final GRBException e ) {
 					e.printStackTrace();
 				}
 			}
@@ -415,7 +408,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 
 	/**
 	 * This methods draws the given division-assignment into the component.
-	 *
+	 * 
 	 * @param g
 	 * @param g2
 	 * @param da
@@ -494,8 +487,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 					}
 					g2.drawString( String.format( "c=%.4f", cost ), DISPLAY_COSTS_ABSOLUTE_X, this.mousePosY + OFFSET_DISPLAY_COSTS - this.currentCostLine * LINEHEIGHT_DISPLAY_COSTS );
 					this.currentCostLine++;
-				}
-				catch ( final GRBException e ) {
+				} catch ( final GRBException e ) {
 					e.printStackTrace();
 				}
 			}
@@ -525,7 +517,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 
 	/**
 	 * This methods draws the given exit-assignment into the component.
-	 *
+	 * 
 	 * @param g
 	 * @param g2
 	 * @param ea
@@ -571,8 +563,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 					final double cost = ea.getCost();
 					g2.drawString( String.format( "c=%.4f", cost ), 10, this.mousePosY - 10 - this.currentCostLine * 20 );
 					this.currentCostLine++;
-				}
-				catch ( final GRBException e ) {
+				} catch ( final GRBException e ) {
 					e.printStackTrace();
 				}
 			}
@@ -602,7 +593,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 
 	/**
 	 * Sets new data without modifying the filter setting.
-	 *
+	 * 
 	 * @param data
 	 * @param doFilterActive
 	 */
@@ -616,8 +607,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 						if ( ass.isChoosen() || ass.isGroundTruth() ) {
 							activeSet.add( ass );
 						}
-					}
-					catch ( final GRBException e ) {
+					} catch ( final GRBException e ) {
 						e.printStackTrace();
 					}
 					this.data.put( hypo, activeSet );
@@ -744,7 +734,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	/**
 	 * If set, this filter shows only assignments that are flagged as being
 	 * ground-truth or ground-untruth.
-	 *
+	 * 
 	 * @param doIt
 	 *            indicate whether of not to set this filter active.
 	 */

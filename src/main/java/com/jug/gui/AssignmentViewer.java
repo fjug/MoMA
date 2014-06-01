@@ -86,7 +86,7 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 
 	/**
 	 * Receives and visualizes a new HashMap of assignments.
-	 *
+	 * 
 	 * @param hashMap
 	 *            a <code>HashMap</code> containing pairs of segmentation
 	 *            hypothesis at some time-point t and assignments towards t+1.
@@ -116,6 +116,16 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 		} else {
 			fixedAssignments.setData( data, false );
 		}
+	}
+
+	/**
+	 * Returns the <code>AssignmentView</code> that holds all active
+	 * assignments.
+	 * 
+	 * @return
+	 */
+	public AssignmentView getActiveAssignments() {
+		return this.activeAssignments;
 	}
 
 }
