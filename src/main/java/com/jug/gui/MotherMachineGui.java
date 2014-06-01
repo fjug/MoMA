@@ -55,6 +55,7 @@ import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
 import com.jug.MotherMachine;
 import com.jug.lp.GrowthLineTrackingILP;
+import com.jug.lp.Hypothesis;
 import com.jug.util.ComponentTreeUtils;
 import com.jug.util.SimpleFunctionAnalysis;
 
@@ -421,7 +422,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelHorizontalHelper.add( labelHelper );
 		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
 		// - - - - - -
-		imgCanvasActiveLeft = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		imgCanvasActiveLeft = new Viewer2DCanvas( this, GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
 		panelVerticalHelper.add( imgCanvasActiveLeft, BorderLayout.CENTER );
 		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
 		panelVerticalHelper.setBackground( Color.BLACK );
@@ -444,7 +445,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelHorizontalHelper.add( labelHelper );
 		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
 		// - - - - - -
-		imgCanvasActiveCenter = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		imgCanvasActiveCenter = new Viewer2DCanvas( this, GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
 		panelVerticalHelper.add( imgCanvasActiveCenter, BorderLayout.CENTER );
 		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 3, 3, 3, 3, Color.RED ) );
 		panelVerticalHelper.setBackground( Color.BLACK );
@@ -467,7 +468,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelHorizontalHelper.add( labelHelper );
 		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
 		// - - - - - -
-		imgCanvasActiveRight = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		imgCanvasActiveRight = new Viewer2DCanvas( this, GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
 		panelVerticalHelper.add( imgCanvasActiveRight, BorderLayout.CENTER );
 		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
 		panelVerticalHelper.setBackground( Color.BLACK );
@@ -558,7 +559,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			}
 
 			i = 0;
-			for ( final Component< DoubleType, ? > ctn : ilp.getOptimalSegmentation( t ) ) {
+			for ( final Hypothesis< Component< DoubleType, ? >> hyp : ilp.getOptimalSegmentation( t ) ) {
+				final Component< DoubleType, ? > ctn = hyp.getWrappedHypothesis();
 				addBoxAtIndex( i, ctn, xydxdyCTNBordersActive, ySegmentationData, ComponentTreeUtils.getLevelInTree( ctn ) );
 				i++;
 			}
@@ -1349,5 +1351,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			e1.printStackTrace();
 		}
 		System.out.println( "...done!" );
+	}
+
+	/**
+	 * Requests the focus on the slider controlling the time (frame).
+	 */
+	public void focusOnSliderTime() {
+		sliderTime.requestFocus();
 	}
 }

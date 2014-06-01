@@ -818,16 +818,17 @@ public class GrowthLineTrackingILP {
 	 * 
 	 * @param t
 	 *            the time-point at which to look for the optimal segmentation.
-	 * @return a list of <code>ComponentTreeNodes</code> that correspond to the
+	 * @return a list of <code>Hypothesis</code> containting
+	 *         <code>ComponentTreeNodes</code> that correspond to the
 	 *         active segmentation hypothesis (chosen by the optimization
 	 *         procedure).
 	 */
-	public List< Component< DoubleType, ? >> getOptimalSegmentation( final int t ) {
-		final ArrayList< Component< DoubleType, ? >> ret = new ArrayList< Component< DoubleType, ? >>();
+	public List< Hypothesis< Component< DoubleType, ? >>> getOptimalSegmentation( final int t ) {
+		final ArrayList< Hypothesis< Component< DoubleType, ? >>> ret = new ArrayList< Hypothesis< Component< DoubleType, ? >>>();
 
 		final List< Hypothesis< Component< DoubleType, ? >>> hyps = getOptimalHypotheses( t );
 		for ( final Hypothesis< Component< DoubleType, ? >> h : hyps ) {
-			ret.add( h.getWrappedHypothesis() );
+			ret.add( h );
 		}
 
 		return ret;
@@ -857,6 +858,55 @@ public class GrowthLineTrackingILP {
 			if ( ctnLimits.getA().intValue() <= gapSepYPos && ctnLimits.getB().intValue() >= gapSepYPos ) { return h; }
 		}
 		return null;
+	}
+
+	/**
+	 * Returns all active segmentations at time t that conflict with the given
+	 * hypothesis.
+	 * 
+	 * @param t
+	 *            the time-point at which to look for the optimal segmentation.
+	 * @param hyp
+	 *            another hypothesis conflicts have to be queried for.
+	 * @return a list of <code>Hypothesis< Component< DoubleType, ? >></code>
+	 *         that
+	 *         conflict with the given hypothesis. (Overlap in space!)
+	 */
+	public List< Hypothesis< Component< DoubleType, ? >>> getOptimalSegmentationsInConflict( final int t, final Hypothesis< Component< DoubleType, ? >> hyp ) {
+		final List< Hypothesis< Component< DoubleType, ? >>> ret = new ArrayList< Hypothesis< Component< DoubleType, ? >>>();
+
+		final Pair< Integer, Integer > interval = ComponentTreeUtils.getTreeNodeInterval( hyp.getWrappedHypothesis() );
+		final int startpos = interval.getA();
+		final int endpos = interval.getB();
+
+		final List< Hypothesis< Component< DoubleType, ? >>> hyps = getOptimalHypotheses( t );
+		for ( final Hypothesis< Component< DoubleType, ? >> h : hyps ) {
+			final Pair< Integer, Integer > ctnLimits = ComponentTreeUtils.getTreeNodeInterval( h.getWrappedHypothesis() );
+			if ( ( ctnLimits.getA().intValue() <= startpos && ctnLimits.getB().intValue() >= startpos ) || // overlap at top 
+			( ctnLimits.getA().intValue() <= endpos && ctnLimits.getB().intValue() >= endpos ) ||    // overlap at bottom
+			( ctnLimits.getA().intValue() >= startpos && ctnLimits.getB().intValue() <= endpos ) ) {  // fully contained inside
+				ret.add( h );
+			}
+		}
+		return ret;
+	}
+
+	/**
+	 * @param t
+	 * @param gapSepYPos
+	 * @return
+	 */
+	public List< Hypothesis< Component< DoubleType, ? >>> getSegmentsAtLocation( final int t, final int gapSepYPos ) {
+		final List< Hypothesis< Component< DoubleType, ? >>> ret = new ArrayList< Hypothesis< Component< DoubleType, ? >>>();
+
+		final List< Hypothesis< Component< DoubleType, ? >>> hyps = nodes.getHypothesesAt( t );
+		for ( final Hypothesis< Component< DoubleType, ? >> h : hyps ) {
+			final Pair< Integer, Integer > ctnLimits = ComponentTreeUtils.getTreeNodeInterval( h.getWrappedHypothesis() );
+			if ( ctnLimits.getA().intValue() <= gapSepYPos && ctnLimits.getB().intValue() >= gapSepYPos ) {  // fully contained inside
+				ret.add( h );
+			}
+		}
+		return ret;
 	}
 
 	/**
@@ -1294,8 +1344,8 @@ public class GrowthLineTrackingILP {
 	 * @param gapSepYPos
 	 * @return
 	 */
-	public Component< DoubleType, ? > getLowestInTreeHypAt( final int t, final int gapSepYPos ) {
-		Component< DoubleType, ? > ret = null;
+	public Hypothesis< Component< DoubleType, ? >> getLowestInTreeHypAt( final int t, final int gapSepYPos ) {
+		Hypothesis< Component< DoubleType, ? >> ret = null;
 		long min = Long.MAX_VALUE;
 
 		final List< Hypothesis< Component< DoubleType, ? >>> hyps = nodes.getHypothesesAt( t );
@@ -1305,7 +1355,7 @@ public class GrowthLineTrackingILP {
 			if ( isComponentContainingYpos( comp, gapSepYPos ) ) {
 				if ( s < min ) {
 					min = s;
-					ret = comp;
+					ret = hyp;
 				}
 			}
 		}
@@ -1323,5 +1373,64 @@ public class GrowthLineTrackingILP {
 			if ( gapSepYPos == componentIterator.next().getIntPosition( 0 ) ) { return true; }
 		}
 		return false;
+	}
+
+	/**
+	 * Adds a constraint that forces a solution of this ILP to contain a certain
+	 * segment hypothesis.
+	 * To avoid requesting solutions that conflict with the tree constraints,
+	 * the second parameter can be the hypothesis at the same location for which
+	 * such a constraint exists so far.
+	 * 
+	 * @param hyp2add
+	 *            the hypothesis for which the constraint should be installed.
+	 * @param hyp2remove
+	 *            the hypothesis at conflicting location for which this type of
+	 *            constraint needs to be removed. (Can be 'null'!)
+	 * @throws GRBException
+	 */
+	public void addSegmentInSolutionConstraint( final Hypothesis< Component< DoubleType, ? >> hyp2add, final List< Hypothesis< Component< DoubleType, ? >>> hyps2remove ) throws GRBException {
+		final GRBLinExpr expr = new GRBLinExpr();
+
+		// Remove constraints form all given hypotheses
+		if ( hyps2remove != null ) {
+			for ( final Hypothesis< Component< DoubleType, ? >> hyp2remove : hyps2remove ) {
+				final GRBConstr oldConstr = hyp2remove.getSegmentSpecificConstraint();
+				if ( oldConstr != null ) {
+					try {
+						model.remove( oldConstr );
+						hyp2remove.setSegmentSpecificConstraint( null );
+					} catch ( final GRBException e ) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+
+		final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > rightNeighbors = edgeSets.getRightNeighborhood( hyp2add );
+		for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> assmnt : rightNeighbors ) {
+			expr.addTerm( 1.0, assmnt.getGRBVar() );
+		}
+
+		// Store the newly created constraint in hyp2add
+		hyp2add.setSegmentSpecificConstraint( model.addConstr( expr, GRB.EQUAL, 1.0, "sisc_" + hyp2add.hashCode() ) );
+	}
+
+	/**
+	 * Adds a constraint that forces any solution of this ILP to avoid a certain
+	 * segment hypothesis.
+	 * 
+	 * @param hyp2avoid
+	 * @throws GRBException
+	 */
+	public void addSegmentNotInSolutionConstraint( final Hypothesis< Component< DoubleType, ? >> hyp2avoid ) throws GRBException {
+		final GRBLinExpr expr = new GRBLinExpr();
+
+		final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > rightNeighbors = edgeSets.getRightNeighborhood( hyp2avoid );
+		for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> assmnt : rightNeighbors ) {
+			expr.addTerm( 1.0, assmnt.getGRBVar() );
+		}
+
+		hyp2avoid.setSegmentSpecificConstraint( model.addConstr( expr, GRB.EQUAL, 0.0, "snisc_" + hyp2avoid.hashCode() ) );
 	}
 }

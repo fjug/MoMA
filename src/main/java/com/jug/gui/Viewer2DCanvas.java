@@ -3,10 +3,13 @@
  */
 package com.jug.gui;
 
+import gurobi.GRBException;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.event.MouseInputListener;
@@ -20,6 +23,7 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.view.IntervalView;
 
 import com.jug.GrowthLineFrame;
+import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.Hypothesis;
 
 /**
@@ -46,10 +50,14 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 	private int dragX;
 	private int dragY;
 
+	private final MotherMachineGui mmgui;
+
 	private static final int OFFSET_DISPLAY_COSTS = -25;
 
-	public Viewer2DCanvas( final int w, final int h ) {
+	public Viewer2DCanvas( final MotherMachineGui mmgui, final int w, final int h ) {
 		super();
+
+		this.mmgui = mmgui;
 
 		addMouseListener( this );
 		addMouseMotionListener( this );
@@ -116,21 +124,27 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 
 		// Mouse-position related stuff...
 		String strToShow = "";
-		String str2ToShow = "";
+		String str2ToShow = " ";
 		if ( !this.isDragging && this.isMouseOver && glf != null && glf.getParent().getIlp() != null ) {
 			double cost = Double.NaN;
 			//TODO NOT nice... do something against that, please!
 			final int t = glf.getTime();
-			final Hypothesis< Component< DoubleType, ? >> hyp = glf.getParent().getIlp().getOptimalSegmentationAtLocation( t, this.mousePosY );
+			Hypothesis< Component< DoubleType, ? >> hyp = glf.getParent().getIlp().getOptimalSegmentationAtLocation( t, this.mousePosY );
 			if ( hyp != null ) {
 				cost = hyp.getCosts();
 				strToShow = String.format( "c=%.4f", cost );
+				str2ToShow = "-";
 			}
 			// figure out which hyps are at current location
-			final Component< DoubleType, ? > comp = glf.getParent().getIlp().getLowestInTreeHypAt( t, this.mousePosY );
-			if ( comp != null ) {
+			hyp = glf.getParent().getIlp().getLowestInTreeHypAt( t, this.mousePosY );
+			if ( hyp != null ) {
+				final Component< DoubleType, ? > comp = hyp.getWrappedHypothesis();
 				glf.drawOptionalSegmentation( screenImage, view, comp );
-				str2ToShow = " +";
+				if ( str2ToShow.endsWith( "-" ) ) {
+					str2ToShow += "/+";
+				} else {
+					str2ToShow += "+";
+				}
 			} else {
 				str2ToShow = "  noseg";
 			}
@@ -140,14 +154,14 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 		if ( !strToShow.equals( "" ) ) {
 			g.setColor( Color.DARK_GRAY );
 			g.drawString( strToShow, 2, this.mousePosY - OFFSET_DISPLAY_COSTS + 1 );
-			g.setColor( Color.YELLOW.brighter() );
+			g.setColor( Color.GREEN.darker() );
 			g.drawString( strToShow, 1, this.mousePosY - OFFSET_DISPLAY_COSTS );
 		}
 		if ( !str2ToShow.equals( "" ) ) {
 			g.setColor( Color.DARK_GRAY );
-			g.drawString( str2ToShow, this.mousePosX + 6, this.mousePosY - OFFSET_DISPLAY_COSTS + 31 );
+			g.drawString( str2ToShow, this.mousePosX + 6, this.mousePosY - OFFSET_DISPLAY_COSTS + 36 );
 			g.setColor( Color.ORANGE.brighter() );
-			g.drawString( str2ToShow, this.mousePosX + 5, this.mousePosY - OFFSET_DISPLAY_COSTS + 30 );
+			g.drawString( str2ToShow, this.mousePosX + 5, this.mousePosY - OFFSET_DISPLAY_COSTS + 35 );
 		}
 	}
 
@@ -159,7 +173,39 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 	 * @see java.awt.event.MouseListener#mouseClicked(java.awt.event.MouseEvent)
 	 */
 	@Override
-	public void mouseClicked( final MouseEvent e ) {}
+	public void mouseClicked( final MouseEvent e ) {
+		final int t = glf.getTime();
+		final GrowthLineTrackingILP ilp = glf.getParent().getIlp();
+
+		if ( e.isControlDown() ) {
+			final List< Hypothesis< Component< DoubleType, ? >>> hyps2avoid = ilp.getSegmentsAtLocation( t, this.mousePosY );
+			try {
+				for ( final Hypothesis< Component< DoubleType, ? >> hyp2avoid : hyps2avoid ) {
+					if ( hyp2avoid.getSegmentSpecificConstraint() != null ) {
+						ilp.model.remove( hyp2avoid.getSegmentSpecificConstraint() );
+					}
+					ilp.addSegmentNotInSolutionConstraint( hyp2avoid );
+				}
+			} catch ( final GRBException e1 ) {
+				e1.printStackTrace();
+			}
+		} else {
+			final Hypothesis< Component< DoubleType, ? >> hyp2add = ilp.getLowestInTreeHypAt( t, this.mousePosY );
+			final List< Hypothesis< Component< DoubleType, ? >>> hyps2remove = ilp.getOptimalSegmentationsInConflict( t, hyp2add );
+
+			try {
+				if ( hyp2add.getSegmentSpecificConstraint() != null ) {
+					ilp.model.remove( hyp2add.getSegmentSpecificConstraint() );
+				}
+				ilp.addSegmentInSolutionConstraint( hyp2add, hyps2remove );
+			} catch ( final GRBException e1 ) {
+				e1.printStackTrace();
+			}
+		}
+		ilp.run();
+		mmgui.dataToDisplayChanged();
+		mmgui.focusOnSliderTime();
+	}
 
 	/**
 	 * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)

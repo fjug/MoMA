@@ -570,30 +570,15 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * 
 	 * @param img
 	 *            the Img to draw into.
-	 * @param optimalSegmentation
-	 *            a <code>List</code> of the component-tree-nodes that represent
-	 *            the optimal segmentation (the one returned by the solution to
-	 *            the ILP).
-	 */
-	public void drawOptimalSegmentation( final Img< ARGBType > img, final List< Component< DoubleType, ? >> optimalSegmentation ) {
-		drawOptimalSegmentation( img, null, optimalSegmentation );
-	}
-
-	/**
-	 * Draws the optimal segmentation (determined by the solved ILP) into the
-	 * given <code>Img</code>.
-	 * 
-	 * @param img
-	 *            the Img to draw into.
 	 * @param view
 	 *            the active view on that Img (in order to know the pixel
 	 *            offsets)
 	 * @param optimalSegmentation
-	 *            a <code>List</code> of the component-tree-nodes that represent
-	 *            the optimal segmentation (the one returned by the solution to
-	 *            the ILP).
+	 *            a <code>List</code> of the hypotheses containing
+	 *            component-tree-nodes that represent the optimal segmentation
+	 *            (the one returned by the solution to the ILP).
 	 */
-	public void drawOptimalSegmentation( final Img< ARGBType > img, final IntervalView< DoubleType > view, final List< Component< DoubleType, ? >> optimalSegmentation ) {
+	public void drawOptimalSegmentation( final Img< ARGBType > img, final IntervalView< DoubleType > view, final List< Hypothesis< Component< DoubleType, ? >>> optimalSegmentation ) {
 		final RandomAccess< ARGBType > raAnnotationImg = img.randomAccess();
 
 		long offsetX = 0;
@@ -612,8 +597,13 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 			}
 		}
 
-		for ( final Component< DoubleType, ? > ctn : optimalSegmentation ) {
-			ArgbDrawingUtils.taintComponentTreeNode( ctn, raAnnotationImg, offsetX + getAvgXpos(), offsetY + MotherMachine.GL_OFFSET_TOP );
+		for ( final Hypothesis< Component< DoubleType, ? >> hyp : optimalSegmentation ) {
+			final Component< DoubleType, ? > ctn = hyp.getWrappedHypothesis();
+			if ( hyp.getSegmentSpecificConstraint() != null ) {
+				ArgbDrawingUtils.taintForcedComponentTreeNode( ctn, raAnnotationImg, offsetX + getAvgXpos(), offsetY + MotherMachine.GL_OFFSET_TOP );
+			} else {
+				ArgbDrawingUtils.taintComponentTreeNode( ctn, raAnnotationImg, offsetX + getAvgXpos(), offsetY + MotherMachine.GL_OFFSET_TOP );
+			}
 		}
 	}
 
