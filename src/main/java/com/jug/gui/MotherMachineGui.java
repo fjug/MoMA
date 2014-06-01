@@ -357,22 +357,21 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				try {
 					numCells = Integer.parseInt( txtNumCells.getText() );
 				} catch ( final NumberFormatException nfe ) {
+					numCells = -1;
 					txtNumCells.setText( "?" );
 					ilp.removeSegmentsInFrameCountConstraint( model.getCurrentTime() );
-					ilp.run();
-					dataToDisplayChanged();
-					return;
 				}
-				try {
-					ilp.removeSegmentsInFrameCountConstraint( model.getCurrentTime() );
-					ilp.addSegmentsInFrameCountConstraint( model.getCurrentTime(), numCells );
-					ilp.run();
-					dataToDisplayChanged();
-					sliderTime.requestFocus();
-					// enable deletion of constraints
-				} catch ( final GRBException e1 ) {
-					e1.printStackTrace();
+				if ( numCells != -1 ) {
+					try {
+						ilp.removeSegmentsInFrameCountConstraint( model.getCurrentTime() );
+						ilp.addSegmentsInFrameCountConstraint( model.getCurrentTime(), numCells );
+					} catch ( final GRBException e1 ) {
+						e1.printStackTrace();
+					}
 				}
+				ilp.run();
+				dataToDisplayChanged();
+				sliderTime.requestFocus();
 			}
 		} );
 

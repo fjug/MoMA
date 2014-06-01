@@ -617,6 +617,28 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 		}
 	}
 
+	public void drawOptionalSegmentation( final Img< ARGBType > img, final IntervalView< DoubleType > view, final Component< DoubleType, ? > optionalSegmentation ) {
+		final RandomAccess< ARGBType > raAnnotationImg = img.randomAccess();
+
+		long offsetX = 0;
+		long offsetY = 0;
+
+		if ( view != null ) {
+			// Lord, forgive me!
+			if ( view.min( 0 ) == 0 ) {
+				// In case I give the cropped paramaxflow-baby I lost the offset and must do ugly shit...
+				// I promise this is only done because I need to finish the f****** paper!
+				offsetX = -( this.getAvgXpos() - MotherMachineGui.GL_WIDTH_TO_SHOW / 2 );
+				offsetY = view.min( 1 );
+			} else {
+				offsetX = view.min( 0 );
+				offsetY = view.min( 1 );
+			}
+		}
+
+		ArgbDrawingUtils.taintInactiveComponentTreeNode( optionalSegmentation, raAnnotationImg, offsetX + getAvgXpos(), offsetY + MotherMachine.GL_OFFSET_TOP );
+	}
+
 	/**
 	 * @return the average X coordinate of the center line of this
 	 *         <code>GrowthLine</code>

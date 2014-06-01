@@ -16,9 +16,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import net.imglib2.Localizable;
 import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.algorithm.componenttree.ComponentForest;
@@ -1249,13 +1251,13 @@ public class GrowthLineTrackingILP {
 	 * Removes an constraint on the number of cells at a given time-point (in
 	 * case such a constraint was ever added).
 	 * 
-	 * @param currentTime
+	 * @param t
 	 */
-	public void removeSegmentsInFrameCountConstraint( final int currentTime ) {
-		if ( segmentInFrameCountConstraint[ currentTime ] != null ) {
+	public void removeSegmentsInFrameCountConstraint( final int t ) {
+		if ( segmentInFrameCountConstraint[ t ] != null ) {
 			try {
-				model.remove( segmentInFrameCountConstraint[ currentTime ] );
-				segmentInFrameCountConstraint[ currentTime ] = null;
+				model.remove( segmentInFrameCountConstraint[ t ] );
+				segmentInFrameCountConstraint[ t ] = null;
 			} catch ( final GRBException e ) {
 				e.printStackTrace();
 			}
@@ -1266,19 +1268,60 @@ public class GrowthLineTrackingILP {
 	 * Returns the right hand side of the segment-count constraint the given
 	 * time-point.
 	 * 
-	 * @param currentTime
+	 * @param t
 	 *            time-point index.
 	 * @return the RHS of the constraint if one such constraint is set, -1
 	 *         otherwise.
 	 */
-	public int getSegmentsInFrameCountConstraintRHS( final int currentTime ) {
-		if ( segmentInFrameCountConstraint[ currentTime ] != null ) {
+	public int getSegmentsInFrameCountConstraintRHS( final int t ) {
+		if ( segmentInFrameCountConstraint[ t ] != null ) {
 			try {
-				return ( int ) segmentInFrameCountConstraint[ currentTime ].get( GRB.DoubleAttr.RHS );
+				return ( int ) segmentInFrameCountConstraint[ t ].get( GRB.DoubleAttr.RHS );
 			} catch ( final GRBException e ) {
 				e.printStackTrace();
 			}
 		}
 		return -1;
+	}
+
+	/**
+	 * Returns the hypothesis at a given position.
+	 * If there are more then one hypothesis at given location only the lowest
+	 * in the hypotheses tree will be returned.
+	 * (This is also the "shortest" one!)
+	 * 
+	 * @param t
+	 * @param gapSepYPos
+	 * @return
+	 */
+	public Component< DoubleType, ? > getLowestInTreeHypAt( final int t, final int gapSepYPos ) {
+		Component< DoubleType, ? > ret = null;
+		long min = Long.MAX_VALUE;
+
+		final List< Hypothesis< Component< DoubleType, ? >>> hyps = nodes.getHypothesesAt( t );
+		for ( final Hypothesis< Component< DoubleType, ? >> hyp : hyps ) {
+			final Component< DoubleType, ? > comp = hyp.getWrappedHypothesis();
+			final long s = comp.size();
+			if ( isComponentContainingYpos( comp, gapSepYPos ) ) {
+				if ( s < min ) {
+					min = s;
+					ret = comp;
+				}
+			}
+		}
+		return ret;
+	}
+
+	/**
+	 * @param comp
+	 * @param gapSepYPos
+	 * @return
+	 */
+	private boolean isComponentContainingYpos( final Component< DoubleType, ? > comp, final int gapSepYPos ) {
+		final Iterator< Localizable > componentIterator = comp.iterator();
+		while ( componentIterator.hasNext() ) {
+			if ( gapSepYPos == componentIterator.next().getIntPosition( 0 ) ) { return true; }
+		}
+		return false;
 	}
 }
