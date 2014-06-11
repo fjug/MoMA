@@ -104,7 +104,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 			if ( projector != null ) {
 				projector.map();
 			}
-			glf.drawCenterLine( screenImage, view );
+//			glf.drawCenterLine( screenImage, view );
 			//TODO NOT nice... do something against that, please!
 			final int t = glf.getParent().getFrames().indexOf( glf );
 			glf.drawOptimalSegmentation( screenImage, view, glf.getParent().getIlp().getOptimalSegmentation( t ) );

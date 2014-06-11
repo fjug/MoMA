@@ -72,7 +72,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * Parameter: how many pixels wide is the image containing the selected
 	 * GrowthLine?
 	 */
-	public static final int GL_WIDTH_TO_SHOW = 70;
+	public static final int GL_WIDTH_TO_SHOW = 50;
 
 	// -------------------------------------------------------------------------------------
 	// fields
@@ -850,18 +850,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 //				public void run() {
 			final JFileChooser fc = new JFileChooser();
 			fc.setSelectedFile( new File( String.format( MotherMachine.DEFAULT_PATH + String.format( "/gl_%02d", sliderGL.getValue() ) ) ) );
-			fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "csv", "CSV" }, "CVS-file" ) );
-
-			if ( fc.showSaveDialog( self ) == JFileChooser.APPROVE_OPTION ) {
-				File file = fc.getSelectedFile();
-				if ( !file.getAbsolutePath().endsWith( ".csv" ) && !file.getAbsolutePath().endsWith( ".CSV" ) ) {
-					file = new File( file.getAbsolutePath() + ".csv" );
-				}
-				MotherMachine.DEFAULT_PATH = file.getParent();
-
-				exportTracks( file );
-				dataToDisplayChanged();
-			}
 
 			fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "html", "htm" }, "HTML-file" ) );
 
@@ -872,7 +860,34 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				}
 				MotherMachine.DEFAULT_PATH = file.getParent();
 
-				exportTrackingImagesAndHtml( file );
+				int startFrame = 0;
+				int endFrame = ( sliderTime.getMaximum() - 2 );
+
+				boolean done = false;
+				while ( !done ) {
+					try {
+						final String str = JOptionPane.showInputDialog( "First frame to be exported:", "" + startFrame );
+						if ( str == null ) return; // User decided to hit cancel!
+						startFrame = Integer.parseInt( str );
+						done = true;
+					} catch ( final NumberFormatException nfe ) {
+						done = false;
+					}
+				}
+				done = false;
+				while ( !done ) {
+					try {
+						final String str = JOptionPane.showInputDialog( "Last frame to be exported:", "" + endFrame );
+						if ( str == null ) return; // User decided to hit cancel!
+						endFrame = Integer.parseInt( str );
+						done = true;
+					} catch ( final NumberFormatException nfe ) {
+						done = false;
+					}
+				}
+
+				exportTrackingImagesAndHtml( file, startFrame, endFrame );
+				exportTracks( new File( file.getPath() + ".csv" ) );
 				dataToDisplayChanged();
 			}
 
@@ -1312,15 +1327,24 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * Exports current tracking solution as individual PNG images in the given
 	 * folder.
 	 * 
+	 * @param endFrame
+	 * @param startFrame
+	 * 
 	 * @param folder
 	 *            path to folder in which to store PNGs.
 	 */
-	private void exportTrackingImagesAndHtml( final File htmlFileToSaveTo ) {
+	private void exportTrackingImagesAndHtml( final File htmlFileToSaveTo, final int startFrame, final int endFrame ) {
 		System.out.println( "Exporting tracks as images + html..." );
 
 		final String path = htmlFileToSaveTo.getParent();
 		final String imgpath = path + "/imgs";
 		final File fImgpath = new File( imgpath );
+
+		String basename = htmlFileToSaveTo.getName();
+		final int pos = basename.lastIndexOf( "." );
+		if ( pos > 0 ) {
+			basename = basename.substring( 0, pos );
+		}
 
 		// create folders to imgs if not exists
 		if ( !fImgpath.exists() && !fImgpath.mkdirs() ) {
@@ -1341,19 +1365,19 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			final String nextrow = "		</tr>\n			<tr>\n";
 			String row2 = "";
 
-			for ( int i = 0; i < model.getCurrentGL().size(); i++ ) {
+			for ( int i = startFrame; i < endFrame; i++ ) {
 				this.sliderTime.setValue( i );
 				try {
-					String fn = String.format( "/gl_%02d_glf_%03d.png", model.getCurrentTime(), i );
+					String fn = String.format( "/" + basename + "_gl_%02d_glf_%03d.png", sliderGL.getValue(), i );
 					Util.saveImage( Util.getImageOf( this.imgCanvasActiveCenter ), imgpath + fn );
 					row1 += "			<th><font size='+2'>t=" + i + "</font></th>\n";
 					row2 += "			<td><img src='./imgs" + fn + "'></td>\n";
 
-					if ( i < model.getCurrentGL().size() - 1 ) {
-						fn = String.format( "/gl_%02d_assmnts_%03d.png", model.getCurrentTime(), i );
+					if ( i < endFrame - 1 ) {
+						fn = String.format( "/" + basename + "_gl_%02d_assmnts_%03d.png", model.getCurrentTime(), i );
 						Util.saveImage( Util.getImageOf( this.rightAssignmentViewer.getActiveAssignments() ), imgpath + fn );
 						row1 += "			<th></th>\n";
-						row2 += "			<td><img src='./imgs" + fn + "'></td>\n";
+						row2 += "			<td><img src='./imgs" + fn + "' width='10' height='" + this.imgCanvasActiveCenter.getHeight() + "'></td>\n";
 					}
 				} catch ( final IOException e ) {
 					JOptionPane.showMessageDialog( this, "Tracking imagery could not be saved entirely!", "Export Error", JOptionPane.ERROR_MESSAGE );
