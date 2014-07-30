@@ -9,6 +9,7 @@ import gurobi.GRBException;
 import ij.ImageJ;
 
 import java.awt.DisplayMode;
+import java.awt.FileDialog;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
@@ -17,6 +18,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,15 +29,12 @@ import java.util.List;
 import java.util.Properties;
 
 import javax.swing.BorderFactory;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
-import javax.swing.filechooser.FileFilter;
 
-import loci.formats.gui.ExtensionFileFilter;
 import net.imglib2.Cursor;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessible;
@@ -157,7 +156,7 @@ public class MotherMachine {
 	 * String pointing at the weka-segmenter model file that should be used for
 	 * classification.
 	 */
-	public static String CLASSIFIER_MODEL_FILE = "src/main/resources/BinaryGapClassifier.model";
+	public static String CLASSIFIER_MODEL_FILE = "BinaryGapClassifier.model";
 
 	/**
 	 * Global switch that turns the use of the weka classifier for paramaxflow
@@ -642,16 +641,28 @@ public class MotherMachine {
 		if ( decision == JOptionPane.YES_OPTION ) {
 			GrowthLineSegmentationMagic.setClassifier( CLASSIFIER_MODEL_FILE, "" );
 		} else {
-			final JFileChooser fc = new JFileChooser( CLASSIFIER_MODEL_FILE );
-			fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "model", "MODEL" }, "weka model file" ) );
+			final FileDialog fd = new FileDialog( guiFrame, "Select classifier model file...", FileDialog.LOAD );
+			fd.setDirectory( CLASSIFIER_MODEL_FILE );
+			fd.setFilenameFilter( new FilenameFilter() {
 
-			if ( fc.showOpenDialog( this.guiFrame ) == JFileChooser.APPROVE_OPTION ) {
-				CLASSIFIER_MODEL_FILE = fc.getSelectedFile().getAbsolutePath();
-				GrowthLineSegmentationMagic.setClassifier( CLASSIFIER_MODEL_FILE, "" );
-			} else {
-				GrowthLineSegmentationMagic.setClassifier( CLASSIFIER_MODEL_FILE, "" );
+				@Override
+				public boolean accept( final File dir, final String name ) {
+					final String lowercaseName = name.toLowerCase();
+					if ( lowercaseName.endsWith( ".model" ) ) {
+						return true;
+					} else {
+						return false;
+					}
+				}
+			} );
+//			fd.setLocation(50,50);
+			fd.setVisible( true );
+			final String filename = fd.getDirectory() + "/" + fd.getFile();
+			if ( filename != null ) {
+				CLASSIFIER_MODEL_FILE = filename;
 			}
 		}
+		GrowthLineSegmentationMagic.setClassifier( CLASSIFIER_MODEL_FILE, "" );
 
 		return file;
 	}
@@ -667,30 +678,43 @@ public class MotherMachine {
 	 * @return an instance of {@link File} pointing at the selected folder.
 	 */
 	private File showFolderChooser( final JFrame guiFrame, final String path ) {
-		final JFileChooser chooser = new JFileChooser();
-		chooser.setCurrentDirectory( new java.io.File( path ) );
-		chooser.setDialogTitle( "Select folder containing image sequence..." );
-		chooser.setFileFilter( new FileFilter() {
+//		final JFileChooser chooser = new JFileChooser();
+//		chooser.setCurrentDirectory( new java.io.File( path ) );
+//		chooser.setDialogTitle( "Select folder containing image sequence..." );
+//		chooser.setFileFilter( new FileFilter() {
+//
+//			@Override
+//			public final boolean accept( final File file ) {
+//				return file.isDirectory();
+//			}
+//
+//			@Override
+//			public String getDescription() {
+//				return "We only take directories";
+//			}
+//		} );
+//		chooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+//		chooser.setAcceptAllFileFilterUsed( false );
+//
+//		if ( chooser.showOpenDialog( guiFrame ) == JFileChooser.APPROVE_OPTION ) {
+//			return chooser.getSelectedFile();
+//		} else {
+//			System.exit( 0 );
+//			return null;
+//		}
 
-			@Override
-			public final boolean accept( final File file ) {
-				return file.isDirectory();
-			}
-
-			@Override
-			public String getDescription() {
-				return "We only take directories";
-			}
-		} );
-		chooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-		chooser.setAcceptAllFileFilterUsed( false );
-
-		if ( chooser.showOpenDialog( guiFrame ) == JFileChooser.APPROVE_OPTION ) {
-			return chooser.getSelectedFile();
-		} else {
+		System.setProperty( "apple.awt.fileDialogForDirectories", "true" );
+		final FileDialog fd = new FileDialog( guiFrame, "Select folder containing image sequence...", FileDialog.LOAD );
+		fd.setDirectory( path );
+//		fd.setLocation(50,50);
+		fd.setVisible( true );
+		final File selectedFile = new File( fd.getDirectory() + "/" + fd.getFile() );
+		if ( fd.getFile() == null ) {
 			System.exit( 0 );
 			return null;
 		}
+		System.setProperty( "apple.awt.fileDialogForDirectories", "false" );
+		return selectedFile;
 	}
 
 	/**
