@@ -624,37 +624,9 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 */
 	@Override
 	public void mouseClicked( final MouseEvent e ) {
-		if ( e.getClickCount() == 2 ) {
-			new DialogAssignmentViewSetup( this, e.getXOnScreen(), e.getYOnScreen() ).setVisible( true );
-		}
-	}
-
-	/**
-	 * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
-	 */
-	@Override
-	public void mousePressed( final MouseEvent e ) {
-		// plain click to initiate dragging
-		if ( !e.isShiftDown() && !e.isControlDown() && e.getButton() == MouseEvent.BUTTON1 || e.getButton() == MouseEvent.BUTTON3 ) {
-			this.isDragging = true;
-			this.dragX = e.getX();
-			this.dragY = e.getY();
-		}
-
-		// ctrl-click to filter some assignments
-		if ( !e.isAltDown() && e.isControlDown() && e.getButton() == MouseEvent.BUTTON1 ) {
-			this.doFilterDataByIdentity = true;
-			this.doAddToFilter = true; // when repainting component next time...
-		}
-
-		// shift-click to filter some assignments
-		if ( !e.isAltDown() && e.isShiftDown() && e.getButton() == MouseEvent.BUTTON1 ) {
-			this.doFilterDataByIdentity = false;
-			this.filteredAssignments.clear();
-		}
-
-		// alt-click to filter some assignments
-		if ( e.isAltDown() && e.getButton() == MouseEvent.BUTTON1 ) {
+		// unmodified click -- include assignment
+		// ctrl click       -- avoid assignment
+		if ( e.getClickCount() == 1 && !e.isAltDown() && !e.isShiftDown() && e.getButton() == MouseEvent.BUTTON1 ) {
 			if ( e.isControlDown() ) {
 				this.doAddAsGroundUntruth = true;
 			} else {
@@ -662,7 +634,48 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 			}
 		}
 
+		// unmod. double_click  --  show filter window thing
+		if ( e.getClickCount() == 2 && !e.isShiftDown() ) {
+			new DialogAssignmentViewSetup( this, e.getXOnScreen(), e.getYOnScreen() ).setVisible( true );
+		}
+
 		repaint();
+	}
+
+	/**
+	 * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
+	 */
+	@Override
+	public void mousePressed( final MouseEvent e ) {
+		System.out.println( "shift:    " + e.isShiftDown() );
+		System.out.println( "ctrl:     " + e.isControlDown() );
+		System.out.println( "alt:      " + e.isAltDown() );
+		System.out.println( "click-c.: " + e.getClickCount() );
+		System.out.println( "button:   " + e.getButton() );
+
+		// shift-click   --   hide assignments
+		if ( !e.isAltDown() && !e.isControlDown() && e.isShiftDown() && e.getButton() == MouseEvent.BUTTON1 ) {
+			System.out.println( "Filter!" );
+			this.doFilterDataByIdentity = true;
+			this.doAddToFilter = true; // when repainting component next time...
+		}
+
+		// right_click or shift-right_click  --  clear list of hidden assignments
+		if ( !e.isAltDown() && !e.isControlDown() && e.getButton() == MouseEvent.BUTTON3 ) {
+			this.doFilterDataByIdentity = false;
+			this.filteredAssignments.clear();
+		}
+
+		// I repaint before detecting dragging (since this can interfere with filtering)
+		repaint();
+
+		// plain click to initiate dragging
+		if ( !e.isShiftDown() && !e.isControlDown() && !e.isAltDown() && e.getButton() == MouseEvent.BUTTON1 || e.getButton() == MouseEvent.BUTTON3 ) {
+			System.out.println( "Dragging!" );
+			this.isDragging = true;
+			this.dragX = e.getX();
+			this.dragY = e.getY();
+		}
 	}
 
 	/**
@@ -728,6 +741,8 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	public void mouseMoved( final MouseEvent e ) {
 		this.mousePosX = e.getX();
 		this.mousePosY = e.getY();
+		this.doAddAsGroundTruth = false;
+		this.doAddAsGroundUntruth = false;
 		this.repaint();
 	}
 
