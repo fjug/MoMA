@@ -433,6 +433,9 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 		// it might help to divide at right spots
 		if ( MotherMachine.SEGMENTATION_MIX_CT_INTO_PMFRF > 0.00001 ) {
 			final double percSimpleToStay = MotherMachine.SEGMENTATION_MIX_CT_INTO_PMFRF;
+			if ( simpleSepValues == null ) {
+				simpleSepValues = getSimpleGapSeparationValues( img );
+			}
 			for ( int i = 0; i < Math.min( simpleSepValues.length, awesomeSepValues.length ); i++ ) {
 				awesomeSepValues[ i ] = percSimpleToStay * simpleSepValues[ i ] + ( 1.0 - percSimpleToStay ) * awesomeSepValues[ i ];
 			}
