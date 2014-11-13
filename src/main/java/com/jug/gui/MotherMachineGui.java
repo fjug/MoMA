@@ -630,7 +630,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 			if ( model.getCurrentGLFsPredecessor() != null ) {
 				final GrowthLineFrame glf = model.getCurrentGLFsPredecessor();
-				viewImgLeftActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
+				viewImgLeftActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
 				imgCanvasActiveLeft.setScreenImage( glf, viewImgLeftActive );
 			} else {
 				// show something empty
@@ -641,7 +641,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 			if ( model.getCurrentGLFsSuccessor() != null ) {
 				final GrowthLineFrame glf = model.getCurrentGLFsSuccessor();
-				viewImgRightActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
+				viewImgRightActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
 				imgCanvasActiveRight.setScreenImage( glf, viewImgRightActive );
 			} else {
 				// show something empty
@@ -651,7 +651,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			// - -  t  - - - - - -
 
 			final GrowthLineFrame glf = model.getCurrentGLF();
-			viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
+			viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
 
 			final IntervalView< DoubleType > paramaxflowSumImageDoubleTyped = model.getCurrentGLF().getParamaxflowSumImageDoubleTyped( null );
 			if ( paramaxflowSumImageDoubleTyped != null && cbShowParaMaxFlowData.isSelected() ) {
@@ -1333,7 +1333,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * @param folder
 	 *            path to folder in which to store PNGs.
 	 */
-	private void exportTrackingImagesAndHtml( final File htmlFileToSaveTo, final int startFrame, final int endFrame ) {
+	public void exportTrackingImagesAndHtml( final File htmlFileToSaveTo, final int startFrame, final int endFrame ) {
 		System.out.println( "Exporting tracks as images + html..." );
 
 		final String path = htmlFileToSaveTo.getParent();
@@ -1369,15 +1369,15 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				this.sliderTime.setValue( i );
 				try {
 					String fn = String.format( "/" + basename + "_gl_%02d_glf_%03d.png", sliderGL.getValue(), i );
-					Util.saveImage( Util.getImageOf( this.imgCanvasActiveCenter ), imgpath + fn );
+					this.imgCanvasActiveCenter.exportScreenImage( imgpath + fn );
 					row1 += "			<th><font size='+2'>t=" + i + "</font></th>\n";
 					row2 += "			<td><img src='./imgs" + fn + "'></td>\n";
 
 					if ( i < endFrame - 1 ) {
-						fn = String.format( "/" + basename + "_gl_%02d_assmnts_%03d.png", model.getCurrentTime(), i );
-						Util.saveImage( Util.getImageOf( this.rightAssignmentViewer.getActiveAssignments() ), imgpath + fn );
+						fn = String.format( "/" + basename + "_gl_%02d_assmnts_%03d.png", sliderGL.getValue(), i );
+						Util.saveImage( Util.getImageOf( this.rightAssignmentViewer.getActiveAssignments(), imgCanvasActiveCenter.getWidth(), imgCanvasActiveCenter.getHeight() ), imgpath + fn );
 						row1 += "			<th></th>\n";
-						row2 += "			<td><img src='./imgs" + fn + "' width='10' height='" + this.imgCanvasActiveCenter.getHeight() + "'></td>\n";
+						row2 += "			<td><img src='./imgs" + fn + "'></td>\n"; // + "' width='10' height='" + this.imgCanvasActiveCenter.getHeight() 
 					}
 				} catch ( final IOException e ) {
 					JOptionPane.showMessageDialog( this, "Tracking imagery could not be saved entirely!", "Export Error", JOptionPane.ERROR_MESSAGE );

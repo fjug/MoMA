@@ -29,11 +29,13 @@ import java.util.List;
 import java.util.Properties;
 
 import javax.swing.BorderFactory;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
+import javax.swing.filechooser.FileFilter;
 
 import net.imglib2.Cursor;
 import net.imglib2.Point;
@@ -53,6 +55,7 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 
 import com.jug.gui.JFrameSnapper;
@@ -256,32 +259,74 @@ public class MotherMachine {
 	/**
 	 * PROJECT MAIN
 	 * 
-	 * @param arga
-	 *            muh!
+	 * @param args
+	 *            <input-folder> <output-folder> <file-filter-string>
+	 *            ["headless"]
 	 */
 	public static void main( final String[] args ) {
+		boolean headless = false;
+		File inputFolder = null;
+		File outputFolder = null;
+		String fileFilter = null;
+
+		if ( args.length == 4 ) {
+			headless = true;
+		}
+		if ( args.length >= 3 ) {
+			inputFolder = new File( args[ 0 ] );
+			outputFolder = new File( args[ 1 ] );
+			fileFilter = args[ 2 ];
+
+			if ( !inputFolder.isDirectory() ) {
+				System.out.println( "Given input folder is not a directory!" );
+				System.exit( 1 );
+			}
+			if ( !inputFolder.canWrite() ) {
+				System.out.println( "Given input folder cannot be written to!" );
+				System.exit( 1 );
+			}
+			if ( !outputFolder.isDirectory() ) {
+				System.out.println( "Given output folder is not a directory!" );
+				System.exit( 2 );
+			}
+			if ( !outputFolder.canWrite() ) {
+				System.out.println( "Given output folder cannot be written to!" );
+				System.exit( 2 );
+			}
+		}
 
 		// ******** CHECK GUROBI ********* CHECK GUROBI ********* CHECK GUROBI *********
 		final String jlp = System.getProperty( "java.library.path" );
 		try {
 			new GRBEnv( "MotherMachineILPs.log" );
 		} catch ( final GRBException e ) {
-			JOptionPane.showMessageDialog( MotherMachine.guiFrame, "Initial Gurobi test threw exception... check your Gruobi setup!\n\nJava library path: " + jlp, "Gurobi Error?", JOptionPane.ERROR_MESSAGE );
+			final String msgs = "Initial Gurobi test threw exception... check your Gruobi setup!\n\nJava library path: " + jlp;
+			if ( headless ) {
+				System.out.println( msgs );
+			} else {
+				JOptionPane.showMessageDialog( MotherMachine.guiFrame, msgs, "Gurobi Error?", JOptionPane.ERROR_MESSAGE );
+			}
 			e.printStackTrace();
 			System.exit( 98 );
 		} catch ( final UnsatisfiedLinkError ulr ) {
-			JOptionPane.showMessageDialog( MotherMachine.guiFrame, "Could initialize Gurobi.\n" + "You might not have installed Gurobi properly or you miss a valid license.\n" + "Please visit 'www.gurobi.com' for further information.\n\n" + ulr.getMessage() + "\nJava library path: " + jlp, "Gurobi Error?", JOptionPane.ERROR_MESSAGE );
-			System.out.println( "\n>>>>> Java library path: " + jlp + "\n" );
-			ulr.printStackTrace();
+			final String msgs = "Could initialize Gurobi.\n" + "You might not have installed Gurobi properly or you miss a valid license.\n" + "Please visit 'www.gurobi.com' for further information.\n\n" + ulr.getMessage() + "\nJava library path: " + jlp;
+			if ( headless ) {
+				System.out.println( msgs );
+			} else {
+				JOptionPane.showMessageDialog( MotherMachine.guiFrame, msgs, "Gurobi Error?", JOptionPane.ERROR_MESSAGE );
+				System.out.println( "\n>>>>> Java library path: " + jlp + "\n" );
+				ulr.printStackTrace();
+			}
 			System.exit( 99 );
 		}
 		// ******* END CHECK GUROBI **** END CHECK GUROBI **** END CHECK GUROBI ******** 
 
 		final MotherMachine main = new MotherMachine();
-		main.ij = new ImageJ();
-
-		guiFrame = new JFrame( "Interactive MotherMachine" );
-		main.initMainWindow( guiFrame );
+		if ( !headless ) {
+			main.ij = new ImageJ();
+			guiFrame = new JFrame( "Interactive MotherMachine" );
+			main.initMainWindow( guiFrame );
+		}
 
 		props = main.loadParams();
 		BGREM_TEMPLATE_XMIN = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMIN", Integer.toString( BGREM_TEMPLATE_XMIN ) ) );
@@ -306,43 +351,42 @@ public class MotherMachine {
 		GUI_WIDTH = Integer.parseInt( props.getProperty( "GUI_WIDTH", Integer.toString( GUI_WIDTH ) ) );
 		GUI_HEIGHT = Integer.parseInt( props.getProperty( "GUI_HEIGHT", Integer.toString( GUI_HEIGHT ) ) );
 		GUI_CONSOLE_WIDTH = Integer.parseInt( props.getProperty( "GUI_CONSOLE_WIDTH", Integer.toString( GUI_CONSOLE_WIDTH ) ) );
-		// Iterate over all currently attached monitors and check if sceen
-		// position is actually possible,
-		// otherwise fall back to the DEFAULT values and ignore the ones
-		// coming from the properties-file.
-		boolean pos_ok = false;
-		final GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-		final GraphicsDevice[] gs = ge.getScreenDevices();
-		for ( int i = 0; i < gs.length; i++ ) {
-			final DisplayMode dm = gs[ i ].getDisplayMode();
-			if ( gs[ i ].getDefaultConfiguration().getBounds().contains( new java.awt.Point( GUI_POS_X, GUI_POS_Y ) ) ) {
-				pos_ok = true;
+
+		if ( !headless ) {
+			// Iterate over all currently attached monitors and check if sceen
+			// position is actually possible,
+			// otherwise fall back to the DEFAULT values and ignore the ones
+			// coming from the properties-file.
+			boolean pos_ok = false;
+			final GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+			final GraphicsDevice[] gs = ge.getScreenDevices();
+			for ( int i = 0; i < gs.length; i++ ) {
+				final DisplayMode dm = gs[ i ].getDisplayMode();
+				if ( gs[ i ].getDefaultConfiguration().getBounds().contains( new java.awt.Point( GUI_POS_X, GUI_POS_Y ) ) ) {
+					pos_ok = true;
+				}
 			}
-		}
-		// None of the screens contained the top-left window coordinates -->
-		// fall back onto default values...
-		if ( !pos_ok ) {
-			GUI_POS_X = DEFAULT_GUI_POS_X;
-			GUI_POS_Y = DEFAULT_GUI_POS_Y;
+			// None of the screens contained the top-left window coordinates -->
+			// fall back onto default values...
+			if ( !pos_ok ) {
+				GUI_POS_X = DEFAULT_GUI_POS_X;
+				GUI_POS_Y = DEFAULT_GUI_POS_Y;
+			}
 		}
 
 		String path = props.getProperty( "import_path", System.getProperty( "user.home" ) );
-		final File fPath = main.showStartupDialog( guiFrame, path );
-		path = fPath.getAbsolutePath();
-		props.setProperty( "import_path", fPath.getAbsolutePath() );
-
-		// Setting up console window and window snapper...
-		main.initConsoleWindow();
-		main.showConsoleWindow();
-		final JFrameSnapper snapper = new JFrameSnapper();
-		snapper.addFrame( main.frameConsoleWindow );
-		snapper.addFrame( guiFrame );
+		if ( inputFolder == null ) {
+			inputFolder = main.showStartupDialog( guiFrame, path );
+		}
+		path = inputFolder.getAbsolutePath();
+		props.setProperty( "import_path", path );
 
 		// ---------------------------------------------------
-		main.processDataFromFolder( path );
+		final MotherMachineModel mmm = new MotherMachineModel( main );
+		instance = main;
+		main.processDataFromFolder( path, fileFilter );
 		// ---------------------------------------------------
 
-		System.out.print( "Build and show GUI..." );
 		// show loaded and annotated data
 		if ( false ) {
 			ImageJFunctions.show( main.imgRaw, "Rotated & cropped raw data" );
@@ -350,25 +394,38 @@ public class MotherMachine {
 			// ImageJFunctions.show( main.imgAnnotated, "Annotated ARGB data" );
 		}
 
-		final MotherMachineGui gui = new MotherMachineGui( new MotherMachineModel( main ) );
-		gui.setVisible( true );
+		final MotherMachineGui gui = new MotherMachineGui( mmm );
 
-		guiFrame.add( gui );
-		guiFrame.setSize( GUI_WIDTH, GUI_HEIGHT );
-		guiFrame.setLocation( GUI_POS_X, GUI_POS_Y );
-		guiFrame.setVisible( true );
+		if ( !headless ) {
+			System.out.print( "Build GUI..." );
+			// Setting up console window and window snapper...
+			main.initConsoleWindow();
+			main.showConsoleWindow();
+			final JFrameSnapper snapper = new JFrameSnapper();
+			snapper.addFrame( main.frameConsoleWindow );
+			snapper.addFrame( guiFrame );
 
-		SwingUtilities.invokeLater( new Runnable() {
+			gui.setVisible( true );
+			guiFrame.add( gui );
+			guiFrame.setSize( GUI_WIDTH, GUI_HEIGHT );
+			guiFrame.setLocation( GUI_POS_X, GUI_POS_Y );
+			guiFrame.setVisible( true );
 
-			@Override
-			public void run() {
-				snapper.snapFrames( main.frameConsoleWindow, guiFrame, JFrameSnapper.EAST );
-			}
-		} );
+			SwingUtilities.invokeLater( new Runnable() {
 
-		System.out.println( " done!" );
+				@Override
+				public void run() {
+					snapper.snapFrames( main.frameConsoleWindow, guiFrame, JFrameSnapper.EAST );
+				}
+			} );
+			System.out.println( " done!" );
+		} else {
+			final String name = inputFolder.getName();
+			gui.exportTrackingImagesAndHtml( new File( outputFolder.getAbsolutePath() + String.format( "/%s.html", name ) ), 0, main.getGrowthLines().get( 0 ).size() );
+			gui.exportTracks( new File( outputFolder.getAbsolutePath() + String.format( "/%s.csv", name ) ) );
 
-		instance = main;
+			System.exit( 0 );
+		}
 	}
 
 	// -------------------------------------------------------------------------------------
@@ -678,42 +735,49 @@ public class MotherMachine {
 	 * @return an instance of {@link File} pointing at the selected folder.
 	 */
 	private File showFolderChooser( final JFrame guiFrame, final String path ) {
-//		final JFileChooser chooser = new JFileChooser();
-//		chooser.setCurrentDirectory( new java.io.File( path ) );
-//		chooser.setDialogTitle( "Select folder containing image sequence..." );
-//		chooser.setFileFilter( new FileFilter() {
-//
-//			@Override
-//			public final boolean accept( final File file ) {
-//				return file.isDirectory();
-//			}
-//
-//			@Override
-//			public String getDescription() {
-//				return "We only take directories";
-//			}
-//		} );
-//		chooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-//		chooser.setAcceptAllFileFilterUsed( false );
-//
-//		if ( chooser.showOpenDialog( guiFrame ) == JFileChooser.APPROVE_OPTION ) {
-//			return chooser.getSelectedFile();
-//		} else {
-//			System.exit( 0 );
-//			return null;
-//		}
+		File selectedFile = null;
 
-		System.setProperty( "apple.awt.fileDialogForDirectories", "true" );
-		final FileDialog fd = new FileDialog( guiFrame, "Select folder containing image sequence...", FileDialog.LOAD );
-		fd.setDirectory( path );
-//		fd.setLocation(50,50);
-		fd.setVisible( true );
-		final File selectedFile = new File( fd.getDirectory() + "/" + fd.getFile() );
-		if ( fd.getFile() == null ) {
-			System.exit( 0 );
-			return null;
+		if ( SystemUtils.IS_OS_MAC ) {
+			// --- ON MAC SYSTEMS --- ON MAC SYSTEMS --- ON MAC SYSTEMS --- ON MAC SYSTEMS --- ON MAC SYSTEMS ---
+			System.setProperty( "apple.awt.fileDialogForDirectories", "true" );
+			final FileDialog fd = new FileDialog( guiFrame, "Select folder containing image sequence...", FileDialog.LOAD );
+			fd.setDirectory( path );
+//			fd.setLocation(50,50);
+			fd.setVisible( true );
+			selectedFile = new File( fd.getDirectory() + "/" + fd.getFile() );
+			if ( fd.getFile() == null ) {
+				System.exit( 0 );
+				return null;
+			}
+			System.setProperty( "apple.awt.fileDialogForDirectories", "false" );
+		} else {
+			// --- NOT ON A MAC --- NOT ON A MAC --- NOT ON A MAC --- NOT ON A MAC --- NOT ON A MAC --- NOT ON A MAC ---
+			final JFileChooser chooser = new JFileChooser();
+			chooser.setCurrentDirectory( new java.io.File( path ) );
+			chooser.setDialogTitle( "Select folder containing image sequence..." );
+			chooser.setFileFilter( new FileFilter() {
+
+				@Override
+				public final boolean accept( final File file ) {
+					return file.isDirectory();
+				}
+
+				@Override
+				public String getDescription() {
+					return "We only take directories";
+				}
+			} );
+			chooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
+			chooser.setAcceptAllFileFilterUsed( false );
+
+			if ( chooser.showOpenDialog( guiFrame ) == JFileChooser.APPROVE_OPTION ) {
+				selectedFile = chooser.getSelectedFile();
+			} else {
+				System.exit( 0 );
+				return null;
+			}
 		}
-		System.setProperty( "apple.awt.fileDialogForDirectories", "false" );
+
 		return selectedFile;
 	}
 
@@ -809,21 +873,21 @@ public class MotherMachine {
 	 * @param path
 	 *            the folder to be processed.
 	 */
-	private void processDataFromFolder( final String path ) {
+	private void processDataFromFolder( final String path, final String filter ) {
 		// load tiffs from folder
 		System.out.print( "Loading tiff sequence..." );
-		loadTiffSequence( path );
+		loadTiffSequence( path, filter );
 		System.out.println( " done!" );
 
-		// straighten loaded images
-		System.out.print( "Staighten loaded images..." );
-		straightenRawImg();
-		System.out.println( " done!" );
-
-		// cropping loaded images
-		System.out.print( "Cropping to ROI..." );
-		cropRawImgToROI();
-		System.out.println( " done!" );
+//		// straighten loaded images
+//		System.out.print( "Staighten loaded images..." );
+//		straightenRawImg();
+//		System.out.println( " done!" );
+//
+//		// cropping loaded images
+//		System.out.print( "Cropping to ROI..." );
+//		cropRawImgToROI();
+//		System.out.println( " done!" );
 
 		// setup ARGB image (that will eventually contain annotations)
 		System.out.print( "Spawning off annotation image (ARGB)..." );
@@ -842,24 +906,26 @@ public class MotherMachine {
 		annotateDetectedWellCenters();
 		System.out.println( " done!" );
 
-		// subtracting BG in RAW image...
-		System.out.print( "Subtracting background..." );
-		subtractBackgroundInRaw();
-		// ...and make temp image be the same
-		resetImgTempToRaw();
+//		// subtracting BG in RAW image...
+//		System.out.print( "Subtracting background..." );
+//		subtractBackgroundInRaw();
+//		// ...and make temp image be the same
+//		resetImgTempToRaw();
+//		System.out.println( " done!" );
+
+		normalizePerFrame( imgTemp );
+
+		System.out.print( "Generating Segmentation Hypotheses..." );
+		generateAllSimpleSegmentationHypotheses();
 		System.out.println( " done!" );
 
-		// System.out.print( "Generating Segmentation Hypotheses..." );
-		// generateAllSimpleSegmentationHypotheses();
-		// System.out.println( " done!" );
+		System.out.println( "Generating Integer Linear Programs..." );
+		generateILPs();
+		System.out.println( " done!" );
 
-		// System.out.println( "Generating Integer Linear Programs..." );
-		// generateILPs();
-		// System.out.println( " done!" );
-		//
-		// System.out.println( "Running Integer Linear Programs..." );
-		// runILPs();
-		// System.out.println( " done!" );
+		System.out.println( "Running Integer Linear Programs..." );
+		runILPs();
+		System.out.println( " done!" );
 	}
 
 	/**
@@ -869,9 +935,9 @@ public class MotherMachine {
 	 * @param folder
 	 *            string containing a sequence of '.tif' files.
 	 */
-	public void loadTiffSequence( final String folder ) {
+	public void loadTiffSequence( final String folder, final String filter ) {
 		try {
-			imgRaw = DoubleTypeImgLoader.loadStackOfTiffsFromFolder( folder );
+			imgRaw = DoubleTypeImgLoader.loadPathAsStack( folder, filter );
 		} catch ( final Exception e ) {
 			e.printStackTrace();
 		}
@@ -1100,6 +1166,13 @@ public class MotherMachine {
 				// Normalize the zone we removed the background from...
 				Normalize.normalize( Views.iterable( growthLineArea ), new DoubleType( 0.0 ), new DoubleType( 1.0 ) );
 			}
+		}
+	}
+
+	private void normalizePerFrame( final Img< DoubleType > img ) {
+
+		for ( int f = 0; f < img.dimension( 2 ); f++ ) {
+			Normalize.normalize( Views.iterable( Views.hyperSlice( img, 2, f ) ), new DoubleType( 0.0 ), new DoubleType( 1.0 ) );
 		}
 	}
 
@@ -1400,24 +1473,23 @@ public class MotherMachine {
 	 * optimization-related structures used to compute the optimal tracking.
 	 */
 	private void generateILPs() {
-		// for ( final GrowthLine gl : getGrowthLines() ) {
-		// gl.generateILP();
-		// }
-		// getGrowthLines().get( 0 ).generateILP();
+		for ( final GrowthLine gl : getGrowthLines() ) {
+			gl.generateILP();
+		}
+		getGrowthLines().get( 0 ).generateILP();
 	}
 
 	/**
 	 * Runs all the generated ILPs.
 	 */
 	private void runILPs() {
-		// int i = 0;
-		// for ( final GrowthLine gl : getGrowthLines() ) {
-		// System.out.println( " > > > > > Starting LP for GL# " + i +
-		// " < < < < < " );
-		// gl.runILP();
-		// i++;
-		// }
-		// getGrowthLines().get( 0 ).runILP();
+		int i = 0;
+		for ( final GrowthLine gl : getGrowthLines() ) {
+			System.out.println( " > > > > > Starting LP for GL# " + i + " < < < < < " );
+			gl.runILP();
+			i++;
+		}
+		getGrowthLines().get( 0 ).runILP();
 	}
 
 	/**

@@ -156,8 +156,8 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * @return the x-offset of the GrowthLineFrame given the original micrograph
 	 */
 	public long getOffsetX() {
-//		return getAvgXpos();
-		return getPoint( 0 ).getLongPosition( 0 );
+		return getAvgXpos();
+//		return getPoint( 0 ).getLongPosition( 0 );
 	}
 
 	/**
@@ -168,10 +168,10 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	}
 
 	/**
-	 * @return the z-offset of the GrowthLineFrame given the original micrograph
+	 * @return the f-offset of the GrowthLineFrame given the original micrograph
 	 *         (stack)
 	 */
-	public long getOffsetZ() {
+	public long getOffsetF() {
 		return parent.getFrames().indexOf( this );
 	}
 
@@ -423,7 +423,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 			final long right = getOffsetX() + MotherMachineGui.GL_WIDTH_TO_SHOW / 2;
 			final long top = img.min( 1 );
 			final long bottom = img.max( 1 );
-			final IntervalView< DoubleType > viewCropped = Views.interval( Views.hyperSlice( img, 2, getOffsetZ() ), new long[] { left, top }, new long[] { right, bottom } );
+			final IntervalView< DoubleType > viewCropped = Views.interval( Views.hyperSlice( img, 2, getOffsetF() ), new long[] { left, top }, new long[] { right, bottom } );
 			paramaxflowSumImageDoubleTyped = getParamaxflowSumImageDoubleTyped( viewCropped );
 		}
 

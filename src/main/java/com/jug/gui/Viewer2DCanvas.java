@@ -4,6 +4,8 @@
 package com.jug.gui;
 
 import gurobi.GRBException;
+import ij.IJ;
+import ij.ImagePlus;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -18,9 +20,11 @@ import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.converter.RealARGBConverter;
 import net.imglib2.display.projector.IterableIntervalProjector2D;
 import net.imglib2.display.screenimage.awt.ARGBScreenImage;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.view.IntervalView;
+import net.imglib2.view.Views;
 
 import com.jug.GrowthLineFrame;
 import com.jug.lp.GrowthLineTrackingILP;
@@ -86,6 +90,17 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 		this.view = viewImg;
 		this.glf = glf;
 		this.repaint();
+	}
+
+	/**
+	 * Exports the part of the original image that is seen in this canvas.
+	 * 
+	 * @param path
+	 *            note that the extension you give determines the file format!
+	 */
+	public void exportScreenImage( final String path ) {
+		final ImagePlus imagePlus = ImageJFunctions.wrapFloat( Views.interval( view, screenImage ), "export" );
+		IJ.save( imagePlus, path );
 	}
 
 	/**
@@ -260,5 +275,15 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 		this.mousePosX = e.getX();
 		this.mousePosY = e.getY() - 42;
 		this.repaint();
+	}
+
+	@Override
+	public int getWidth() {
+		return w;
+	}
+
+	@Override
+	public int getHeight() {
+		return h;
 	}
 }

@@ -50,12 +50,26 @@ public class Util {
 	 *         component.
 	 */
 	public static BufferedImage getImageOf( final Component component ) {
-		final BufferedImage image = new BufferedImage( component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_RGB );
+		return getImageOf( component, component.getWidth(), component.getHeight() );
+	}
+
+	/**
+	 * Creates an image containing the given component (as is on screen).
+	 * 
+	 * @param component
+	 *            the component to be captured
+	 * @param width
+	 * @param height
+	 * @return a <code>BufferedImage</code> containing a screenshot of the given
+	 *         component.
+	 */
+	public static BufferedImage getImageOf( final Component component, final int width, final int height ) {
+		final BufferedImage image = new BufferedImage( width, height, BufferedImage.TYPE_INT_RGB );
 		final Graphics2D graphics = image.createGraphics();
 		graphics.setPaint( Color.WHITE );
 		graphics.fillRect( 0, 0, image.getWidth(), image.getHeight() );
-		component.paint( image.getGraphics() ); // alternately use .printAll(..)
-		//component.printAll( image.getGraphics() );
+		component.paint( image.getGraphics() );
+//		component.printAll( image.getGraphics() );
 		return image;
 	}
 
