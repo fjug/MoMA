@@ -131,7 +131,7 @@ public class MM_MovieToDatasets {
 		}
 		System.out.println( " done!" );
 
-		ImageJFunctions.show( movie, "Loaded data..." );
+//		ImageJFunctions.show( movie, "Loaded data..." );
 
 		// straighten loaded images
 		System.out.print( "Straighten loaded images..." );

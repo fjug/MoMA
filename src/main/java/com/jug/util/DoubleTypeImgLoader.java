@@ -53,7 +53,7 @@ public class DoubleTypeImgLoader {
 
 			@Override
 			public boolean accept( final File dir, final String name ) {
-				return name.contains( ".tif" ) && ( filterString != null ) ? name.contains( filterString ) : true;
+				return name.contains( ".tif" ) && ( ( filterString != null ) ? name.contains( filterString ) : true );
 			}
 		};
 		final File[] listOfFiles = folder.listFiles( filter );
@@ -65,7 +65,7 @@ public class DoubleTypeImgLoader {
 		final ImgOpener imageOpener = new ImgOpener();
 		for ( int i = 0; i < listOfFiles.length; i++ ) {
 			if ( listOfFiles[ i ].isFile() ) {
-				// System.out.println("Loading file '" + listOfFiles[i].getName() +"' ...");
+				System.out.println( ">> Loading file '" + listOfFiles[ i ].getName() + "' ..." );
 				final List< SCIFIOImgPlus< DoubleType >> imgs = imageOpener.openImgs( listOfFiles[ i ].getAbsolutePath(), imgFactory, new DoubleType() );
 				final Img< DoubleType > img = imgs.get( 0 ).getImg();
 				images.add( img );

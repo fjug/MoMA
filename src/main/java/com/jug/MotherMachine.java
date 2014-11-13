@@ -79,6 +79,7 @@ public class MotherMachine {
 	// statics
 	// -------------------------------------------------------------------------------------
 	public static MotherMachine instance;
+	public static boolean HEADLESS = false;
 
 	/**
 	 * Parameter: sigma for gaussian blurring in x-direction of the raw image
@@ -264,13 +265,12 @@ public class MotherMachine {
 	 *            ["headless"]
 	 */
 	public static void main( final String[] args ) {
-		boolean headless = false;
 		File inputFolder = null;
 		File outputFolder = null;
 		String fileFilter = null;
 
 		if ( args.length == 4 ) {
-			headless = true;
+			HEADLESS = true;
 		}
 		if ( args.length >= 3 ) {
 			inputFolder = new File( args[ 0 ] );
@@ -297,11 +297,12 @@ public class MotherMachine {
 
 		// ******** CHECK GUROBI ********* CHECK GUROBI ********* CHECK GUROBI *********
 		final String jlp = System.getProperty( "java.library.path" );
+//		System.out.println( jlp );
 		try {
 			new GRBEnv( "MotherMachineILPs.log" );
 		} catch ( final GRBException e ) {
 			final String msgs = "Initial Gurobi test threw exception... check your Gruobi setup!\n\nJava library path: " + jlp;
-			if ( headless ) {
+			if ( HEADLESS ) {
 				System.out.println( msgs );
 			} else {
 				JOptionPane.showMessageDialog( MotherMachine.guiFrame, msgs, "Gurobi Error?", JOptionPane.ERROR_MESSAGE );
@@ -310,7 +311,7 @@ public class MotherMachine {
 			System.exit( 98 );
 		} catch ( final UnsatisfiedLinkError ulr ) {
 			final String msgs = "Could initialize Gurobi.\n" + "You might not have installed Gurobi properly or you miss a valid license.\n" + "Please visit 'www.gurobi.com' for further information.\n\n" + ulr.getMessage() + "\nJava library path: " + jlp;
-			if ( headless ) {
+			if ( HEADLESS ) {
 				System.out.println( msgs );
 			} else {
 				JOptionPane.showMessageDialog( MotherMachine.guiFrame, msgs, "Gurobi Error?", JOptionPane.ERROR_MESSAGE );
@@ -322,8 +323,8 @@ public class MotherMachine {
 		// ******* END CHECK GUROBI **** END CHECK GUROBI **** END CHECK GUROBI ******** 
 
 		final MotherMachine main = new MotherMachine();
-		if ( !headless ) {
-			main.ij = new ImageJ();
+		if ( !HEADLESS ) {
+//			main.ij = new ImageJ();
 			guiFrame = new JFrame( "Interactive MotherMachine" );
 			main.initMainWindow( guiFrame );
 		}
@@ -352,7 +353,7 @@ public class MotherMachine {
 		GUI_HEIGHT = Integer.parseInt( props.getProperty( "GUI_HEIGHT", Integer.toString( GUI_HEIGHT ) ) );
 		GUI_CONSOLE_WIDTH = Integer.parseInt( props.getProperty( "GUI_CONSOLE_WIDTH", Integer.toString( GUI_CONSOLE_WIDTH ) ) );
 
-		if ( !headless ) {
+		if ( !HEADLESS ) {
 			// Iterate over all currently attached monitors and check if sceen
 			// position is actually possible,
 			// otherwise fall back to the DEFAULT values and ignore the ones
@@ -396,7 +397,7 @@ public class MotherMachine {
 
 		final MotherMachineGui gui = new MotherMachineGui( mmm );
 
-		if ( !headless ) {
+		if ( !HEADLESS ) {
 			System.out.print( "Build GUI..." );
 			// Setting up console window and window snapper...
 			main.initConsoleWindow();
@@ -423,6 +424,13 @@ public class MotherMachine {
 			final String name = inputFolder.getName();
 			gui.exportTrackingImagesAndHtml( new File( outputFolder.getAbsolutePath() + String.format( "/%s.html", name ) ), 0, main.getGrowthLines().get( 0 ).size() );
 			gui.exportTracks( new File( outputFolder.getAbsolutePath() + String.format( "/%s.csv", name ) ) );
+
+			instance.saveParams();
+			if ( fileWriterForStats != null ) {
+				try {
+					fileWriterForStats.close();
+				} catch ( final IOException e ) {}
+			}
 
 			System.exit( 0 );
 		}
@@ -846,11 +854,13 @@ public class MotherMachine {
 			props.setProperty( "STATS_OUTPUT_PATH", STATS_OUTPUT_PATH );
 			props.setProperty( "DEFAULT_PATH", DEFAULT_PATH );
 
-			final java.awt.Point loc = guiFrame.getLocation();
-			GUI_POS_X = loc.x;
-			GUI_POS_Y = loc.y;
-			GUI_WIDTH = guiFrame.getWidth();
-			GUI_HEIGHT = guiFrame.getHeight();
+			if ( !MotherMachine.HEADLESS ) {
+				final java.awt.Point loc = guiFrame.getLocation();
+				GUI_POS_X = loc.x;
+				GUI_POS_Y = loc.y;
+				GUI_WIDTH = guiFrame.getWidth();
+				GUI_HEIGHT = guiFrame.getHeight();
+			}
 
 			props.setProperty( "GUI_POS_X", Integer.toString( GUI_POS_X ) );
 			props.setProperty( "GUI_POS_Y", Integer.toString( GUI_POS_Y ) );

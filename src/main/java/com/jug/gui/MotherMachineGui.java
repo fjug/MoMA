@@ -202,7 +202,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelVerticalHelper.setBorder( BorderFactory.createEmptyBorder( 10, 10, 0, 5 ) );
 		panelVerticalHelper.add( new JLabel( "GL#" ), BorderLayout.NORTH );
 		panelVerticalHelper.add( sliderGL, BorderLayout.CENTER );
-		add( panelVerticalHelper, BorderLayout.WEST );
+		// show the slider only if it actually has a purpose...
+		if ( sliderGL.getMaximum() > 1 ) {
+			add( panelVerticalHelper, BorderLayout.WEST );
+		}
 
 		// --- All the TABs -------------
 
