@@ -1,0 +1,3 @@
+cd /Users/jug/local/MotherMachine
+java -jar MotherMachine.jar $1 $2 $3
+cd -
