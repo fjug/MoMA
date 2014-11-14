@@ -28,6 +28,13 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 
 import com.jug.loops.Loops;
@@ -90,38 +97,67 @@ public class MM_MovieToDatasets {
 	 *            muh!
 	 */
 	public static void main( final String[] args ) {
-		if ( args.length < 1 || args.length > 2 ) {
-			System.out.println( "Usage: java MM_MovieToDatasets <folder-in> [folder-out]" );
-			System.exit( 1 );
+
+		// ===== command line parsing ======================================================================
+		// create Options object & the parser
+		final Options options = new Options();
+		final CommandLineParser parser = new BasicParser();
+		// defining command line options
+		final Option help = new Option( "help", "print this message" );
+		final Option channels = new Option( "c", "channels", true, "number of channels" );
+		channels.setRequired( true );
+		final Option infolder = new Option( "i", "infolder", true, "folder to read data from" );
+		infolder.setRequired( true );
+		final Option outfolder = new Option( "o", "outfolder", true, "folder to write preprocessed data to (equals infolder if not set)" );
+		outfolder.setRequired( false );
+		options.addOption( help );
+		options.addOption( channels );
+		options.addOption( infolder );
+		options.addOption( outfolder );
+		// get the commands parsed
+		CommandLine cmd = null;
+		try {
+			cmd = parser.parse( options, args );
+		} catch ( final ParseException e1 ) {
+			final HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp( "... -c <# of channels> -i <in-folder> -o [out-folder]", "", options, "Error: " + e1.getMessage() );
+			System.exit( 0 );
 		}
 
-		final File inFolder = new File( args[ 0 ] );
+		if ( cmd.hasOption( "help" ) ) {
+			final HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp( "... -c <# of channels> -i <in-folder> -o [out-folder]", options );
+			System.exit( 0 );
+		}
+
+		final File inFolder = new File( cmd.getOptionValue( "i" ) );
 		if ( !inFolder.isDirectory() ) {
-			System.out.println( "Input folder is not a directory!" );
+			System.out.println( "Error: Input folder is not a directory!" );
 			System.exit( 2 );
 		}
 		if ( !inFolder.canRead() ) {
-			System.out.println( "Input folder cannot be read!" );
+			System.out.println( "Error: Input folder cannot be read!" );
 			System.exit( 2 );
 		}
 
 		File outFolder = null;
-		if ( args.length == 1 ) {
+		if ( !cmd.hasOption( "o" ) ) {
 			outFolder = inFolder;
 		} else {
-			outFolder = new File( args[ 1 ] );
+			outFolder = new File( cmd.getOptionValue( "i" ) );
 
 			if ( !outFolder.isDirectory() ) {
-				System.out.println( "Output folder is not a directory!" );
+				System.out.println( "Error: Output folder is not a directory!" );
 				System.exit( 3 );
 			}
 			if ( !inFolder.canWrite() ) {
-				System.out.println( "Output folder cannot be written to!" );
+				System.out.println( "Error: Output folder cannot be written to!" );
 				System.exit( 3 );
 			}
 		}
 
-		// load tiffs from folder
+		// ===== load tiffs from folder ======================================================================
+
 		System.out.print( "Loading tiff sequence..." );
 		try {
 			movie = DoubleTypeImgLoader.loadFolderAsChannelStack( inFolder );
@@ -130,8 +166,14 @@ public class MM_MovieToDatasets {
 			System.exit( 4 );
 		}
 		System.out.println( " done!" );
-
+//		try {
+//			movie = DoubleTypeImgLoader.loadPathAsStack( inFolder, filter );
+//		} catch ( final Exception e ) {
+//			e.printStackTrace();
+//		}
 //		ImageJFunctions.show( movie, "Loaded data..." );
+
+		// ===== start preprocessing pipeline ======================================================================
 
 		// straighten loaded images
 		System.out.print( "Straighten loaded images..." );
