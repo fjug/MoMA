@@ -104,14 +104,17 @@ public class MM_MovieToDatasets {
 		final CommandLineParser parser = new BasicParser();
 		// defining command line options
 		final Option help = new Option( "help", "print this message" );
-		final Option channels = new Option( "c", "channels", true, "number of channels" );
-		channels.setRequired( true );
+		final Option channels = new Option( "c", "channels", true, "number of channels (will be determined if not given)" );
+		channels.setRequired( false );
+		final Option filenameFilterStringOption = new Option( "f", "fnfilter", true, "string that must be contained in loaded filenames" );
+		filenameFilterStringOption.setRequired( false );
 		final Option infolder = new Option( "i", "infolder", true, "folder to read data from" );
 		infolder.setRequired( true );
-		final Option outfolder = new Option( "o", "outfolder", true, "folder to write preprocessed data to (equals infolder if not set)" );
+		final Option outfolder = new Option( "o", "outfolder", true, "folder to write preprocessed data to (equals infolder if not given)" );
 		outfolder.setRequired( false );
 		options.addOption( help );
 		options.addOption( channels );
+		options.addOption( filenameFilterStringOption );
 		options.addOption( infolder );
 		options.addOption( outfolder );
 		// get the commands parsed
@@ -144,7 +147,7 @@ public class MM_MovieToDatasets {
 		if ( !cmd.hasOption( "o" ) ) {
 			outFolder = inFolder;
 		} else {
-			outFolder = new File( cmd.getOptionValue( "i" ) );
+			outFolder = new File( cmd.getOptionValue( "o" ) );
 
 			if ( !outFolder.isDirectory() ) {
 				System.out.println( "Error: Output folder is not a directory!" );
@@ -156,22 +159,40 @@ public class MM_MovieToDatasets {
 			}
 		}
 
+		// get filter string
+		String filenameFilterString = "";
+		if ( cmd.hasOption( "f" ) ) {
+			filenameFilterString = cmd.getOptionValue( "f" );
+		}
+
+		// receive number of channels to be loaded
+		int maxTime = -1;
+		int numChannelsToLoad = -1;
+		try {
+			maxTime = DoubleTypeImgLoader.figureMaxCounterFromFolder( inFolder.getAbsolutePath(), filenameFilterString, "_t" );
+			numChannelsToLoad = DoubleTypeImgLoader.figureMaxCounterFromFolder( inFolder.getAbsolutePath(), filenameFilterString, "_c" );
+		} catch ( final Exception e ) {
+			e.printStackTrace();
+			System.exit( 4 );
+		}
+		if ( cmd.hasOption( "c" ) ) {
+			numChannelsToLoad = Integer.parseInt( cmd.getOptionValue( "c" ) );
+		}
+
 		// ===== load tiffs from folder ======================================================================
 
-		System.out.print( "Loading tiff sequence..." );
+		System.out.print( String.format( "Loading tiff sequence (%d time points, %d channels) ...", maxTime, numChannelsToLoad ) );
 		try {
-			movie = DoubleTypeImgLoader.loadFolderAsChannelStack( inFolder );
+			// TODO 5 should be maxTime!
+			final List< Img< DoubleType >> frameList = DoubleTypeImgLoader.load2DTiffSequenceAsListOfMultiChannelImgs( inFolder.getAbsolutePath(), "_c", 0, 5, 1, numChannelsToLoad, 4 );
+			movie = DoubleTypeImgLoader.makeMultiFrameFromChannelImages( frameList );
 		} catch ( final Exception e ) {
 			e.printStackTrace();
 			System.exit( 4 );
 		}
 		System.out.println( " done!" );
-//		try {
-//			movie = DoubleTypeImgLoader.loadPathAsStack( inFolder, filter );
-//		} catch ( final Exception e ) {
-//			e.printStackTrace();
-//		}
-//		ImageJFunctions.show( movie, "Loaded data..." );
+
+		ImageJFunctions.show( movie, "Loaded data..." );
 
 		// ===== start preprocessing pipeline ======================================================================
 
@@ -180,7 +201,7 @@ public class MM_MovieToDatasets {
 		movie = straightenRawImg( movie );
 		System.out.println( " done!" );
 
-//		ImageJFunctions.show( movie, "Straightened data..." );
+		ImageJFunctions.show( movie, "Straightened data..." );
 
 		// cropping loaded images
 		System.out.print( "Cropping to ROI..." );
@@ -224,13 +245,13 @@ public class MM_MovieToDatasets {
 	 *         loosing data!)
 	 */
 	private static Img< DoubleType > straightenRawImg( final Img< DoubleType > movie ) {
-		assert ( movie.numDimensions() == 3 );
+		assert ( movie.numDimensions() == 4 );
 
 		// new raw image
 		Img< DoubleType > rawNew;
 
 		// find out how slanted the given stack is...
-		final List< Cursor< DoubleType >> points = new Loops< DoubleType, Cursor< DoubleType >>().forEachHyperslice( Views.hyperSlice( movie, 2, 0 ), 0, new FindLocationAboveThreshold< DoubleType >( new DoubleType( 0.33 ) ) );
+		final List< Cursor< DoubleType >> points = new Loops< DoubleType, Cursor< DoubleType >>().forEachHyperslice( Views.hyperSlice( Views.hyperSlice( movie, 3, 0 ), 2, 0 ), 0, new FindLocationAboveThreshold< DoubleType >( new DoubleType( 0.33 ) ) );
 
 		final SimpleRegression regression = new SimpleRegression();
 		final long[] pos = new long[ 2 ];
@@ -292,7 +313,7 @@ public class MM_MovieToDatasets {
 			}
 		}
 
-//		ImageJFunctions.show( rawNew );
+		ImageJFunctions.show( rawNew );
 		return rawNew;
 	}
 
