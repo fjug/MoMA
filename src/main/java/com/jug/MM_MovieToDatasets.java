@@ -55,6 +55,21 @@ import com.jug.util.DoubleTypeImgLoader;
  */
 public class MM_MovieToDatasets {
 
+	private static class CropArea {
+
+		public long top;
+		public long left;
+		public long bottom;
+		public long right;
+
+		public CropArea( final long top, final long left, final long bottom, final long right ) {
+			this.top = top;
+			this.left = left;
+			this.bottom = bottom;
+			this.right = right;
+		}
+	}
+
 	public static double SIGMA_GL_DETECTION_X = 15.0;
 	public static double SIGMA_GL_DETECTION_Y = 3.0;
 
@@ -70,7 +85,7 @@ public class MM_MovieToDatasets {
 	/**
 	 * Holds the entire movie sequence as loaded from given input folder.
 	 */
-	private static Img< DoubleType > movie;
+	private static Img< DoubleType > data;
 
 	/**
 	 * The slope of the growth lines in raw data (used to rotate raw images).
@@ -99,22 +114,40 @@ public class MM_MovieToDatasets {
 	public static void main( final String[] args ) {
 
 		// ===== command line parsing ======================================================================
+
 		// create Options object & the parser
 		final Options options = new Options();
 		final CommandLineParser parser = new BasicParser();
 		// defining command line options
 		final Option help = new Option( "help", "print this message" );
+
 		final Option channels = new Option( "c", "channels", true, "number of channels (will be determined if not given)" );
 		channels.setRequired( false );
+
 		final Option filenameFilterStringOption = new Option( "f", "fnfilter", true, "string that must be contained in loaded filenames" );
 		filenameFilterStringOption.setRequired( false );
+
+		final Option doFrameByFrame = new Option( "s", "serial", false, "does data preprocessing frame by frame (saves memory, might cause trouble)" );
+		doFrameByFrame.setRequired( false );
+
+		final Option timeFirst = new Option( "tmin", "min_time", true, "first time-point to be processed" );
+		timeFirst.setRequired( false );
+
+		final Option timeLast = new Option( "tmax", "max_time", true, "last time-point to be processed" );
+		timeFirst.setRequired( false );
+
 		final Option infolder = new Option( "i", "infolder", true, "folder to read data from" );
 		infolder.setRequired( true );
+
 		final Option outfolder = new Option( "o", "outfolder", true, "folder to write preprocessed data to (equals infolder if not given)" );
 		outfolder.setRequired( false );
+
 		options.addOption( help );
 		options.addOption( channels );
 		options.addOption( filenameFilterStringOption );
+		options.addOption( doFrameByFrame );
+		options.addOption( timeFirst );
+		options.addOption( timeLast );
 		options.addOption( infolder );
 		options.addOption( outfolder );
 		// get the commands parsed
@@ -131,6 +164,11 @@ public class MM_MovieToDatasets {
 			final HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp( "... -c <# of channels> -i <in-folder> -o [out-folder]", options );
 			System.exit( 0 );
+		}
+
+		boolean doSerial = false;
+		if ( cmd.hasOption( "s" ) ) {
+			doSerial = true;
 		}
 
 		final File inFolder = new File( cmd.getOptionValue( "i" ) );
@@ -167,6 +205,7 @@ public class MM_MovieToDatasets {
 
 		// receive number of channels to be loaded
 		int maxTime = -1;
+		int minTime = 0;
 		int numChannelsToLoad = -1;
 		try {
 			maxTime = DoubleTypeImgLoader.figureMaxCounterFromFolder( inFolder.getAbsolutePath(), filenameFilterString, "_t" );
@@ -179,57 +218,83 @@ public class MM_MovieToDatasets {
 			numChannelsToLoad = Integer.parseInt( cmd.getOptionValue( "c" ) );
 		}
 
-		// ===== load tiffs from folder ======================================================================
-
-		System.out.print( String.format( "Loading tiff sequence (%d time points, %d channels) ...", maxTime, numChannelsToLoad ) );
-		try {
-			// TODO 5 should be maxTime!
-			final List< Img< DoubleType >> frameList = DoubleTypeImgLoader.load2DTiffSequenceAsListOfMultiChannelImgs( inFolder.getAbsolutePath(), "_c", 0, 5, 1, numChannelsToLoad, 4 );
-			movie = DoubleTypeImgLoader.makeMultiFrameFromChannelImages( frameList );
-		} catch ( final Exception e ) {
-			e.printStackTrace();
-			System.exit( 4 );
+		if ( cmd.hasOption( "tmin" ) ) {
+			minTime = Integer.parseInt( cmd.getOptionValue( "tmin" ) );
 		}
-		System.out.println( " done!" );
-
-		ImageJFunctions.show( movie, "Loaded data..." );
-
-		// ===== start preprocessing pipeline ======================================================================
-
-		// straighten loaded images
-		System.out.print( "Straighten loaded images..." );
-		movie = straightenRawImg( movie );
-		System.out.println( " done!" );
-
-		ImageJFunctions.show( movie, "Straightened data..." );
-
-		// cropping loaded images
-		System.out.print( "Cropping to ROI..." );
-		movie = cropRawImgToROI( movie );
-		System.out.println( " done!" );
-
-//		ImageJFunctions.show( movie, "Cropped data..." );
-
-		// searching for GLs
-		System.out.print( "Searching for GrowthLines..." );
-		findGrowthLines( movie );
-		System.out.println( " done!" );
-
-		// subtracting BG in RAW image...
-		System.out.print( "Subtracting background..." );
-		subtractBackground( movie );
-		System.out.println( " done!" );
-
-//		ImageJFunctions.show( movie, "BG-Subtracted data..." );
-
-		// exporting individual GLs as image sequence...
-		System.out.print( "Exporting individual GLs..." );
-		for ( int i = 0; i < growthLines.size(); i++ ) {
-			System.out.print( " " + ( i + 1 ) );
-			final String newFileName = String.format( "%s%sGL%02d", outFolder.getAbsolutePath(), File.separator, i + 1 );
-			exportGrowthLineToFolder( movie, i, new File( newFileName ) );
+		if ( cmd.hasOption( "tmax" ) ) {
+			maxTime = Integer.parseInt( cmd.getOptionValue( "tmax" ) );
 		}
-		System.out.println( " done!" );
+
+		System.out.print( String.format( "Loading tiff sequence (%d time points, %d channels):", maxTime - minTime + 1, numChannelsToLoad ) );
+
+		// TODO remove!
+		CropArea crop = null;
+		for ( int t = minTime; t <= ( ( doSerial ) ? maxTime : minTime ); t++ ) {
+
+			// ===== load tiffs from folder ======================================================================
+
+			try {
+				List< Img< DoubleType >> frameList = null;
+				if ( doSerial ) {
+					System.out.print( String.format( "Loading time point %d  (%d channels) ...", t, numChannelsToLoad ) );
+					frameList = DoubleTypeImgLoader.load2DTiffSequenceAsListOfMultiChannelImgs( inFolder.getAbsolutePath(), "_c", t, t, 1, numChannelsToLoad, 4 );
+				} else {
+					System.out.print( String.format( "Loading data  (%d time-point with %d channels each) ...", maxTime, numChannelsToLoad ) );
+					frameList = DoubleTypeImgLoader.load2DTiffSequenceAsListOfMultiChannelImgs( inFolder.getAbsolutePath(), "_c", minTime, maxTime, 1, numChannelsToLoad, 4 );
+				}
+				System.out.print( String.format( "    ...glue time-point multi-channel images together...", maxTime - minTime + 1, numChannelsToLoad ) );
+				data = DoubleTypeImgLoader.makeMultiFrameFromChannelImages( frameList ); // ALERT: this empties the list in fact!
+			} catch ( final Exception e ) {
+				e.printStackTrace();
+				System.exit( 4 );
+			}
+			System.out.println( " done!" );
+
+//			ImageJFunctions.show( data, "Loaded data..." );
+
+			// ===== start preprocessing pipeline ======================================================================
+
+			// straighten loaded images
+			System.out.print( "Straighten loaded images..." );
+			data = straightenRawImg( data );
+			System.out.println( " done!" );
+
+//			ImageJFunctions.show( data, "Straightened data..." );
+
+			// cropping loaded images
+			System.out.print( "Cropping to ROI..." );
+			// if we are in serial mode we want to reuse the crop area
+			// this makes drift being a problem, but that is better then having GLs jumping around like hell!
+			if ( crop == null ) {
+				crop = determineCropCoordinates( data );
+			}
+			data = cropRawImgToROI( data, crop );
+			System.out.println( " done!" );
+
+//			ImageJFunctions.show( data, "Cropped data..." );
+
+			// searching for GLs
+			System.out.print( "Searching for GrowthLines..." );
+			findGrowthLines( data );
+			System.out.println( " done!" );
+
+			// subtracting BG in RAW image...
+			System.out.print( "Subtracting background..." );
+			subtractBackground( data );
+			System.out.println( " done!" );
+
+//			ImageJFunctions.show( data, "BG-Subtracted data..." );
+
+			// exporting individual GLs as image sequence...
+			System.out.print( "Exporting individual GLs..." );
+			for ( int i = 0; i < growthLines.size(); i++ ) {
+				System.out.print( " " + ( i + 1 ) );
+				final String newFileName = String.format( "%s%sGL%02d", outFolder.getAbsolutePath(), File.separator, i );
+				exportGrowthLineToFolder( data, i, new File( newFileName ), t );
+			}
+			System.out.println( " done!" );
+		}
+
 		System.out.println( "Individual growth-lines written to " + outFolder.getAbsolutePath() + " !" );
 		System.exit( 0 );
 	}
@@ -239,19 +304,19 @@ public class MM_MovieToDatasets {
 	 * wells seen in the micrographs come from the MotherMachine. Note: This is
 	 * NOT done in-place! The returned <code>Img</code> is newly created!
 	 * 
-	 * @param movie
+	 * @param data
 	 *            - the 3d <code>Img</code> to be straightened.
 	 * @return the straightened <code>Img</code>. (Might be larger to avoid
 	 *         loosing data!)
 	 */
-	private static Img< DoubleType > straightenRawImg( final Img< DoubleType > movie ) {
-		assert ( movie.numDimensions() == 4 );
+	private static Img< DoubleType > straightenRawImg( final Img< DoubleType > data ) {
+		assert ( data.numDimensions() == 4 );
 
 		// new raw image
 		Img< DoubleType > rawNew;
 
 		// find out how slanted the given stack is...
-		final List< Cursor< DoubleType >> points = new Loops< DoubleType, Cursor< DoubleType >>().forEachHyperslice( Views.hyperSlice( Views.hyperSlice( movie, 3, 0 ), 2, 0 ), 0, new FindLocationAboveThreshold< DoubleType >( new DoubleType( 0.33 ) ) );
+		final List< Cursor< DoubleType >> points = new Loops< DoubleType, Cursor< DoubleType >>().forEachHyperslice( Views.hyperSlice( Views.hyperSlice( data, 3, 0 ), 2, 0 ), 0, new FindLocationAboveThreshold< DoubleType >( new DoubleType( 0.33 ) ) );
 
 		final SimpleRegression regression = new SimpleRegression();
 		final long[] pos = new long[ 2 ];
@@ -272,7 +337,7 @@ public class MM_MovieToDatasets {
 		final double radSlant = Math.atan( regression.getSlope() );
 		// System.out.println("slope = " + regression.getSlope());
 		// System.out.println("intercept = " + regression.getIntercept());
-		final double[] dCenter2d = new double[] { movie.dimension( 0 ) * 0.5, -regression.getIntercept() + points.size() * regression.getSlope() };
+		final double[] dCenter2d = new double[] { data.dimension( 0 ) * 0.5, -regression.getIntercept() + points.size() * regression.getSlope() };
 
 		// ...and inversely rotate the whole stack in XY
 		final AffineTransform2D affine = new AffineTransform2D();
@@ -280,9 +345,9 @@ public class MM_MovieToDatasets {
 		affine.rotate( radSlant );
 		affine.translate( dCenter2d[ 0 ], dCenter2d[ 1 ] );
 
-		long minX = movie.min( 0 ), maxX = movie.max( 0 );
-		long minY = movie.min( 1 );
-		final long maxY = movie.max( 1 );
+		long minX = data.min( 0 ), maxX = data.max( 0 );
+		long minY = data.min( 1 );
+		final long maxY = data.max( 1 );
 		final double[][] corners = { new double[] { minX, minY }, new double[] { maxX, minY }, new double[] { minX, maxY }, new double[] { maxX, maxY } };
 		final double[] tmp = new double[ 2 ];
 		for ( final double[] corner : corners ) {
@@ -295,12 +360,12 @@ public class MM_MovieToDatasets {
 			// wanted!)
 		}
 
-		rawNew = movie.factory().create( new long[] { maxX - minX, maxY - minY, movie.dimension( 2 ), movie.dimension( 3 ) }, movie.firstElement() );
+		rawNew = data.factory().create( new long[] { maxX - minX, maxY - minY, data.dimension( 2 ), data.dimension( 3 ) }, data.firstElement() );
 
-		for ( i = 0; i < movie.dimension( 3 ); i++ ) {
-			final RandomAccessibleInterval< DoubleType > viewZSlize = Views.hyperSlice( movie, 3, i );
+		for ( i = 0; i < data.dimension( 3 ); i++ ) {
+			final RandomAccessibleInterval< DoubleType > viewZSlize = Views.hyperSlice( data, 3, i );
 
-			for ( int c = 0; c < movie.dimension( 2 ); c++ ) {
+			for ( int c = 0; c < data.dimension( 2 ); c++ ) {
 				final RandomAccessibleInterval< DoubleType > viewCZSlize = Views.hyperSlice( viewZSlize, 2, c );
 
 				final RandomAccessible< DoubleType > raInfCZSlize = Views.extendValue( viewCZSlize, new DoubleType( 0.0 ) );
@@ -313,7 +378,7 @@ public class MM_MovieToDatasets {
 			}
 		}
 
-		ImageJFunctions.show( rawNew );
+//		ImageJFunctions.show( rawNew );
 		return rawNew;
 	}
 
@@ -323,25 +388,36 @@ public class MM_MovieToDatasets {
 	 * given <code>Img</code> should be rotated such that the seen wells are
 	 * axis parallel.
 	 * 
-	 * @param movie
+	 * @param data
 	 *            - the streightened 3d <code>Img</code> that should be cropped
 	 *            down to contain only the ROI.
 	 */
-	private static Img< DoubleType > cropRawImgToROI( final Img< DoubleType > movie ) {
-		assert ( movie.numDimensions() == 3 );
+	private static Img< DoubleType > cropRawImgToROI( final Img< DoubleType > data ) {
+		assert ( data.numDimensions() == 4 );
 
-		// return image
-		Img< DoubleType > rawNew = null;
+		final Long top, left, bottom, right;
+		final CropArea c = determineCropCoordinates( data );
+
+		return cropRawImgToROI( data, c.top, c.left, c.bottom, c.right );
+	}
+
+	/**
+	 * @param top
+	 * @param left
+	 * @param bottom
+	 * @param right
+	 */
+	private static CropArea determineCropCoordinates( final Img< DoubleType > data ) {
 
 		// crop positions to be evaluated
-		long top = 0, bottom = movie.dimension( 1 );
+		long top = 0, bottom = data.dimension( 1 );
 		long left, right;
 
 		// check for possible crop in first and last image
-		final long[] lFPositions = new long[] { 0, movie.dimension( 2 ) - 1 };
+		final long[] lFPositions = new long[] { 0, data.dimension( 3 ) - 1 };
 		for ( final long lFPos : lFPositions ) {
 			// find out how slanted the given stack is...
-			final List< DoubleType > points = new Loops< DoubleType, DoubleType >().forEachHyperslice( Views.hyperSlice( movie, 3, lFPos ), 1, new VarOfRai< DoubleType >() );
+			final List< DoubleType > points = new Loops< DoubleType, DoubleType >().forEachHyperslice( Views.hyperSlice( data, 3, lFPos ), 1, new VarOfRai< DoubleType >() );
 
 			final double[] y = new double[ points.size() ];
 			int i = 0;
@@ -380,16 +456,45 @@ public class MM_MovieToDatasets {
 			// System.out.println(">> Top/bottom: " + top + " / " + bottom);
 		}
 		left = Math.round( Math.floor( 0 - dCorrectedSlope * bottom ) );
-		right = Math.round( Math.ceil( movie.dimension( 0 ) + dCorrectedSlope * ( movie.dimension( 1 ) - top ) ) );
+		right = Math.round( Math.ceil( data.dimension( 0 ) + dCorrectedSlope * ( data.dimension( 1 ) - top ) ) );
+
+		final CropArea ret = new CropArea( top, left, bottom, right );
+		return ret;
+	}
+
+	/**
+	 * If you know how to crop... go ahead!
+	 * 
+	 * @param data
+	 * @param c
+	 * @return
+	 */
+	private static Img< DoubleType > cropRawImgToROI( final Img< DoubleType > data, final CropArea c ) {
+		return cropRawImgToROI( data, c.top, c.left, c.bottom, c.right );
+	}
+
+	/**
+	 * If you know how to crop... go ahead!
+	 * 
+	 * @param data
+	 * @param left
+	 * @param top
+	 * @param bottom
+	 * @param right
+	 * @return
+	 */
+	private static Img< DoubleType > cropRawImgToROI( final Img< DoubleType > data, final long top, final long left, final long bottom, final long right ) {
+		// return image
+		Img< DoubleType > rawNew = null;
 
 		// create image that can host cropped data
-		rawNew = movie.factory().create( new long[] { right - left, bottom - top, movie.dimension( 2 ), movie.dimension( 3 ) }, movie.firstElement() );
+		rawNew = data.factory().create( new long[] { right - left, bottom - top, data.dimension( 2 ), data.dimension( 3 ) }, data.firstElement() );
 
 		// and copy it there
-		for ( int f = 0; f < movie.dimension( 3 ); f++ ) {
-			final RandomAccessibleInterval< DoubleType > viewZSlize = Views.hyperSlice( movie, 3, f );
+		for ( int f = 0; f < data.dimension( 3 ); f++ ) {
+			final RandomAccessibleInterval< DoubleType > viewZSlize = Views.hyperSlice( data, 3, f );
 
-			for ( int c = 0; c < movie.dimension( 2 ); c++ ) {
+			for ( int c = 0; c < data.dimension( 2 ); c++ ) {
 				final RandomAccessibleInterval< DoubleType > viewCZSlize = Views.hyperSlice( viewZSlize, 2, c );
 				final RandomAccessibleInterval< DoubleType > viewCroppedCZSlize = Views.zeroMin( Views.interval( viewCZSlize, new long[] { left, top }, new long[] { bottom, right } ) );
 
@@ -404,7 +509,7 @@ public class MM_MovieToDatasets {
 	}
 
 	/**
-	 * Estimates the centers of the growth lines given in 'movie'. The found
+	 * Estimates the centers of the growth lines given in 'data'. The found
 	 * center lines are computed by a linear regression of growth line center
 	 * estimates. Those estimates are obtained by convolving the image with a
 	 * Gaussian (parameterized by SIGMA_GL_DETECTION_*) and looking for local
@@ -413,24 +518,24 @@ public class MM_MovieToDatasets {
 	 * This function operates on 'imgTemp' and sets 'glCenterPoints' as well as
 	 * 'growthLines'.
 	 */
-	private static void findGrowthLines( final Img< DoubleType > movie ) {
+	private static void findGrowthLines( final Img< DoubleType > data ) {
 
 		growthLines = new ArrayList< GrowthLine >();
 		glCenterPoints = new ArrayList< List< List< Point >>>();
 
 		// movie copy for smoothing
-		final Img< DoubleType > movieCopy = movie.copy();
+		final Img< DoubleType > movieCopy = data.copy();
 
 		List< List< Point > > frameWellCenters;
 
 		// ------ GAUSS -----------------------------
 
-		final int n = movie.numDimensions();
+		final int n = data.numDimensions();
 		final double[] sigmas = new double[ n ];
 		sigmas[ 0 ] = SIGMA_GL_DETECTION_X;
 		sigmas[ 1 ] = SIGMA_GL_DETECTION_Y;
 		try {
-			Gauss3.gauss( sigmas, Views.extendMirrorDouble( movie ), movieCopy );
+			Gauss3.gauss( sigmas, Views.extendMirrorDouble( data ), movieCopy );
 		} catch ( final IncompatibleTypeException e ) {
 			e.printStackTrace();
 		}
@@ -623,10 +728,10 @@ public class MM_MovieToDatasets {
 	 * Simple but effective method to subtract uneven illumination from the
 	 * growth-line data.
 	 * 
-	 * @param img
+	 * @param data
 	 *            DoubleType image stack.
 	 */
-	private static void subtractBackground( final Img< DoubleType > movie ) {
+	private static void subtractBackground( final Img< DoubleType > data ) {
 
 		for ( int i = 0; i < growthLines.size(); i++ ) {
 			for ( int f = 0; f < growthLines.get( i ).size(); f++ ) {
@@ -636,9 +741,9 @@ public class MM_MovieToDatasets {
 				if ( glfX == -1 ) continue; // do not do anything with empty GLFs
 
 				final int glfY1 = 0; // gl.getFirstPoint().getIntPosition(1);
-				final int glfY2 = ( int ) movie.dimension( 1 ) - 1;
+				final int glfY2 = ( int ) data.dimension( 1 ) - 1;
 
-				final IntervalView< DoubleType > frame = Views.hyperSlice( Views.hyperSlice( movie, 3, f ), 2, 0 );
+				final IntervalView< DoubleType > frame = Views.hyperSlice( Views.hyperSlice( data, 3, f ), 2, 0 );
 
 				double rowAvgs[] = new double[ glfY2 - glfY1 + 1 ];
 				int colCount = 0;
@@ -649,7 +754,7 @@ public class MM_MovieToDatasets {
 					colCount += ( BGREM_TEMPLATE_XMAX - BGREM_TEMPLATE_XMIN );
 				}
 				// Look to the right if you are not the last GLF
-				if ( glfX < movie.dimension( 0 ) - BGREM_TEMPLATE_XMAX ) {
+				if ( glfX < data.dimension( 0 ) - BGREM_TEMPLATE_XMAX ) {
 					final IntervalView< DoubleType > rightBackgroundWindow = Views.interval( frame, new long[] { glfX + BGREM_TEMPLATE_XMIN, glfY1 }, new long[] { glfX + BGREM_TEMPLATE_XMAX, glfY2 } );
 					rowAvgs = addRowSumsFromInterval( rightBackgroundWindow, rowAvgs );
 					colCount += ( BGREM_TEMPLATE_XMAX - BGREM_TEMPLATE_XMIN );
@@ -712,7 +817,7 @@ public class MM_MovieToDatasets {
 	 * @param outputFolder
 	 *            existing folder that can be written to.
 	 */
-	private static void exportGrowthLineToFolder( final Img< DoubleType > movie, final int idxGL, final File outputFolder ) {
+	private static void exportGrowthLineToFolder( final Img< DoubleType > data, final int idxGL, final File outputFolder, final int tOffset ) {
 		IntervalView< DoubleType > extractedView;
 		RandomAccessibleInterval< DoubleType > extractedRai;
 
@@ -725,19 +830,19 @@ public class MM_MovieToDatasets {
 		int t = 0;
 		final List< GrowthLineFrame > frames = growthLines.get( idxGL ).getFrames();
 		for ( final GrowthLineFrame frame : frames ) {
-			for ( int c = 0; c < movie.dimension( 2 ); c++ ) {
+			for ( int c = 0; c < data.dimension( 2 ); c++ ) {
 				final long offsetX = frame.getOffsetX();
 				final long offsetY = frame.getOffsetY();
 				final long offsetF = frame.getOffsetF();
 				final long width = GL_WIDTH_TO_EXTRACT;
-				final long absoluteHeight = movie.max( 1 );
+				final long absoluteHeight = data.max( 1 );
 
-				extractedView = Views.offset( Views.hyperSlice( Views.hyperSlice( movie, 3, t ), 2, c ), offsetX - width / 2, offsetY );
+				extractedView = Views.offset( Views.hyperSlice( Views.hyperSlice( data, 3, t ), 2, c ), offsetX - width / 2, offsetY );
 				final ExtendedRandomAccessibleInterval< DoubleType, IntervalView< DoubleType >> extendedView = Views.extendMirrorSingle( extractedView );
 				extractedRai = Views.interval( extendedView, new long[] { 0, 0 }, new long[] { width, absoluteHeight - offsetY } );
 				final ImagePlus iPlus = ImageJFunctions.wrapFloat( extractedRai, "temp" );
 
-				final String fn = String.format( outputFolder.getAbsolutePath() + File.separator + "gl%02d_t%03d_c%d.tif", idxGL, t, c );
+				final String fn = String.format( outputFolder.getAbsolutePath() + File.separator + "gl%02d_t%04d_c%04d.tif", idxGL, tOffset + t, c );
 				IJ.save( iPlus.duplicate(), fn );
 			}
 			t++;

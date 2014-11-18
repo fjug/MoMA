@@ -55,6 +55,13 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 
@@ -265,34 +272,100 @@ public class MotherMachine {
 	 *            ["headless"]
 	 */
 	public static void main( final String[] args ) {
-		File inputFolder = null;
-		File outputFolder = null;
-		String fileFilter = null;
 
-		if ( args.length == 4 ) {
-			HEADLESS = true;
+		// ===== command line parsing ======================================================================
+
+		// create Options object & the parser
+		final Options options = new Options();
+		final CommandLineParser parser = new BasicParser();
+		// defining command line options
+		final Option help = new Option( "help", "print this message" );
+
+		final Option headless = new Option( "h", "headless", false, "start without user interface (note: input-folder must be given!)" );
+		headless.setRequired( false );
+
+		final Option filenameFilterStringOption = new Option( "f", "fnfilter", true, "string that must be contained in loaded filenames" );
+		filenameFilterStringOption.setRequired( false );
+
+		final Option timeFirst = new Option( "tmin", "min_time", true, "first time-point to be processed" );
+		timeFirst.setRequired( false );
+
+		final Option timeLast = new Option( "tmax", "max_time", true, "last time-point to be processed" );
+		timeFirst.setRequired( false );
+
+		final Option infolder = new Option( "i", "infolder", true, "folder to read data from" );
+		infolder.setRequired( false );
+
+		final Option outfolder = new Option( "o", "outfolder", true, "folder to write preprocessed data to (equals infolder if not given)" );
+		outfolder.setRequired( false );
+
+		options.addOption( help );
+		options.addOption( headless );
+		options.addOption( filenameFilterStringOption );
+		options.addOption( timeFirst );
+		options.addOption( timeLast );
+		options.addOption( infolder );
+		options.addOption( outfolder );
+		// get the commands parsed
+		CommandLine cmd = null;
+		try {
+			cmd = parser.parse( options, args );
+		} catch ( final ParseException e1 ) {
+			final HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp( "... -i [in-folder] -o [out-folder] -f [filter-string] [-headless]", "", options, "Error: " + e1.getMessage() );
+			System.exit( 0 );
 		}
-		if ( args.length >= 3 ) {
-			inputFolder = new File( args[ 0 ] );
-			outputFolder = new File( args[ 1 ] );
-			fileFilter = args[ 2 ];
+
+		if ( cmd.hasOption( "help" ) ) {
+			final HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp( "... -i <in-folder> -o [out-folder] [-headless]", options );
+			System.exit( 0 );
+		}
+
+		if ( cmd.hasOption( "h" ) ) {
+			System.out.println( ">>> Starting MM in headless mode." );
+			HEADLESS = true;
+			if ( !cmd.hasOption( "i" ) ) {
+				final HelpFormatter formatter = new HelpFormatter();
+				formatter.printHelp( "Headless-mode requires option '-i <in-folder>'...", options );
+				System.exit( 0 );
+			}
+		}
+
+		File inputFolder = null;
+		if ( cmd.hasOption( "i" ) ) {
+			inputFolder = new File( cmd.getOptionValue( "i" ) );
 
 			if ( !inputFolder.isDirectory() ) {
-				System.out.println( "Given input folder is not a directory!" );
-				System.exit( 1 );
+				System.out.println( "Error: Input folder is not a directory!" );
+				System.exit( 2 );
+			}
+			if ( !inputFolder.canRead() ) {
+				System.out.println( "Error: Input folder cannot be read!" );
+				System.exit( 2 );
+			}
+		}
+
+		File outputFolder = null;
+		if ( !cmd.hasOption( "o" ) ) {
+			outputFolder = inputFolder;
+		} else {
+			outputFolder = new File( cmd.getOptionValue( "o" ) );
+
+			if ( !outputFolder.isDirectory() ) {
+				System.out.println( "Error: Output folder is not a directory!" );
+				System.exit( 3 );
 			}
 			if ( !inputFolder.canWrite() ) {
-				System.out.println( "Given input folder cannot be written to!" );
-				System.exit( 1 );
+				System.out.println( "Error: Output folder cannot be written to!" );
+				System.exit( 3 );
 			}
-			if ( !outputFolder.isDirectory() ) {
-				System.out.println( "Given output folder is not a directory!" );
-				System.exit( 2 );
-			}
-			if ( !outputFolder.canWrite() ) {
-				System.out.println( "Given output folder cannot be written to!" );
-				System.exit( 2 );
-			}
+		}
+
+		// get filter string
+		String filenameFilterString = "";
+		if ( cmd.hasOption( "f" ) ) {
+			filenameFilterString = cmd.getOptionValue( "f" );
 		}
 
 		// ******** CHECK GUROBI ********* CHECK GUROBI ********* CHECK GUROBI *********
@@ -315,9 +388,9 @@ public class MotherMachine {
 				System.out.println( msgs );
 			} else {
 				JOptionPane.showMessageDialog( MotherMachine.guiFrame, msgs, "Gurobi Error?", JOptionPane.ERROR_MESSAGE );
-				System.out.println( "\n>>>>> Java library path: " + jlp + "\n" );
 				ulr.printStackTrace();
 			}
+			System.out.println( "\n>>>>> Java library path: " + jlp + "\n" );
 			System.exit( 99 );
 		}
 		// ******* END CHECK GUROBI **** END CHECK GUROBI **** END CHECK GUROBI ******** 
@@ -376,17 +449,19 @@ public class MotherMachine {
 		}
 
 		String path = props.getProperty( "import_path", System.getProperty( "user.home" ) );
-		if ( inputFolder == null ) {
+		if ( inputFolder == null || inputFolder.equals( "" ) ) {
 			inputFolder = main.showStartupDialog( guiFrame, path );
 		}
 		path = inputFolder.getAbsolutePath();
 		props.setProperty( "import_path", path );
 
-		// ---------------------------------------------------
+		// ------------------------------------------------------------------------------------------------------
+		// ------------------------------------------------------------------------------------------------------
 		final MotherMachineModel mmm = new MotherMachineModel( main );
 		instance = main;
-		main.processDataFromFolder( path, fileFilter );
-		// ---------------------------------------------------
+		main.processDataFromFolder( path, filenameFilterString );
+		// ------------------------------------------------------------------------------------------------------
+		// ------------------------------------------------------------------------------------------------------
 
 		// show loaded and annotated data
 		if ( false ) {
@@ -885,19 +960,14 @@ public class MotherMachine {
 	 */
 	private void processDataFromFolder( final String path, final String filter ) {
 		// load tiffs from folder
-		System.out.print( "Loading tiff sequence..." );
-		loadTiffSequence( path, filter );
+		System.out.print( String.format( "Loading tiff sequence with filename containing '%s' from '%s'...", filter, path ) );
+		try {
+			imgRaw = DoubleTypeImgLoader.loadPathAsStack( path, filter );
+		} catch ( final Exception e ) {
+			e.printStackTrace();
+			System.exit( 10 );
+		}
 		System.out.println( " done!" );
-
-//		// straighten loaded images
-//		System.out.print( "Staighten loaded images..." );
-//		straightenRawImg();
-//		System.out.println( " done!" );
-//
-//		// cropping loaded images
-//		System.out.print( "Cropping to ROI..." );
-//		cropRawImgToROI();
-//		System.out.println( " done!" );
 
 		// setup ARGB image (that will eventually contain annotations)
 		System.out.print( "Spawning off annotation image (ARGB)..." );
@@ -916,13 +986,6 @@ public class MotherMachine {
 		annotateDetectedWellCenters();
 		System.out.println( " done!" );
 
-//		// subtracting BG in RAW image...
-//		System.out.print( "Subtracting background..." );
-//		subtractBackgroundInRaw();
-//		// ...and make temp image be the same
-//		resetImgTempToRaw();
-//		System.out.println( " done!" );
-
 		normalizePerFrame( imgTemp );
 
 		System.out.print( "Generating Segmentation Hypotheses..." );
@@ -936,21 +999,6 @@ public class MotherMachine {
 		System.out.println( "Running Integer Linear Programs..." );
 		runILPs();
 		System.out.println( " done!" );
-	}
-
-	/**
-	 * Loads all files contained in the given folder that end on '.tif' into an
-	 * image stack and assigns it to imgRaw.
-	 * 
-	 * @param folder
-	 *            string containing a sequence of '.tif' files.
-	 */
-	public void loadTiffSequence( final String folder, final String filter ) {
-		try {
-			imgRaw = DoubleTypeImgLoader.loadPathAsStack( folder, filter );
-		} catch ( final Exception e ) {
-			e.printStackTrace();
-		}
 	}
 
 	/**

@@ -53,7 +53,7 @@ public class DoubleTypeImgLoader {
 
 			@Override
 			public boolean accept( final File dir, final String name ) {
-				return name.contains( ".tif" ) && ( ( filterString != null ) ? name.contains( filterString ) : true );
+				return name.contains( ".tif" ) && ( ( filterString != null && !filterString.equals( "" ) ) ? name.contains( filterString ) : true );
 			}
 		};
 		final File[] listOfFiles = folder.listFiles( filter );
@@ -73,7 +73,7 @@ public class DoubleTypeImgLoader {
 		final List< Img< DoubleType > > images = new ArrayList< Img< DoubleType > >();
 		for ( int i = 0; i < listOfFiles.length; i++ ) {
 			if ( listOfFiles[ i ].isFile() ) {
-				images.add( loadTiff( listOfFiles[ 0 ] ) );
+				images.add( loadTiff( listOfFiles[ i ] ) );
 			}
 		}
 		return images;
@@ -92,7 +92,7 @@ public class DoubleTypeImgLoader {
 		final ImgFactory< DoubleType > imgFactory = new ArrayImgFactory< DoubleType >();
 		final ImgOpener imageOpener = new ImgOpener();
 
-		System.out.println( ">> Loading file '" + file.getName() + "' ..." );
+		System.out.print( "\n >> Loading file '" + file.getName() + "' ..." );
 		final List< SCIFIOImgPlus< DoubleType >> imgs = imageOpener.openImgs( file.getAbsolutePath(), imgFactory, new DoubleType() );
 		final Img< DoubleType > img = imgs.get( 0 ).getImg();
 //		ImageJFunctions.show( img );
@@ -347,7 +347,7 @@ public class DoubleTypeImgLoader {
 		retImage = new ArrayImgFactory< DoubleType >().create( new long[] { width, height, channels, frames }, new DoubleType() );
 
 		// Add frames to images to to be returned...
-		for ( int f = 0; f < frames; f++ ) {
+		for ( int f = ( int ) ( frames - 1 ); f >= 0; f-- ) {
 			final Img< DoubleType > image = frameList.get( f );
 
 			if ( image.numDimensions() == 3 ) {
@@ -361,6 +361,7 @@ public class DoubleTypeImgLoader {
 					Normalize.normalize( iterChannel, new DoubleType( 0.0 ), new DoubleType( 1.0 ) );
 					DataMover.copy( sourceChannel, iterChannel );
 				}
+				frameList.remove( f );
 			} else {
 				throw new ImgIOException( "MultiFrame image can only be composed out of non 3d images." );
 			}
