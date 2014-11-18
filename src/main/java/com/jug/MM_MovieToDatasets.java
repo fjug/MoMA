@@ -842,7 +842,7 @@ public class MM_MovieToDatasets {
 				extractedRai = Views.interval( extendedView, new long[] { 0, 0 }, new long[] { width, absoluteHeight - offsetY } );
 				final ImagePlus iPlus = ImageJFunctions.wrapFloat( extractedRai, "temp" );
 
-				final String fn = String.format( outputFolder.getAbsolutePath() + File.separator + "gl%02d_t%04d_c%04d.tif", idxGL, tOffset + t, c );
+				final String fn = String.format( outputFolder.getAbsolutePath() + File.separator + "gl%02d_t%04d_c%02d.tif", idxGL, tOffset + t, c );
 				IJ.save( iPlus.duplicate(), fn );
 			}
 			t++;

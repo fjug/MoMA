@@ -349,6 +349,7 @@ public class MotherMachine {
 		File outputFolder = null;
 		if ( !cmd.hasOption( "o" ) ) {
 			outputFolder = inputFolder;
+			STATS_OUTPUT_PATH = outputFolder.getAbsolutePath();
 		} else {
 			outputFolder = new File( cmd.getOptionValue( "o" ) );
 
@@ -360,6 +361,8 @@ public class MotherMachine {
 				System.out.println( "Error: Output folder cannot be written to!" );
 				System.exit( 3 );
 			}
+
+			STATS_OUTPUT_PATH = outputFolder.getAbsolutePath();
 		}
 
 		// get filter string
@@ -417,7 +420,7 @@ public class MotherMachine {
 		SIGMA_GL_DETECTION_Y = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION_Y", Double.toString( SIGMA_GL_DETECTION_Y ) ) );
 		SEGMENTATION_MIX_CT_INTO_PMFRF = Double.parseDouble( props.getProperty( "SEGMENTATION_MIX_CT_INTO_PMFRF", Double.toString( SEGMENTATION_MIX_CT_INTO_PMFRF ) ) );
 		CLASSIFIER_MODEL_FILE = props.getProperty( "CLASSIFIER_MODEL_FILE", CLASSIFIER_MODEL_FILE );
-		STATS_OUTPUT_PATH = props.getProperty( "STATS_OUTPUT_PATH", STATS_OUTPUT_PATH );
+//		STATS_OUTPUT_PATH = props.getProperty( "STATS_OUTPUT_PATH", STATS_OUTPUT_PATH );
 		DEFAULT_PATH = props.getProperty( "DEFAULT_PATH", DEFAULT_PATH );
 
 		GUI_POS_X = Integer.parseInt( props.getProperty( "GUI_POS_X", Integer.toString( DEFAULT_GUI_POS_X ) ) );
@@ -926,7 +929,7 @@ public class MotherMachine {
 			props.setProperty( "SIGMA_GL_DETECTION_Y", Double.toString( SIGMA_GL_DETECTION_Y ) );
 			props.setProperty( "SEGMENTATION_MIX_CT_INTO_PMFRF", Double.toString( SEGMENTATION_MIX_CT_INTO_PMFRF ) );
 			props.setProperty( "CLASSIFIER_MODEL_FILE", CLASSIFIER_MODEL_FILE );
-			props.setProperty( "STATS_OUTPUT_PATH", STATS_OUTPUT_PATH );
+//			props.setProperty( "STATS_OUTPUT_PATH", STATS_OUTPUT_PATH );
 			props.setProperty( "DEFAULT_PATH", DEFAULT_PATH );
 
 			if ( !MotherMachine.HEADLESS ) {
