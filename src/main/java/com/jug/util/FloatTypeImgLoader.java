@@ -189,6 +189,7 @@ public class FloatTypeImgLoader {
 		final int numThreads = Math.min( listOfFiles.length, numProcessors );
 
 		final List< Img< FloatType > > images = new ArrayList< Img< FloatType > >( listOfFiles.length );
+
 		for ( int i = 0; i < listOfFiles.length; i++ ) {
 			images.add( null );
 		}
@@ -235,6 +236,17 @@ public class FloatTypeImgLoader {
 			try {
 				thread.join();
 			} catch ( final InterruptedException e ) {}
+		}
+
+		// Add the last image twice. This is to trick the MM to not having tracking problems towards the last frame.
+		// Note that this also means that the GUI always has to show one frame less!!!
+		try {
+			images.add( loadTiff( listOfFiles[ listOfFiles.length - 1 ] ) );
+			if ( normalize ) {
+				Normalize.normalize( images.get( listOfFiles.length ), new FloatType( 0.0f ), new FloatType( 1.0f ) );
+			}
+		} catch ( final ImgIOException e ) {
+			ioe.setStackTrace( e.getStackTrace() );
 		}
 
 		return images;
@@ -396,7 +408,6 @@ public class FloatTypeImgLoader {
 		for ( final Img< FloatType > image : imageList ) {
 			final RandomAccessibleInterval< FloatType > viewZSlize = Views.hyperSlice( stack, 2, i );
 			final IterableInterval< FloatType > iterZSlize = Views.iterable( viewZSlize );
-
 			DataMover.copy( Views.extendZero( image ), iterZSlize );
 			i++;
 		}

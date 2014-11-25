@@ -72,7 +72,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * Parameter: how many pixels wide is the image containing the selected
 	 * GrowthLine?
 	 */
-	public static final int GL_WIDTH_TO_SHOW = 70;
+	public static final int GL_WIDTH_TO_SHOW = 50;
 
 	// -------------------------------------------------------------------------------------
 	// fields
@@ -134,8 +134,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private JButton btnExchangeSegHyps;
 	private JButton btnOptimize;
 	private JButton btnOptimizeAll;
-	private JButton btnExportTracking;
-	private JButton btnGenerateAllStats;
+	private JButton btnExportAllStats;
+	private JButton btnGenerateAllPaperStats;
 	private JButton btnOptimizeRemainingAndExport;
 	private JButton btnSaveFG;
 
@@ -175,12 +175,17 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		// --- Slider for time and GL -------------
 
-		sliderTime = new JSlider( JSlider.HORIZONTAL, 0, model.getCurrentGL().size() - 1, 0 );
+		sliderTime = new JSlider( JSlider.HORIZONTAL, 0, model.getCurrentGL().size() - 2, 0 );
 		sliderTime.setValue( 1 );
 		model.setCurrentGLF( sliderTime.getValue() );
 		sliderTime.addChangeListener( this );
-		sliderTime.setMajorTickSpacing( 10 );
-		sliderTime.setMinorTickSpacing( 2 );
+		if ( sliderTime.getMaximum() < 300 ) {
+			sliderTime.setMajorTickSpacing( 10 );
+			sliderTime.setMinorTickSpacing( 2 );
+		} else {
+			sliderTime.setMajorTickSpacing( 100 );
+			sliderTime.setMinorTickSpacing( 10 );
+		}
 		sliderTime.setPaintTicks( true );
 		sliderTime.setPaintLabels( true );
 		sliderTime.setBorder( BorderFactory.createEmptyBorder( 0, 0, 0, 3 ) );
@@ -223,16 +228,16 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		tabsViews.setSelectedComponent( panelSegmentationAndAssignmentView );
 
 		// --- Controls ----------------------------------
-		btnRedoAllHypotheses = new JButton( "Redo Hyp." );
+		btnRedoAllHypotheses = new JButton( "Resegment" );
 		btnRedoAllHypotheses.addActionListener( this );
-		btnOptimize = new JButton( "Optimize" );
+		btnOptimize = new JButton( "(Re)optimize" );
 		btnOptimize.addActionListener( this );
 		btnOptimizeAll = new JButton( "Optimize All" );
 		btnOptimizeAll.addActionListener( this );
-		btnExportTracking = new JButton( "Export Tracks" );
-		btnExportTracking.addActionListener( this );
-		btnGenerateAllStats = new JButton( "Gen. All Stats" );
-		btnGenerateAllStats.addActionListener( this );
+		btnExportAllStats = new JButton( "Export" );
+		btnExportAllStats.addActionListener( this );
+		btnGenerateAllPaperStats = new JButton( "Gen. Paper Stats" );
+		btnGenerateAllPaperStats.addActionListener( this );
 		btnOptimizeRemainingAndExport = new JButton( "Opt. Remaining & Export" );
 		btnOptimizeRemainingAndExport.addActionListener( this );
 		btnSaveFG = new JButton( "Save FG" );
@@ -240,9 +245,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.RIGHT, 5, 0 ) );
 		panelHorizontalHelper.add( btnRedoAllHypotheses );
 		panelHorizontalHelper.add( btnOptimize );
-		panelHorizontalHelper.add( btnOptimizeAll );
-		panelHorizontalHelper.add( btnExportTracking );
-		panelHorizontalHelper.add( btnGenerateAllStats );
+//		panelHorizontalHelper.add( btnOptimizeAll );
+		panelHorizontalHelper.add( btnExportAllStats );
+//		panelHorizontalHelper.add( btnGenerateAllPaperStats );
 //		panelHorizontalHelper.add( btnOptimizeRemainingAndExport );
 //		panelHorizontalHelper.add( btnSaveFG );
 		add( panelHorizontalHelper, BorderLayout.SOUTH );
@@ -312,7 +317,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					btnOptimize.doClick();
 				}
 				if ( e.getActionCommand().equals( "e" ) ) {
-					btnExportTracking.doClick();
+					btnExportAllStats.doClick();
 				}
 				if ( e.getActionCommand().equals( "r" ) ) {
 					btnRedoAllHypotheses.doClick();
@@ -642,7 +647,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 			// - - t+1 - - - - - -
 
-			if ( model.getCurrentGLFsSuccessor() != null ) {
+			if ( model.getCurrentGLFsSuccessor() != null && sliderTime.getValue() < sliderTime.getMaximum() ) { // hence copy of last frame for border-problem avoidance
 				final GrowthLineFrame glf = model.getCurrentGLFsSuccessor();
 				viewImgRightActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
 				imgCanvasActiveRight.setScreenImage( glf, viewImgRightActive );
@@ -845,61 +850,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			} );
 			t.start();
 		}
-		if ( e.getSource().equals( btnExportTracking ) ) {
-			final MotherMachineGui self = this;
-//			final Thread t = new Thread( new Runnable() {
-//
-//				@Override
-//				public void run() {
-			final JFileChooser fc = new JFileChooser();
-			fc.setSelectedFile( new File( String.format( MotherMachine.DEFAULT_PATH + String.format( "/gl_%02d", sliderGL.getValue() ) ) ) );
-
-			fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "html", "htm" }, "HTML-file" ) );
-
-			if ( fc.showSaveDialog( self ) == JFileChooser.APPROVE_OPTION ) {
-				File file = fc.getSelectedFile();
-				if ( !file.getAbsolutePath().endsWith( ".html" ) && !file.getAbsolutePath().endsWith( ".htm" ) ) {
-					file = new File( file.getAbsolutePath() + ".html" );
-				}
-				MotherMachine.DEFAULT_PATH = file.getParent();
-
-				int startFrame = 0;
-				int endFrame = ( sliderTime.getMaximum() - 2 );
-
-				boolean done = false;
-				while ( !done ) {
-					try {
-						final String str = JOptionPane.showInputDialog( "First frame to be exported:", "" + startFrame );
-						if ( str == null ) return; // User decided to hit cancel!
-						startFrame = Integer.parseInt( str );
-						done = true;
-					} catch ( final NumberFormatException nfe ) {
-						done = false;
-					}
-				}
-				done = false;
-				while ( !done ) {
-					try {
-						final String str = JOptionPane.showInputDialog( "Last frame to be exported:", "" + endFrame );
-						if ( str == null ) return; // User decided to hit cancel!
-						endFrame = Integer.parseInt( str );
-						done = true;
-					} catch ( final NumberFormatException nfe ) {
-						done = false;
-					}
-				}
-
-				exportTrackingImagesAndHtml( file, startFrame, endFrame );
-				exportTracks( new File( file.getPath() + ".csv" ) );
-				dataToDisplayChanged();
-			}
-
-//				}
-//			} );
-//			t.start();
-
+		if ( e.getSource().equals( btnExportAllStats ) ) {
+			exportAllStats();
 		}
-		if ( e.getSource().equals( btnGenerateAllStats ) ) {
+
+		if ( e.getSource().equals( btnGenerateAllPaperStats ) ) {
 			final MotherMachineGui self = this;
 			final Thread t = new Thread( new Runnable() {
 
@@ -1226,6 +1181,69 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	}
 
 	/**
+	 * 
+	 */
+	public void exportAllStats() {
+		final MotherMachineGui self = this;
+
+		boolean doExport = true;
+		int startFrame = 0;
+		int endFrame = sliderTime.getMaximum();
+
+		File file = new File( String.format( MotherMachine.STATS_OUTPUT_PATH + String.format( "/index.html" ) ) );
+
+		if ( !MotherMachine.HEADLESS ) {
+			final JFileChooser fc = new JFileChooser();
+			fc.setSelectedFile( file );
+			fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "html" }, "HTML-file" ) );
+
+			if ( fc.showSaveDialog( self ) == JFileChooser.APPROVE_OPTION ) {
+				file = fc.getSelectedFile();
+				if ( !file.getAbsolutePath().endsWith( ".html" ) && !file.getAbsolutePath().endsWith( ".htm" ) ) {
+					file = new File( file.getAbsolutePath() + ".html" );
+				}
+				MotherMachine.STATS_OUTPUT_PATH = file.getParent();
+
+				boolean done = false;
+				while ( !done ) {
+					try {
+						final String str = JOptionPane.showInputDialog( "First frame to be exported:", "" + startFrame );
+						if ( str == null ) return; // User decided to hit cancel!
+						startFrame = Integer.parseInt( str );
+						done = true;
+					} catch ( final NumberFormatException nfe ) {
+						done = false;
+					}
+				}
+				done = false;
+				while ( !done ) {
+					try {
+						final String str = JOptionPane.showInputDialog( "Last frame to be exported:", "" + endFrame );
+						if ( str == null ) return; // User decided to hit cancel!
+						endFrame = Integer.parseInt( str );
+						done = true;
+					} catch ( final NumberFormatException nfe ) {
+						done = false;
+					}
+				}
+			} else {
+				doExport = false;
+			}
+		}
+
+		// ----------------------------------------------------------------------------------------------------
+		if ( doExport ) {
+			exportTrackingImagesAndHtml( file, startFrame, endFrame );
+			exportTracks( new File( file.getPath().substring( 0, file.getPath().length() - 5 ) + ".csv" ) );
+		}
+		// ----------------------------------------------------------------------------------------------------
+
+		if ( !MotherMachine.HEADLESS ) {
+			dataToDisplayChanged();
+		}
+	}
+
+	/**
 	 * Goes over all glfs of the current gl and activates the simple, intensity
 	 * + comp.tree hypotheses.
 	 */
@@ -1368,7 +1386,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			final String nextrow = "		</tr>\n			<tr>\n";
 			String row2 = "";
 
-			for ( int i = startFrame; i < endFrame; i++ ) {
+			for ( int i = startFrame; i <= endFrame; i++ ) {
 				this.sliderTime.setValue( i );
 				try {
 					String fn = String.format( "/" + basename + "_gl_%02d_glf_%03d.png", sliderGL.getValue(), i );
@@ -1376,7 +1394,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					row1 += "			<th><font size='+2'>t=" + i + "</font></th>\n";
 					row2 += "			<td><img src='./imgs" + fn + "'></td>\n";
 
-					if ( i < endFrame - 1 ) {
+					if ( i < endFrame ) {
 						fn = String.format( "/" + basename + "_gl_%02d_assmnts_%03d.png", sliderGL.getValue(), i );
 						Util.saveImage( Util.getImageOf( this.rightAssignmentViewer.getActiveAssignments(), imgCanvasActiveCenter.getWidth(), imgCanvasActiveCenter.getHeight() ), imgpath + fn );
 						row1 += "			<th></th>\n";

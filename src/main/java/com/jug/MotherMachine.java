@@ -265,7 +265,7 @@ public class MotherMachine {
 	/**
 	 * Control if ImageJ and loaded data will be shown...
 	 */
-	private static boolean showIJ = true;
+	private static boolean showIJ = false;
 
 	// ====================================================================================================================
 
@@ -273,8 +273,6 @@ public class MotherMachine {
 	 * PROJECT MAIN
 	 * 
 	 * @param args
-	 *            <input-folder> <output-folder> <file-filter-string>
-	 *            ["headless"]
 	 */
 	public static void main( final String[] args ) {
 		if ( showIJ ) new ImageJ();
@@ -424,7 +422,6 @@ public class MotherMachine {
 
 		final MotherMachine main = new MotherMachine();
 		if ( !HEADLESS ) {
-//			main.ij = new ImageJ();
 			guiFrame = new JFrame( "Interactive MotherMachine" );
 			main.initMainWindow( guiFrame );
 		}
@@ -528,9 +525,9 @@ public class MotherMachine {
 			} );
 			System.out.println( " done!" );
 		} else {
-			final String name = inputFolder.getName();
-			gui.exportTrackingImagesAndHtml( new File( outputFolder.getAbsolutePath() + String.format( "/%s.html", name ) ), 0, main.getGrowthLines().get( 0 ).size() );
-			gui.exportTracks( new File( outputFolder.getAbsolutePath() + String.format( "/%s.csv", name ) ) );
+//			final String name = inputFolder.getName();
+
+			gui.exportAllStats();
 
 			instance.saveParams();
 			if ( fileWriterForStats != null ) {
@@ -1014,7 +1011,7 @@ public class MotherMachine {
 				if ( cIdx == minChannelIdx ) {
 					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, true, filter ) );
 				} else {
-					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, true, filter ) );
+					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, false, filter ) );
 				}
 			} catch ( final Exception e ) {
 				e.printStackTrace();
@@ -1521,11 +1518,6 @@ public class MotherMachine {
 			double minDist = Double.MAX_VALUE;
 			for ( int i = 0; i <= deltaL; i++ ) {
 				double dist = collectionOfFrames.get( maxGLsPerFrameIdx ).get( i ).getAvgXpos();
-//				System.out.println( "> " + j );
-//				if ( j == 33 ) {
-//					System.out.println( "dreiunddreissig" );
-//				}
-//				if ( collectionOfFrames.get( j ).size() > 0 )
 				dist -= collectionOfFrames.get( j ).get( 0 ).getAvgXpos();
 				if ( dist < minDist ) {
 					minDist = dist;
@@ -1596,7 +1588,7 @@ public class MotherMachine {
 		for ( final GrowthLine gl : getGrowthLines() ) {
 			gl.generateILP();
 		}
-		getGrowthLines().get( 0 ).generateILP();
+//		getGrowthLines().get( 0 ).generateILP();
 	}
 
 	/**
@@ -1609,7 +1601,7 @@ public class MotherMachine {
 			gl.runILP();
 			i++;
 		}
-		getGrowthLines().get( 0 ).runILP();
+//		getGrowthLines().get( 0 ).runILP();
 	}
 
 	/**
