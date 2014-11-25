@@ -5,6 +5,7 @@ package com.jug;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.Prefs;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -227,76 +228,118 @@ public class MM_MovieToDatasets {
 
 		System.out.print( String.format( "Loading tiff sequence (%d time points, %d channels):", maxTime - minTime + 1, numChannelsToLoad ) );
 
-		// TODO remove!
-		CropArea crop = null;
-		for ( int t = minTime; t <= ( ( doSerial ) ? maxTime : minTime ); t++ ) {
-
-			// ===== load tiffs from folder ======================================================================
-
-			try {
-				List< Img< DoubleType >> frameList = null;
-				if ( doSerial ) {
-					System.out.print( String.format( "Loading time point %d  (%d channels) ...", t, numChannelsToLoad ) );
-					frameList = DoubleTypeImgLoader.load2DTiffSequenceAsListOfMultiChannelImgs( inFolder.getAbsolutePath(), "_c", t, t, 1, numChannelsToLoad, 4 );
-				} else {
-					System.out.print( String.format( "Loading data  (%d time-point with %d channels each) ...", maxTime, numChannelsToLoad ) );
-					frameList = DoubleTypeImgLoader.load2DTiffSequenceAsListOfMultiChannelImgs( inFolder.getAbsolutePath(), "_c", minTime, maxTime, 1, numChannelsToLoad, 4 );
-				}
-				System.out.print( String.format( "    ...glue time-point multi-channel images together...", maxTime - minTime + 1, numChannelsToLoad ) );
-				data = DoubleTypeImgLoader.makeMultiFrameFromChannelImages( frameList ); // ALERT: this empties the list in fact!
-			} catch ( final Exception e ) {
-				e.printStackTrace();
-				System.exit( 4 );
-			}
-			System.out.println( " done!" );
-
-//			ImageJFunctions.show( data, "Loaded data..." );
-
-			// ===== start preprocessing pipeline ======================================================================
-
-			// straighten loaded images
-			System.out.print( "Straighten loaded images..." );
-			data = straightenRawImg( data );
-			System.out.println( " done!" );
-
-//			ImageJFunctions.show( data, "Straightened data..." );
-
-			// cropping loaded images
-			System.out.print( "Cropping to ROI..." );
-			// if we are in serial mode we want to reuse the crop area
-			// this makes drift being a problem, but that is better then having GLs jumping around like hell!
-			if ( crop == null ) {
-				crop = determineCropCoordinates( data );
-			}
-			data = cropRawImgToROI( data, crop );
-			System.out.println( " done!" );
-
-//			ImageJFunctions.show( data, "Cropped data..." );
-
-			// searching for GLs
-			System.out.print( "Searching for GrowthLines..." );
-			findGrowthLines( data );
-			System.out.println( " done!" );
-
-			// subtracting BG in RAW image...
-			System.out.print( "Subtracting background..." );
-			subtractBackground( data );
-			System.out.println( " done!" );
-
-//			ImageJFunctions.show( data, "BG-Subtracted data..." );
-
-			// exporting individual GLs as image sequence...
-			System.out.print( "Exporting individual GLs..." );
-			for ( int i = 0; i < growthLines.size(); i++ ) {
-				System.out.print( " " + ( i + 1 ) );
-				final String newFileName = String.format( "%s%sGL%02d", outFolder.getAbsolutePath(), File.separator, i );
-				exportGrowthLineToFolder( data, i, new File( newFileName ), t );
-			}
-			System.out.println( " done!" );
-		}
+		// -----------------------------------------------------------------------------------------------------------
+		// -----------------------------------------------------------------------------------------------------------
+		doWork( doSerial, inFolder, outFolder, minTime, maxTime, numChannelsToLoad );
+		// -----------------------------------------------------------------------------------------------------------
+		// -----------------------------------------------------------------------------------------------------------
 
 		System.out.println( "Individual growth-lines written to " + outFolder.getAbsolutePath() + " !" );
 		System.exit( 0 );
+	}
+
+	/**
+	 * @param doSerial
+	 * @param inFolder
+	 * @param outFolder
+	 * @param minTime
+	 * @param maxTime
+	 * @param numChannelsToLoad
+	 */
+	private static void doWork( final boolean doSerial, final File inFolder, final File outFolder, final int minTime, final int maxTime, final int numChannelsToLoad ) {
+		final int numProcessors = Prefs.getThreads();
+		final int numThreads = Math.min( maxTime - minTime + 1, numProcessors );
+
+		final Thread[] threads = new Thread[ numThreads ];
+
+		class ImageProcessingThread extends Thread {
+
+			final int numThread;
+			final int numThreads;
+
+			public ImageProcessingThread( final int numThread, final int numThreads ) {
+				this.numThread = numThread;
+				this.numThreads = numThreads;
+			}
+
+			@Override
+			public void run() {
+
+				for ( int t = numThread; t <= ( ( doSerial ) ? maxTime : minTime ); t += numThreads ) {
+
+					// ===== load tiffs from folder ======================================================================
+
+					try {
+						List< Img< DoubleType >> frameList = null;
+						if ( doSerial ) {
+							System.out.print( String.format( "Loading time point %d  (%d channels) ...", t, numChannelsToLoad ) );
+							frameList = DoubleTypeImgLoader.load2DTiffSequenceAsListOfMultiChannelImgs( inFolder.getAbsolutePath(), "_c", t, t, 1, numChannelsToLoad, 4 );
+						} else {
+							System.out.print( String.format( "Loading data  (%d time-point with %d channels each) ...", maxTime, numChannelsToLoad ) );
+							frameList = DoubleTypeImgLoader.load2DTiffSequenceAsListOfMultiChannelImgs( inFolder.getAbsolutePath(), "_c", minTime, maxTime, 1, numChannelsToLoad, 4 );
+						}
+						System.out.print( String.format( "    ...glue time-point multi-channel images together...", maxTime - minTime + 1, numChannelsToLoad ) );
+						data = DoubleTypeImgLoader.makeMultiFrameFromChannelImages( frameList ); // ALERT: this empties the list in fact!
+					} catch ( final Exception e ) {
+						e.printStackTrace();
+						System.exit( 4 );
+					}
+					System.out.println( " done!" );
+
+//					ImageJFunctions.show( data, "Loaded data..." );
+
+					// ===== start preprocessing pipeline ======================================================================
+
+					// straighten loaded images
+					System.out.print( "Straighten loaded images..." );
+					data = straightenRawImg( data );
+					System.out.println( " done!" );
+
+//					ImageJFunctions.show( data, "Straightened data..." );
+
+					// cropping loaded images
+					System.out.print( "Cropping to ROI..." );
+					data = cropRawImgToROI( data, determineCropCoordinates( data ) );
+					System.out.println( " done!" );
+
+//					ImageJFunctions.show( data, "Cropped data..." );
+
+					// searching for GLs
+					System.out.print( "Searching for GrowthLines..." );
+					findGrowthLines( data );
+					System.out.println( " done!" );
+
+					// subtracting BG in RAW image...
+					System.out.print( "Subtracting background..." );
+					subtractBackground( data );
+					System.out.println( " done!" );
+
+//					ImageJFunctions.show( data, "BG-Subtracted data..." );
+
+					// exporting individual GLs as image sequence...
+					System.out.print( "Exporting individual GLs..." );
+					for ( int i = 0; i < growthLines.size(); i++ ) {
+						System.out.print( " " + ( i + 1 ) );
+						final String newFileName = String.format( "%s%sGL%02d", outFolder.getAbsolutePath(), File.separator, i );
+						exportGrowthLineToFolder( data, i, new File( newFileName ), t );
+					}
+					System.out.println( " done!" );
+				}
+			}
+		}
+
+		// start threads
+		for ( int i = 0; i < numThreads; i++ ) {
+			threads[ i ] = new ImageProcessingThread( i, numThreads );
+			threads[ i ].start();
+		}
+
+		// wait for all threads to terminate
+		for ( final Thread thread : threads ) {
+			try {
+				thread.join();
+			} catch ( final InterruptedException e ) {}
+		}
 	}
 
 	/**
@@ -395,7 +438,6 @@ public class MM_MovieToDatasets {
 	private static Img< DoubleType > cropRawImgToROI( final Img< DoubleType > data ) {
 		assert ( data.numDimensions() == 4 );
 
-		final Long top, left, bottom, right;
 		final CropArea c = determineCropCoordinates( data );
 
 		return cropRawImgToROI( data, c.top, c.left, c.bottom, c.right );

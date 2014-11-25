@@ -596,6 +596,7 @@ public class GrowthLineTrackingILP {
 		final double costDeltaHL = CostFactory.getMigrationCost( oldPosL, newPosL, glLength );
 		final double costDeltaH = Math.max( costDeltaHL, costDeltaHU );
 		final double costDeltaL = CostFactory.getGrowthCost( sizeFrom, sizeTo, glLength );
+		final double costDeltaL_ifAtTop = CostFactory.getGrowthCost( sizeFrom, sizeToL * 2, glLength );
 		final double costDeltaV = CostFactory.getIntensityMismatchCost( valueFrom, valueTo );
 		final double costDeltaS = CostFactory.getUnevenDivisionCost( sizeToU, sizeToL );
 
@@ -606,11 +607,11 @@ public class GrowthLineTrackingILP {
 		if ( intervalToU.getA().intValue() == 0 || intervalToL.getB().intValue() + 1 >= glLength ) {
 			// In case the upper cell is still at least like 1/2 in
 			if ( ( 1.0 * sizeToU ) / ( 1.0 * sizeToL ) > 0.5 ) {
-				// don't count uneven div cost
-				cost = costDeltaH + costDeltaV;
+				// don't count uneven div cost (but pay a bit to avoid exit+division instead of two mappings)
+				cost = costDeltaL_ifAtTop + costDeltaH + costDeltaV;
 			} else {
 				// otherwise do just leave out shrinking cost - yeah!
-				cost = costDeltaH + costDeltaV + costDeltaS;
+				cost = costDeltaL_ifAtTop + costDeltaH + costDeltaV + costDeltaS;
 			}
 		}
 

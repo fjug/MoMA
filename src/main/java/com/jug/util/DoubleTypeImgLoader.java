@@ -3,9 +3,10 @@
  */
 package com.jug.util;
 
+import ij.IJ;
+import ij.Prefs;
 import io.scif.img.ImgIOException;
 import io.scif.img.ImgOpener;
-import io.scif.img.SCIFIOImgPlus;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -17,6 +18,7 @@ import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.stats.Normalize;
 import net.imglib2.exception.IncompatibleTypeException;
+import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -43,24 +45,74 @@ public class DoubleTypeImgLoader {
 	 * @throws Exception
 	 */
 	public static List< Img< DoubleType >> loadTiffsFromFolder( final String strFolder ) throws ImgIOException, IncompatibleTypeException, Exception {
-		return loadTiffsFromFolder( strFolder, null );
+		return loadTiffsFromFolder( strFolder, -1, -1, ( String[] ) null );
 	}
 
-	public static List< Img< DoubleType >> loadTiffsFromFolder( final String strFolder, final String filterString ) throws ImgIOException, IncompatibleTypeException, Exception {
+	public static List< Img< DoubleType >> loadTiffsFromFolder( final String strFolder, final int minTime, final int maxTime, final String... filterStrings ) throws ImgIOException, IncompatibleTypeException, Exception {
 
 		final File folder = new File( strFolder );
 		final FilenameFilter filter = new FilenameFilter() {
 
 			@Override
 			public boolean accept( final File dir, final String name ) {
-				return name.contains( ".tif" ) && ( ( filterString != null && !filterString.equals( "" ) ) ? name.contains( filterString ) : true );
+				boolean isMatching = name.contains( ".tif" );
+				for ( final String filter : filterStrings ) {
+					isMatching = isMatching && name.contains( filter );
+				}
+				if ( isMatching == true ) {
+					final String strTime = name.split( "_t" )[ 1 ].substring( 0, 4 );
+					final int time = Integer.parseInt( strTime );
+					if ( ( minTime != -1 && time < minTime ) || ( maxTime != -1 && time > maxTime ) ) {
+						isMatching = false;
+					}
+				}
+				return isMatching;
 			}
 		};
 		final File[] listOfFiles = folder.listFiles( filter );
-		if ( listOfFiles == null )
-			throw new Exception( "Given argument is not a valid folder!" );
+		if ( listOfFiles == null ) { throw new Exception( "Given argument is not a valid folder!" ); }
 
 		final List< Img< DoubleType >> images = loadTiffs( listOfFiles );
+		return images;
+	}
+
+	/**
+	 * 
+	 * @param strFolder
+	 * @param minTime
+	 * @param maxTime
+	 * @param normalize
+	 * @param filterStrings
+	 * @return
+	 * @throws ImgIOException
+	 * @throws IncompatibleTypeException
+	 * @throws Exception
+	 */
+	public static List< Img< DoubleType >> loadMMTiffsFromFolder( final String strFolder, final int minTime, final int maxTime, final boolean normalize, final String... filterStrings ) throws ImgIOException, IncompatibleTypeException, Exception {
+
+		final File folder = new File( strFolder );
+		final FilenameFilter filter = new FilenameFilter() {
+
+			@Override
+			public boolean accept( final File dir, final String name ) {
+				boolean isMatching = name.contains( ".tif" );
+				for ( final String filter : filterStrings ) {
+					isMatching = isMatching && name.contains( filter );
+				}
+				if ( isMatching == true ) {
+					final String strTime = name.split( "_t" )[ 1 ].substring( 0, 4 );
+					final int time = Integer.parseInt( strTime );
+					if ( ( minTime != -1 && time < minTime ) || ( maxTime != -1 && time > maxTime ) ) {
+						isMatching = false;
+					}
+				}
+				return isMatching;
+			}
+		};
+		final File[] listOfFiles = folder.listFiles( filter );
+		if ( listOfFiles == null ) { throw new Exception( "Given argument is not a valid folder!" ); }
+
+		final List< Img< DoubleType >> images = loadMMTiffSequence( listOfFiles, normalize );
 		return images;
 	}
 
@@ -70,12 +122,121 @@ public class DoubleTypeImgLoader {
 	 * @throws ImgIOException
 	 */
 	public static List< Img< DoubleType >> loadTiffs( final File[] listOfFiles ) throws ImgIOException {
-		final List< Img< DoubleType > > images = new ArrayList< Img< DoubleType > >();
+		final int numProcessors = Prefs.getThreads();
+		final int numThreads = Math.min( listOfFiles.length, numProcessors );
+
+		final List< Img< DoubleType > > images = new ArrayList< Img< DoubleType > >( listOfFiles.length );
 		for ( int i = 0; i < listOfFiles.length; i++ ) {
-			if ( listOfFiles[ i ].isFile() ) {
-				images.add( loadTiff( listOfFiles[ i ] ) );
+			images.add( null );
+		}
+
+		final ImgIOException ioe = new ImgIOException( "One of the image loading threads had a problem reading from file." );
+
+		final Thread[] threads = new Thread[ numThreads ];
+
+		class ImageProcessingThread extends Thread {
+
+			final int numThread;
+			final int numThreads;
+
+			public ImageProcessingThread( final int numThread, final int numThreads ) {
+				this.numThread = numThread;
+				this.numThreads = numThreads;
+			}
+
+			@Override
+			public void run() {
+
+				for ( int t = numThread; t < listOfFiles.length; t += numThreads ) {
+					try {
+						images.set( t, loadTiff( listOfFiles[ t ] ) );
+					} catch ( final ImgIOException e ) {
+						ioe.setStackTrace( e.getStackTrace() );
+					}
+				}
 			}
 		}
+
+		// start threads
+		for ( int i = 0; i < numThreads; i++ ) {
+			threads[ i ] = new ImageProcessingThread( i, numThreads );
+			threads[ i ].start();
+		}
+
+		// wait for all threads to terminate
+		for ( final Thread thread : threads ) {
+			try {
+				thread.join();
+			} catch ( final InterruptedException e ) {}
+		}
+
+		return images;
+	}
+
+	/**
+	 * Load and selectively normalize channels.
+	 * Assumptions: filename contains channel info in format "_c%04d".
+	 * 
+	 * @param listOfFiles
+	 * @param normalizationFilterString
+	 *            if filename contains this string (not case sensitive), then
+	 *            the loaded image will be normalized to [0,1].
+	 * @return
+	 * @throws ImgIOException
+	 */
+	public static List< Img< DoubleType >> loadMMTiffSequence( final File[] listOfFiles, final boolean normalize ) throws ImgIOException {
+		final int numProcessors = Prefs.getThreads();
+		final int numThreads = Math.min( listOfFiles.length, numProcessors );
+
+		final List< Img< DoubleType > > images = new ArrayList< Img< DoubleType > >( listOfFiles.length );
+		for ( int i = 0; i < listOfFiles.length; i++ ) {
+			images.add( null );
+		}
+
+		final ImgIOException ioe = new ImgIOException( "One of the image loading threads had a problem reading from file." );
+
+		final Thread[] threads = new Thread[ numThreads ];
+
+		class ImageProcessingThread extends Thread {
+
+			final int numThread;
+			final int numThreads;
+
+			public ImageProcessingThread( final int numThread, final int numThreads ) {
+				this.numThread = numThread;
+				this.numThreads = numThreads;
+			}
+
+			@Override
+			public void run() {
+
+				for ( int t = numThread; t < listOfFiles.length; t += numThreads ) {
+					try {
+						images.set( t, loadTiff( listOfFiles[ t ] ) );
+					} catch ( final ImgIOException e ) {
+						ioe.setStackTrace( e.getStackTrace() );
+					}
+					// Selective Normalization!
+					if ( normalize ) {
+						Normalize.normalize( images.get( t ), new DoubleType( 0.0 ), new DoubleType( 1.0 ) );
+					}
+				}
+			}
+		}
+
+		// start threads
+		for ( int i = 0; i < numThreads; i++ ) {
+			threads[ i ] = new ImageProcessingThread( i, numThreads );
+			threads[ i ].start();
+		}
+
+		// wait for all threads to terminate
+		for ( final Thread thread : threads ) {
+			try {
+				thread.join();
+			} catch ( final InterruptedException e ) {}
+		}
+
 		return images;
 	}
 
@@ -93,8 +254,9 @@ public class DoubleTypeImgLoader {
 		final ImgOpener imageOpener = new ImgOpener();
 
 		System.out.print( "\n >> Loading file '" + file.getName() + "' ..." );
-		final List< SCIFIOImgPlus< DoubleType >> imgs = imageOpener.openImgs( file.getAbsolutePath(), imgFactory, new DoubleType() );
-		final Img< DoubleType > img = imgs.get( 0 ).getImg();
+//		final List< SCIFIOImgPlus< DoubleType >> imgs = imageOpener.openImgs( file.getAbsolutePath(), imgFactory, new DoubleType() );
+//		final Img< DoubleType > img = imgs.get( 0 ).getImg();
+		final Img< DoubleType > img = ImagePlusAdapter.wrapReal( IJ.openImage( file.getAbsolutePath() ) );
 //		ImageJFunctions.show( img );
 		return img;
 	}
@@ -109,8 +271,8 @@ public class DoubleTypeImgLoader {
 	 * @throws IncompatibleTypeException
 	 * @throws Exception
 	 */
-	public static < T extends RealType< T > & NativeType< T > > Img< DoubleType > loadFolderAsStack( final File inFolder ) throws ImgIOException, IncompatibleTypeException, Exception {
-		return loadPathAsStack( inFolder.getAbsolutePath() );
+	public static < T extends RealType< T > & NativeType< T > > Img< DoubleType > loadFolderAsStack( final File inFolder, final boolean normalize ) throws ImgIOException, IncompatibleTypeException, Exception {
+		return loadPathAsStack( inFolder.getAbsolutePath(), normalize );
 	}
 
 	/**
@@ -185,13 +347,14 @@ public class DoubleTypeImgLoader {
 	 * @throws IncompatibleTypeException
 	 * @throws Exception
 	 */
-	public static < T extends RealType< T > & NativeType< T > > Img< DoubleType > loadPathAsStack( final String strFolder ) throws ImgIOException, IncompatibleTypeException, Exception {
-		return loadPathAsStack( strFolder, null );
+	public static < T extends RealType< T > & NativeType< T > > Img< DoubleType > loadPathAsStack( final String strFolder, final boolean normalize ) throws ImgIOException, IncompatibleTypeException, Exception {
+		return loadPathAsStack( strFolder, -1, -1, normalize, ( String[] ) null );
 	}
 
-	public static < T extends RealType< T > & NativeType< T > > Img< DoubleType > loadPathAsStack( final String strFolder, final String filter ) throws ImgIOException, IncompatibleTypeException, Exception {
+	public static < T extends RealType< T > & NativeType< T > > Img< DoubleType > loadPathAsStack( final String strFolder, final int minTime, final int maxTime, final boolean normalize, final String... filter ) throws ImgIOException, IncompatibleTypeException, Exception {
 
-		final List< Img< DoubleType >> imageList = loadTiffsFromFolder( strFolder, filter );
+		final List< Img< DoubleType >> imageList = loadTiffsFromFolder( strFolder, minTime, maxTime, filter );
+		if ( imageList.size() == 0 ) return null;
 
 		Img< DoubleType > stack = null;
 		final long width = imageList.get( 0 ).dimension( 0 );
@@ -202,12 +365,39 @@ public class DoubleTypeImgLoader {
 
 		// Add images to stack...
 		int i = 0;
-		for ( final RandomAccessible< DoubleType > image : imageList ) {
+		for ( final Img< DoubleType > image : imageList ) {
 			final RandomAccessibleInterval< DoubleType > viewZSlize = Views.hyperSlice( stack, 2, i );
 			final IterableInterval< DoubleType > iterZSlize = Views.iterable( viewZSlize );
 
-			DataMover.copy( image, iterZSlize );
-			Normalize.normalize( iterZSlize, new DoubleType( 0.0 ), new DoubleType( 1.0 ) );
+			DataMover.copy( Views.extendZero( image ), iterZSlize );
+			if ( normalize ) {
+				Normalize.normalize( iterZSlize, new DoubleType( 0.0 ), new DoubleType( 1.0 ) );
+			}
+			i++;
+		}
+
+		return stack;
+	}
+
+	public static < T extends RealType< T > & NativeType< T > > Img< DoubleType > loadMMPathAsStack( final String strFolder, final int minTime, final int maxTime, final boolean normalize, final String... filter ) throws ImgIOException, IncompatibleTypeException, Exception {
+
+		final List< Img< DoubleType >> imageList = loadMMTiffsFromFolder( strFolder, minTime, maxTime, normalize, filter );
+		if ( imageList.size() == 0 ) return null;
+
+		Img< DoubleType > stack = null;
+		final long width = imageList.get( 0 ).dimension( 0 );
+		final long height = imageList.get( 0 ).dimension( 1 );
+		final long frames = imageList.size();
+
+		stack = new ArrayImgFactory< DoubleType >().create( new long[] { width, height, frames }, new DoubleType() );
+
+		// Add images to stack...
+		int i = 0;
+		for ( final Img< DoubleType > image : imageList ) {
+			final RandomAccessibleInterval< DoubleType > viewZSlize = Views.hyperSlice( stack, 2, i );
+			final IterableInterval< DoubleType > iterZSlize = Views.iterable( viewZSlize );
+
+			DataMover.copy( Views.extendZero( image ), iterZSlize );
 			i++;
 		}
 

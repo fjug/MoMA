@@ -121,7 +121,7 @@ public class MotherMachine {
 	 * Prior knowledge: hard offset in detected well center lines - will be cut
 	 * of from bottom.
 	 */
-	public static int GL_OFFSET_BOTTOM = 10;
+	public static int GL_OFFSET_BOTTOM = 20;
 
 	/**
 	 * Maximum offset in x direction (with respect to growth line center) to
@@ -262,6 +262,11 @@ public class MotherMachine {
 	 */
 	public static OutputStreamWriter fileWriterForStats;
 
+	/**
+	 * Control if ImageJ and loaded data will be shown...
+	 */
+	private static boolean showIJ = true;
+
 	// ====================================================================================================================
 
 	/**
@@ -272,6 +277,7 @@ public class MotherMachine {
 	 *            ["headless"]
 	 */
 	public static void main( final String[] args ) {
+		if ( showIJ ) new ImageJ();
 
 		// ===== command line parsing ======================================================================
 
@@ -284,8 +290,11 @@ public class MotherMachine {
 		final Option headless = new Option( "h", "headless", false, "start without user interface (note: input-folder must be given!)" );
 		headless.setRequired( false );
 
-		final Option filenameFilterStringOption = new Option( "f", "fnfilter", true, "string that must be contained in loaded filenames" );
-		filenameFilterStringOption.setRequired( false );
+		final Option numChannelsOption = new Option( "c", "channels", true, "number of channels to be loaded and analyzed." );
+		numChannelsOption.setRequired( true );
+
+		final Option minChannelIdxOption = new Option( "cmin", "min_channel", true, "the smallest channel index (usually 0 or 1, default is 1)." );
+		minChannelIdxOption.setRequired( false );
 
 		final Option timeFirst = new Option( "tmin", "min_time", true, "first time-point to be processed" );
 		timeFirst.setRequired( false );
@@ -301,7 +310,8 @@ public class MotherMachine {
 
 		options.addOption( help );
 		options.addOption( headless );
-		options.addOption( filenameFilterStringOption );
+		options.addOption( numChannelsOption );
+		options.addOption( minChannelIdxOption );
 		options.addOption( timeFirst );
 		options.addOption( timeLast );
 		options.addOption( infolder );
@@ -365,11 +375,25 @@ public class MotherMachine {
 			STATS_OUTPUT_PATH = outputFolder.getAbsolutePath();
 		}
 
-		// get filter string
-		String filenameFilterString = "";
-		if ( cmd.hasOption( "f" ) ) {
-			filenameFilterString = cmd.getOptionValue( "f" );
+		int minChannelIdx = 1;
+		if ( cmd.hasOption( "minc" ) ) {
+			minChannelIdx = Integer.parseInt( cmd.getOptionValue( "minc" ) );
 		}
+		final int numChannels = 1;
+		if ( cmd.hasOption( "c" ) ) {
+			minChannelIdx = Integer.parseInt( cmd.getOptionValue( "c" ) );
+		}
+
+		int minTime = -1;
+		int maxTime = -1;
+		if ( cmd.hasOption( "tmin" ) ) {
+			minTime = Integer.parseInt( cmd.getOptionValue( "tmin" ) );
+		}
+		if ( cmd.hasOption( "tmax" ) ) {
+			maxTime = Integer.parseInt( cmd.getOptionValue( "tmax" ) );
+		}
+
+		System.out.print( String.format( "Loading tiff sequence (%d time points):", maxTime - minTime + 1 ) );
 
 		// ******** CHECK GUROBI ********* CHECK GUROBI ********* CHECK GUROBI *********
 		final String jlp = System.getProperty( "java.library.path" );
@@ -462,12 +486,17 @@ public class MotherMachine {
 		// ------------------------------------------------------------------------------------------------------
 		final MotherMachineModel mmm = new MotherMachineModel( main );
 		instance = main;
-		main.processDataFromFolder( path, filenameFilterString );
+		try {
+			main.processDataFromFolder( path, minTime, maxTime, minChannelIdx, numChannels );
+		} catch ( final Exception e ) {
+			e.printStackTrace();
+			System.exit( 11 );
+		}
 		// ------------------------------------------------------------------------------------------------------
 		// ------------------------------------------------------------------------------------------------------
 
 		// show loaded and annotated data
-		if ( false ) {
+		if ( showIJ ) {
 			ImageJFunctions.show( main.imgRaw, "Rotated & cropped raw data" );
 			// ImageJFunctions.show( main.imgTemp, "Temporary" );
 			// ImageJFunctions.show( main.imgAnnotated, "Annotated ARGB data" );
@@ -526,6 +555,7 @@ public class MotherMachine {
 	private double dCorrectedSlope;
 
 	private Img< DoubleType > imgRaw;
+	private List< Img< DoubleType >> rawChannelImgs;
 
 	private Img< DoubleType > imgTemp;
 
@@ -958,19 +988,41 @@ public class MotherMachine {
 	 * hypothesis and a Markov random field for tracking. Finally it even solves
 	 * this model using Gurobi and reads out the MAP.
 	 * 
+	 * Note: multi-channel assumption is that filename encodes channel by
+	 * containing a substring of format "_c%02d".
+	 * 
 	 * @param path
 	 *            the folder to be processed.
+	 * @param minTime
+	 * @param maxTime
+	 * @param minChannelIdx
+	 * @param numChannels
+	 * @throws Exception
 	 */
-	private void processDataFromFolder( final String path, final String filter ) {
-		// load tiffs from folder
-		System.out.print( String.format( "Loading tiff sequence with filename containing '%s' from '%s'...", filter, path ) );
-		try {
-			imgRaw = DoubleTypeImgLoader.loadPathAsStack( path, filter );
-		} catch ( final Exception e ) {
-			e.printStackTrace();
-			System.exit( 10 );
+	private void processDataFromFolder( final String path, final int minTime, final int maxTime, final int minChannelIdx, final int numChannels ) throws Exception {
+
+		if ( numChannels == 0 ) { throw new Exception( "At least one color channel must be loaded!" ); }
+
+		// load channels separately into Img objects
+		rawChannelImgs = new ArrayList< Img< DoubleType >>();
+		for ( int cIdx = minChannelIdx; cIdx < minChannelIdx + numChannels; cIdx++ ) {
+
+			// load tiffs from folder
+			final String filter = String.format( "_c%02d", cIdx );
+			System.out.print( String.format( "Loading tiff sequence for channel, identified by '%s', from '%s'...", filter, path ) );
+			try {
+				if ( cIdx == minChannelIdx ) {
+					rawChannelImgs.add( DoubleTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, true, filter ) );
+				} else {
+					rawChannelImgs.add( DoubleTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, true, filter ) );
+				}
+			} catch ( final Exception e ) {
+				e.printStackTrace();
+				System.exit( 10 );
+			}
+			System.out.println( " done!" );
 		}
-		System.out.println( " done!" );
+		imgRaw = rawChannelImgs.get( 0 );
 
 		// setup ARGB image (that will eventually contain annotations)
 		System.out.print( "Spawning off annotation image (ARGB)..." );
@@ -989,7 +1041,9 @@ public class MotherMachine {
 		annotateDetectedWellCenters();
 		System.out.println( " done!" );
 
-		normalizePerFrame( imgTemp );
+		System.out.print( "Normalize loaded images..." );
+		normalizePerFrame( imgTemp, MotherMachine.GL_OFFSET_TOP, MotherMachine.GL_OFFSET_BOTTOM );
+		System.out.println( " done!" );
 
 		System.out.print( "Generating Segmentation Hypotheses..." );
 		generateAllSimpleSegmentationHypotheses();
@@ -1230,10 +1284,11 @@ public class MotherMachine {
 		}
 	}
 
-	private void normalizePerFrame( final Img< DoubleType > img ) {
-
+	private void normalizePerFrame( final Img< DoubleType > img, final int topOffset, final int bottomOffset ) {
 		for ( int f = 0; f < img.dimension( 2 ); f++ ) {
-			Normalize.normalize( Views.iterable( Views.hyperSlice( img, 2, f ) ), new DoubleType( 0.0 ), new DoubleType( 1.0 ) );
+			final IntervalView< DoubleType > slice = Views.hyperSlice( img, 2, f );
+			final IntervalView< DoubleType > roi = Views.interval( slice, new long[] { img.min( 0 ), img.min( 1 ) + topOffset }, new long[] { img.max( 0 ), img.max( 1 ) - bottomOffset } );
+			Normalize.normalize( Views.iterable( roi ), new DoubleType( 0.0 ), new DoubleType( 1.0 ) );
 		}
 	}
 
@@ -1302,8 +1357,8 @@ public class MotherMachine {
 
 		final List< List< GrowthLineFrame >> collectionOfFrames = new ArrayList< List< GrowthLineFrame >>();
 
-		for ( long frameIdx = 0; frameIdx < imgTemp.dimension( 2 ); frameIdx++ ) {
-			final IntervalView< DoubleType > ivFrame = Views.hyperSlice( imgTemp, 2, frameIdx );
+		for ( long frameIdx = 0; frameIdx < imgTemp.dimension( 3 ); frameIdx++ ) {
+			final IntervalView< DoubleType > ivFrame = Views.hyperSlice( imgTemp, 3, frameIdx );
 
 			// Find maxima per image row (per frame)
 			frameWellCenters = new Loops< DoubleType, List< Point >>().forEachHyperslice( ivFrame, 1, new FindLocalMaxima< DoubleType >() );
@@ -1425,8 +1480,7 @@ public class MotherMachine {
 			collectionOfFrames.add( glFrames );
 		}
 
-		// ------ SORT GrowthLineFrames FROM collectionOfFrames INTO
-		// this.growthLines -------------
+		// ------ SORT GrowthLineFrames FROM collectionOfFrames INTO this.growthLines -------------
 		int maxGLsPerFrame = 0;
 		int maxGLsPerFrameIdx = 0;
 		for ( int i = 0; i < collectionOfFrames.size(); i++ ) {
@@ -1467,6 +1521,11 @@ public class MotherMachine {
 			double minDist = Double.MAX_VALUE;
 			for ( int i = 0; i <= deltaL; i++ ) {
 				double dist = collectionOfFrames.get( maxGLsPerFrameIdx ).get( i ).getAvgXpos();
+//				System.out.println( "> " + j );
+//				if ( j == 33 ) {
+//					System.out.println( "dreiunddreissig" );
+//				}
+//				if ( collectionOfFrames.get( j ).size() > 0 )
 				dist -= collectionOfFrames.get( j ).get( 0 ).getAvgXpos();
 				if ( dist < minDist ) {
 					minDist = dist;
