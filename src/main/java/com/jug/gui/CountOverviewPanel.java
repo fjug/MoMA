@@ -19,7 +19,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 
 import net.imglib2.algorithm.componenttree.Component;
-import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
 
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
@@ -29,7 +29,7 @@ import com.jug.lp.Hypothesis;
 
 /**
  * @author jug
- *
+ * 
  */
 public class CountOverviewPanel extends JPanel {
 
@@ -83,8 +83,7 @@ public class CountOverviewPanel extends JPanel {
 			public void changeSelection( final int rowIndex, final int columnIndex, final boolean toggle, final boolean extend ) {
 				try {
 					// content?
-				}
-				catch ( final Exception e ) {}
+				} catch ( final Exception e ) {}
 				// make the selection change
 				super.changeSelection( rowIndex, columnIndex, toggle, extend );
 			}
@@ -113,8 +112,8 @@ public class CountOverviewPanel extends JPanel {
 				int exits = 0;
 				int divisions = 0;
 
-				for ( final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > set : currentGL.getIlp().getOptimalRightAssignments( glf.getTime() ).values() ) {
-					for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> ora : set ) {
+				for ( final Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > set : currentGL.getIlp().getOptimalRightAssignments( glf.getTime() ).values() ) {
+					for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> ora : set ) {
 						cells++;
 						if ( ora.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION )
 							divisions++;

@@ -10,7 +10,7 @@ import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.ARGBType;
-import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
 
 /**
  * @author jug
@@ -23,7 +23,7 @@ public class ArgbDrawingUtils {
 	 * @param offsetX
 	 * @param offsetY
 	 */
-	public static void taintComponentTreeNode( final Component< DoubleType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
+	public static void taintComponentTreeNode( final Component< FloatType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
 		assert ( ctn.iterator().hasNext() );
 
 		switch ( ctn.iterator().next().numDimensions() ) {
@@ -41,7 +41,7 @@ public class ArgbDrawingUtils {
 	 * @param offsetX
 	 * @param offsetY
 	 */
-	public static void taintForcedComponentTreeNode( final Component< DoubleType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
+	public static void taintForcedComponentTreeNode( final Component< FloatType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
 		assert ( ctn.iterator().hasNext() );
 
 		switch ( ctn.iterator().next().numDimensions() ) {
@@ -59,7 +59,7 @@ public class ArgbDrawingUtils {
 	 * @param offsetX
 	 * @param offsetY
 	 */
-	public static void taintInactiveComponentTreeNode( final Component< DoubleType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
+	public static void taintInactiveComponentTreeNode( final Component< FloatType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
 		assert ( ctn.iterator().hasNext() );
 
 		switch ( ctn.iterator().next().numDimensions() ) {
@@ -77,7 +77,7 @@ public class ArgbDrawingUtils {
 	 * @param offsetX
 	 * @param offsetY
 	 */
-	private static void taint1dComponentTreeNodeFaintGreen( final Component< DoubleType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
+	private static void taint1dComponentTreeNodeFaintGreen( final Component< FloatType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
 
 		final Iterator< Localizable > componentIterator = ctn.iterator();
 		while ( componentIterator.hasNext() ) {
@@ -104,7 +104,7 @@ public class ArgbDrawingUtils {
 	 * @param offsetX
 	 * @param offsetY
 	 */
-	private static void taint1dComponentTreeNodeGreen( final Component< DoubleType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
+	private static void taint1dComponentTreeNodeGreen( final Component< FloatType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
 
 		final Iterator< Localizable > componentIterator = ctn.iterator();
 		while ( componentIterator.hasNext() ) {
@@ -131,7 +131,7 @@ public class ArgbDrawingUtils {
 	 * @param offsetX
 	 * @param offsetY
 	 */
-	private static void taint1dComponentTreeNodeRed( final Component< DoubleType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
+	private static void taint1dComponentTreeNodeRed( final Component< FloatType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
 
 		final Iterator< Localizable > componentIterator = ctn.iterator();
 		while ( componentIterator.hasNext() ) {
@@ -158,7 +158,7 @@ public class ArgbDrawingUtils {
 	 * @param offsetX
 	 * @param offsetY
 	 */
-	private static void taint1dComponentTreeNodeYellow( final Component< DoubleType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
+	private static void taint1dComponentTreeNodeYellow( final Component< FloatType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
 
 		final Iterator< Localizable > componentIterator = ctn.iterator();
 		while ( componentIterator.hasNext() ) {

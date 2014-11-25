@@ -44,7 +44,7 @@ import loci.formats.gui.ExtensionFileFilter;
 import net.imglib2.Localizable;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.algorithm.componenttree.ComponentForest;
-import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.ValuePair;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
@@ -72,7 +72,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * Parameter: how many pixels wide is the image containing the selected
 	 * GrowthLine?
 	 */
-	public static final int GL_WIDTH_TO_SHOW = 50;
+	public static final int GL_WIDTH_TO_SHOW = 70;
 
 	// -------------------------------------------------------------------------------------
 	// fields
@@ -83,33 +83,33 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * The view onto <code>imgRaw</code> that is supposed to be shown on screen
 	 * (left one in active assignments view).
 	 */
-	IntervalView< DoubleType > viewImgLeftActive;
+	IntervalView< FloatType > viewImgLeftActive;
 	/**
 	 * The view onto <code>imgRaw</code> that is supposed to be shown on screen
 	 * (center one in active assignments view).
 	 */
-	IntervalView< DoubleType > viewImgCenterActive;
+	IntervalView< FloatType > viewImgCenterActive;
 	/**
 	 * The view onto <code>imgRaw</code> that is supposed to be shown on screen
 	 * (right one in active assignments view).
 	 */
-	IntervalView< DoubleType > viewImgRightActive;
+	IntervalView< FloatType > viewImgRightActive;
 
 	/**
 	 * The view onto <code>imgRaw</code> that is supposed to be shown on screen
 	 * (left one in inactive assignments view).
 	 */
-	IntervalView< DoubleType > viewImgLeftInactive;
+	IntervalView< FloatType > viewImgLeftInactive;
 	/**
 	 * The view onto <code>imgRaw</code> that is supposed to be shown on screen
 	 * (center one in inactive assignments view).
 	 */
-	IntervalView< DoubleType > viewImgCenterInactive;
+	IntervalView< FloatType > viewImgCenterInactive;
 	/**
 	 * The view onto <code>imgRaw</code> that is supposed to be shown on screen
 	 * (right one in inactive assignments view).
 	 */
-	IntervalView< DoubleType > viewImgRightInactive;
+	IntervalView< FloatType > viewImgRightInactive;
 
 	// -------------------------------------------------------------------------------------
 	// gui-fields
@@ -510,21 +510,21 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		// --------------
 		plot.removeAllPlots();
 
-		final double[] yMidline = model.getCurrentGLF().getMirroredCenterLineValues( model.mm.getImgTemp() );
-		double[] ySegmentationData;
+		final float[] yMidline = model.getCurrentGLF().getMirroredCenterLineValues( model.mm.getImgTemp() );
+		float[] ySegmentationData;
 		if ( cbShowParaMaxFlowData.isSelected() ) {
 			ySegmentationData = model.getCurrentGLF().getAwesomeGapSeparationValues( model.mm.getImgTemp() );
 		} else {
 			ySegmentationData = model.getCurrentGLF().getSimpleGapSeparationValues( model.mm.getImgTemp() );
 		}
-		final double[] yAvg = new double[ yMidline.length ];
-		final double constY = SimpleFunctionAnalysis.getSum( ySegmentationData ) / ySegmentationData.length;
+		final float[] yAvg = new float[ yMidline.length ];
+		final float constY = SimpleFunctionAnalysis.getSum( ySegmentationData ) / ySegmentationData.length;
 		for ( int i = 0; i < yAvg.length; i++ ) {
 			yAvg[ i ] = constY;
 		}
-		plot.addLinePlot( "Midline Intensities", new Color( 127, 127, 255 ), yMidline );
-		plot.addLinePlot( "Segmentation data", new Color( 80, 255, 80 ), ySegmentationData );
-		plot.addLinePlot( "avg. fkt-value", new Color( 200, 64, 64 ), yAvg );
+		plot.addLinePlot( "Midline Intensities", new Color( 127, 127, 255 ), Util.makeDoubleArray( yMidline ) );
+		plot.addLinePlot( "Segmentation data", new Color( 80, 255, 80 ), Util.makeDoubleArray( ySegmentationData ) );
+		plot.addLinePlot( "avg. fkt-value", new Color( 200, 64, 64 ), Util.makeDoubleArray( yAvg ) );
 
 		plot.setFixedBounds( 1, 0.0, 1.0 );
 
@@ -535,11 +535,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		}
 	}
 
-	private < C extends Component< DoubleType, C > > void dumpCosts( final ComponentForest< C > ct, final double[] ySegmentationData, final GrowthLineTrackingILP ilp ) {
+	private < C extends Component< FloatType, C > > void dumpCosts( final ComponentForest< C > ct, final float[] ySegmentationData, final GrowthLineTrackingILP ilp ) {
 		final int numCTNs = ComponentTreeUtils.countNodes( ct );
-		final double[][] xydxdyCTNBorders = new double[ numCTNs ][ 4 ];
+		final float[][] xydxdyCTNBorders = new float[ numCTNs ][ 4 ];
 		final int t = sliderTime.getValue();
-		final double[][] xydxdyCTNBordersActive = new double[ ilp.getOptimalSegmentation( t ).size() ][ 4 ];
+		final float[][] xydxdyCTNBordersActive = new float[ ilp.getOptimalSegmentation( t ).size() ][ 4 ];
 
 		int i = 0;
 		for ( final C root : ct.roots() ) {
@@ -563,15 +563,15 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			}
 
 			i = 0;
-			for ( final Hypothesis< Component< DoubleType, ? >> hyp : ilp.getOptimalSegmentation( t ) ) {
-				final Component< DoubleType, ? > ctn = hyp.getWrappedHypothesis();
+			for ( final Hypothesis< Component< FloatType, ? >> hyp : ilp.getOptimalSegmentation( t ) ) {
+				final Component< FloatType, ? > ctn = hyp.getWrappedHypothesis();
 				addBoxAtIndex( i, ctn, xydxdyCTNBordersActive, ySegmentationData, ComponentTreeUtils.getLevelInTree( ctn ) );
 				i++;
 			}
 		}
-		plot.addBoxPlot( "Seg. Hypothesis", new Color( 127, 127, 127, 255 ), xydxdyCTNBorders );
+		plot.addBoxPlot( "Seg. Hypothesis", new Color( 127, 127, 127, 255 ), Util.makeDoubleArray2d( xydxdyCTNBorders ) );
 		if ( ilp.getOptimalSegmentation( t ).size() > 0 ) {
-			plot.addBoxPlot( "Active Seg. Hypothesis", new Color( 255, 0, 0, 255 ), xydxdyCTNBordersActive );
+			plot.addBoxPlot( "Active Seg. Hypothesis", new Color( 255, 0, 0, 255 ), Util.makeDoubleArray2d( xydxdyCTNBordersActive ) );
 		}
 	}
 
@@ -582,7 +582,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * @param ydata
 	 * @param level
 	 */
-	private void addBoxAtIndex( final int index, final Component< ?, ? > ctn, final double[][] boxDataArray, final double[] ydata, final int level ) {
+	private void addBoxAtIndex( final int index, final Component< ?, ? > ctn, final float[][] boxDataArray, final float[] ydata, final int level ) {
 		int min = Integer.MAX_VALUE;
 		int max = Integer.MIN_VALUE;
 		final Iterator< Localizable > componentIterator = ctn.iterator();
@@ -594,10 +594,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		final int maxLocation = SimpleFunctionAnalysis.getMax( ydata, min, max ).a.intValue();
 		final int leftLocation = min;
 		final int rightLocation = max;
-		final double maxLocVal = ydata[ maxLocation ];
-		final double minVal = SimpleFunctionAnalysis.getMin( ydata, min, max ).b.doubleValue();
-//					xydxdyCTNBorders[ i ] = new double[] { 0.5 * ( leftLocation + rightLocation ) + 1, 0.5 * ( minVal + maxLocVal ), rightLocation - leftLocation, maxLocVal - minVal };
-		boxDataArray[ index ] = new double[] { 0.5 * ( leftLocation + rightLocation ) + 1, 1.0 - level * 0.05 - 0.02, rightLocation - leftLocation, 0.02 };
+		final float maxLocVal = ydata[ maxLocation ];
+		final float minVal = SimpleFunctionAnalysis.getMin( ydata, min, max ).b.floatValue();
+//					xydxdyCTNBorders[ i ] = new float[] { 0.5 * ( leftLocation + rightLocation ) + 1, 0.5 * ( minVal + maxLocVal ), rightLocation - leftLocation, maxLocVal - minVal };
+		boxDataArray[ index ] = new float[] { 0.5f * ( leftLocation + rightLocation ) + 1, 1.0f - level * 0.05f - 0.02f, rightLocation - leftLocation, 0.02f };
 	}
 
 	// -------------------------------------------------------------------------------------
@@ -656,9 +656,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			final GrowthLineFrame glf = model.getCurrentGLF();
 			viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
 
-			final IntervalView< DoubleType > paramaxflowSumImageDoubleTyped = model.getCurrentGLF().getParamaxflowSumImageDoubleTyped( null );
-			if ( paramaxflowSumImageDoubleTyped != null && cbShowParaMaxFlowData.isSelected() ) {
-				imgCanvasActiveCenter.setScreenImage( glf, paramaxflowSumImageDoubleTyped );
+			final IntervalView< FloatType > paramaxflowSumImageFloatTyped = model.getCurrentGLF().getParamaxflowSumImageFloatTyped( null );
+			if ( paramaxflowSumImageFloatTyped != null && cbShowParaMaxFlowData.isSelected() ) {
+				imgCanvasActiveCenter.setScreenImage( glf, paramaxflowSumImageFloatTyped );
 			} else {
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
 			}
@@ -1273,7 +1273,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		final int numProcessors = 16; //Prefs.getThreads();
 		final int numThreads = Math.min( model.getCurrentGL().getFrames().size(), numProcessors );
-		final int numFurtherThreads = ( int ) Math.ceil( ( double ) ( numProcessors - numThreads ) / model.getCurrentGL().getFrames().size() ) + 1;
+		final int numFurtherThreads = ( int ) Math.ceil( ( float ) ( numProcessors - numThreads ) / model.getCurrentGL().getFrames().size() ) + 1;
 
 		final Thread[] threads = new Thread[ numThreads ];
 

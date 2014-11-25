@@ -12,17 +12,17 @@ import net.imglib2.util.ValuePair;
 
 /**
  * @author jug
- *
+ * 
  */
 public class SimpleFunctionAnalysis {
 
 	/**
-	 * Takes double function values and returns the location of all maxima.
+	 * Takes float function values and returns the location of all maxima.
 	 * that have some minimal specified lateral extent (see monotonicity
 	 * parameters '*FlankWidth').
-	 *
+	 * 
 	 * @param fktValues
-	 *            - discrete double function values.
+	 *            - discrete float function values.
 	 * @param minLeftFlankWidth
 	 *            - a local maximum will only be considered if at least
 	 *            the given number of lefthand values are strict monotone
@@ -33,7 +33,7 @@ public class SimpleFunctionAnalysis {
 	 *            decreasing.
 	 * @return
 	 */
-	public static int[] getMaxima( final double[] fktValues, final int minLeftFlankWidth, final int minRightFlankWidth ) {
+	public static int[] getMaxima( final float[] fktValues, final int minLeftFlankWidth, final int minRightFlankWidth ) {
 		final List< Integer > retInt = new ArrayList< Integer >();
 		for ( int center = minLeftFlankWidth; center < fktValues.length - minRightFlankWidth; center++ ) {
 			boolean maximum = true;
@@ -63,13 +63,13 @@ public class SimpleFunctionAnalysis {
 	}
 
 	/**
-	 * Takes double function values and returns the heights of all maxima and
+	 * Takes float function values and returns the heights of all maxima and
 	 * all minima
 	 * that have some minimal specified lateral extent (see monotonicity
 	 * parameters '*FlankWidth').
-	 *
+	 * 
 	 * @param fktValues
-	 *            - discrete double function values.
+	 *            - discrete float function values.
 	 * @param minLeftFlankWidth
 	 *            - a local maximum will only be considered if at least
 	 *            the given number of lefthand values are strict monotone
@@ -80,9 +80,9 @@ public class SimpleFunctionAnalysis {
 	 *            decreasing.
 	 * @return
 	 */
-	public static double[] getExteremalPointHeights( final double[] fktValues, final int minLeftFlankWidth, final int minRightFlankWidth ) {
+	public static float[] getExteremalPointHeights( final float[] fktValues, final int minLeftFlankWidth, final int minRightFlankWidth ) {
 
-		final List< Double > retDouble = new ArrayList< Double >();
+		final List< Float > retFloat = new ArrayList< Float >();
 		for ( int center = minLeftFlankWidth; center < fktValues.length - minRightFlankWidth; center++ ) {
 			boolean maximum = true;
 			int cmp;
@@ -96,7 +96,7 @@ public class SimpleFunctionAnalysis {
 				}
 			}
 			if ( maximum ) {
-				retDouble.add( new Double( -fktValues[ center ] ) ); // tricky '-' for decreasing sort oder
+				retFloat.add( new Float( -fktValues[ center ] ) ); // tricky '-' for decreasing sort oder
 				center += minRightFlankWidth;
 			}
 		}
@@ -113,101 +113,101 @@ public class SimpleFunctionAnalysis {
 				}
 			}
 			if ( minimum ) {
-				retDouble.add( new Double( -fktValues[ center ] ) ); // tricky '-' for decreasing sort oder
+				retFloat.add( new Float( -fktValues[ center ] ) ); // tricky '-' for decreasing sort oder
 				center += minRightFlankWidth;
 			}
 		}
-		Collections.sort( retDouble );
+		Collections.sort( retFloat );
 
-		// build double array to return it
-		final double[] ret = new double[ retDouble.size() ];
-		for ( int i = 0; i < retDouble.size(); i++ ) {
-			ret[ i ] = -retDouble.get( i ).doubleValue(); // undo the decreasing sort oder trick (see above)
+		// build float array to return it
+		final float[] ret = new float[ retFloat.size() ];
+		for ( int i = 0; i < retFloat.size(); i++ ) {
+			ret[ i ] = -retFloat.get( i ).floatValue(); // undo the decreasing sort oder trick (see above)
 		}
 		return ret;
 	}
 
-	public static ValuePair< Integer, Double > getMin( final double[] fktValues ) {
+	public static ValuePair< Integer, Float > getMin( final float[] fktValues ) {
 		return getMin( fktValues, 0, fktValues.length - 1 );
 	}
 
-	public static ValuePair< Integer, Double > getMin( final double[] fktValues, final int from, final int to ) {
+	public static ValuePair< Integer, Float > getMin( final float[] fktValues, final int from, final int to ) {
 		int minPos = from;
-		double min = fktValues[ from ];
+		float min = fktValues[ from ];
 		for ( int i = from; i <= to; i++ ) {
 			if ( min > fktValues[ i ] ) {
 				minPos = i;
 				min = fktValues[ i ];
 			}
 		}
-		return new ValuePair< Integer, Double >( Integer.valueOf( minPos ), Double.valueOf( min ) );
+		return new ValuePair< Integer, Float >( Integer.valueOf( minPos ), Float.valueOf( min ) );
 	}
 
-	public static ValuePair< Integer, Double > getMax( final double[] fktValues ) {
+	public static ValuePair< Integer, Float > getMax( final float[] fktValues ) {
 		return getMax( fktValues, 0, fktValues.length - 1 );
 	}
 
-	public static ValuePair< Integer, Double > getMax( final double[] fktValues, final int from, final int to ) {
+	public static ValuePair< Integer, Float > getMax( final float[] fktValues, final int from, final int to ) {
 		int maxPos = from;
-		double max = fktValues[ from ];
+		float max = fktValues[ from ];
 		for ( int i = from; i <= to; i++ ) {
 			if ( max < fktValues[ i ] ) {
 				maxPos = i;
 				max = fktValues[ i ];
 			}
 		}
-		return new ValuePair< Integer, Double >( Integer.valueOf( maxPos ), Double.valueOf( max ) );
+		return new ValuePair< Integer, Float >( Integer.valueOf( maxPos ), Float.valueOf( max ) );
 	}
 
-	public static ValuePair< Integer, Double > getLefthandLocalMin( final double[] fktValues, final int idx ) {
-		return getLefthandLocalMinOrPlateau( fktValues, idx, 0.0 );
+	public static ValuePair< Integer, Float > getLefthandLocalMin( final float[] fktValues, final int idx ) {
+		return getLefthandLocalMinOrPlateau( fktValues, idx, 0.0f );
 	}
 
-	public static ValuePair< Integer, Double > getLefthandLocalMinOrPlateau( final double[] fktValues, final int idx, final double plateauDerivativeThreshold ) {
+	public static ValuePair< Integer, Float > getLefthandLocalMinOrPlateau( final float[] fktValues, final int idx, final float plateauDerivativeThreshold ) {
 		int i = idx;
 		while ( i > 0 && fktValues[ i - 1 ] + plateauDerivativeThreshold <= fktValues[ i ] ) {
 			i--;
 		}
 		if ( i > 0 ) i--; // since we really want the min
-		return new ValuePair< Integer, Double >( Integer.valueOf( i ), Double.valueOf( fktValues[ i ] ) );
+		return new ValuePair< Integer, Float >( Integer.valueOf( i ), Float.valueOf( fktValues[ i ] ) );
 	}
 
-	public static ValuePair< Integer, Double > getLefthandLocalMax( final double[] fktValues, final int idx ) {
+	public static ValuePair< Integer, Float > getLefthandLocalMax( final float[] fktValues, final int idx ) {
 		int i = idx;
 		while ( i > 0 && fktValues[ i - 1 ] >= fktValues[ i ] ) {
 			i--;
 		}
 		if ( i > 0 ) i--; // since we really want the max
-		return new ValuePair< Integer, Double >( Integer.valueOf( i ), Double.valueOf( fktValues[ i ] ) );
+		return new ValuePair< Integer, Float >( Integer.valueOf( i ), Float.valueOf( fktValues[ i ] ) );
 	}
 
-	public static ValuePair< Integer, Double > getRighthandLocalMin( final double[] fktValues, final int idx ) {
-		return getRighthandLocalMinOrPlateau( fktValues, idx, 0.0 );
+	public static ValuePair< Integer, Float > getRighthandLocalMin( final float[] fktValues, final int idx ) {
+		return getRighthandLocalMinOrPlateau( fktValues, idx, 0.0f );
 	}
 
-	public static ValuePair< Integer, Double > getRighthandLocalMinOrPlateau( final double[] fktValues, final int idx, final double plateauDerivativeThreshold ) {
+	public static ValuePair< Integer, Float > getRighthandLocalMinOrPlateau( final float[] fktValues, final int idx, final float plateauDerivativeThreshold ) {
 		int i = idx;
 		while ( i + 1 < fktValues.length && fktValues[ i ] >= fktValues[ i + 1 ] + plateauDerivativeThreshold ) {
 			i++;
 		}
 		if ( i + 1 < fktValues.length ) i++; // since we really want the min
-		return new ValuePair< Integer, Double >( Integer.valueOf( i ), Double.valueOf( fktValues[ i ] ) );
+		return new ValuePair< Integer, Float >( Integer.valueOf( i ), Float.valueOf( fktValues[ i ] ) );
 	}
 
-	public static ValuePair< Integer, Double > getRighthandLocalMax( final double[] fktValues, final int idx ) {
+	public static ValuePair< Integer, Float > getRighthandLocalMax( final float[] fktValues, final int idx ) {
 		int i = idx;
 		while ( i + 1 < fktValues.length && fktValues[ i ] <= fktValues[ i + 1 ] ) {
 			i++;
 		}
 		if ( i + 1 < fktValues.length ) i++; // since we really want the max
-		return new ValuePair< Integer, Double >( Integer.valueOf( i ), Double.valueOf( fktValues[ i ] ) );
+		return new ValuePair< Integer, Float >( Integer.valueOf( i ), Float.valueOf( fktValues[ i ] ) );
 	}
 
-	public static double[] normalizeDoubleArray( final double[] array, final double min, final double max ) {
-		final double valMin = getMin( array, 0, array.length - 1 ).b;
-		final double valMax = getMax( array, 0, array.length - 1 ).b;
+	public static float[] normalizeFloatArray( final float[] array, final float min, final float max ) {
+		final float valMin = getMin( array, 0, array.length - 1 ).b;
+		final float valMax = getMax( array, 0, array.length - 1 ).b;
 
-		final double[] ret = new double[ array.length ];
+		final float[] ret = new float[ array.length ];
 		for ( int i = 0; i < array.length; i++ ) {
 			ret[ i ] = ( array[ i ] - valMin ) / ( valMax - valMin ) * ( max - min ); // normalized in [0,max-min]
 			ret[ i ] += min; // normalized in [min,max];
@@ -217,20 +217,20 @@ public class SimpleFunctionAnalysis {
 		return ret;
 	}
 
-	public static double[] differentiateDoubleArray( final double[] array ) {
-		return differentiateDoubleArray( array, 1 );
+	public static float[] differentiateFloatArray( final float[] array ) {
+		return differentiateFloatArray( array, 1 );
 	}
 
-	public static double[] differentiateDoubleArray( final double[] array, final int span ) {
-		final double[] ret = new double[ array.length - 2 * span ];
+	public static float[] differentiateFloatArray( final float[] array, final int span ) {
+		final float[] ret = new float[ array.length - 2 * span ];
 		for ( int i = span; i < array.length - span; i++ ) {
-			ret[ i - span ] = .5 * ( ( array[ i - span ] - array[ i ] ) + ( array[ i ] - array[ i + span ] ) );
+			ret[ i - span ] = .5f * ( ( array[ i - span ] - array[ i ] ) + ( array[ i ] - array[ i + span ] ) );
 		}
 		return ret;
 	}
 
-	public static double[] filterAbove( final double[] array, final double threshold ) {
-		final double[] ret = new double[ array.length ];
+	public static float[] filterAbove( final float[] array, final float threshold ) {
+		final float[] ret = new float[ array.length ];
 		for ( int i = 0; i < array.length; i++ ) {
 			ret[ i ] = ( array[ i ] > threshold ) ? array[ i ] : threshold;
 		}
@@ -241,12 +241,12 @@ public class SimpleFunctionAnalysis {
 	 * @param intensities
 	 * @return
 	 */
-	public static double getSum( final double[] fktValues ) {
+	public static float getSum( final float[] fktValues ) {
 		return getSum( fktValues, 0, fktValues.length - 1 );
 	}
 
-	public static double getSum( final double[] fktValues, final int from, final int to ) {
-		double sum = 0;
+	public static float getSum( final float[] fktValues, final int from, final int to ) {
+		float sum = 0;
 		for ( int i = from; i <= to; i++ ) {
 			sum += fktValues[ i ];
 		}
@@ -257,7 +257,7 @@ public class SimpleFunctionAnalysis {
 	 * @param fktValues
 	 * @return
 	 */
-	public static double getAvg( final double[] fktValues ) {
+	public static float getAvg( final float[] fktValues ) {
 		return getSum( fktValues, 0, fktValues.length - 1 ) / fktValues.length;
 	}
 
@@ -267,7 +267,7 @@ public class SimpleFunctionAnalysis {
 	 * @param to
 	 * @return
 	 */
-	public static double getAvg( final double[] fktValues, final int from, final int to ) {
+	public static float getAvg( final float[] fktValues, final int from, final int to ) {
 		return getSum( fktValues, from, to ) / ( to - from + 1 );
 	}
 
@@ -275,14 +275,14 @@ public class SimpleFunctionAnalysis {
 	 * @param fkt
 	 * @return
 	 */
-	public static int[] findMarbleValleySegmentation( final double[] fkt ) {
+	public static int[] findMarbleValleySegmentation( final float[] fkt ) {
 		// border case
 		if ( fkt.length == 0 ) return new int[ 0 ];
 
 		final ArrayList< Integer > valleyBorders = new ArrayList< Integer >();
 
-		final double energyLeakageFactor = 0.33;
-		final double initialEnergy = 0.02;
+		final float energyLeakageFactor = 0.33f;
+		final float initialEnergy = 0.02f;
 
 		final int RUN_RIGHT = 0;
 		final int RUN_LEFT = 1;
@@ -292,13 +292,13 @@ public class SimpleFunctionAnalysis {
 
 		final int[] valleys = new int[ fkt.length ];
 		int valleyId = 1;
-		double energy = initialEnergy;
+		float energy = initialEnergy;
 
 		int idx = 0;
 //	System.out.print("0>");
 		int rightBorder = 0;
 		while ( idx < fkt.length - 1 ) {
-			final double deltaH = getHeightDifference( fkt, idx, idx + 1 );
+			final float deltaH = getHeightDifference( fkt, idx, idx + 1 );
 
 			if ( state == RUN_RIGHT ) {
 				if ( deltaH <= energy ) {
@@ -404,7 +404,7 @@ public class SimpleFunctionAnalysis {
 	 * @param j
 	 * @return
 	 */
-	private static double getHeightDifference( final double[] fkt, final int i, final int j ) {
+	private static float getHeightDifference( final float[] fkt, final int i, final int j ) {
 		assert ( i <= j );
 		return ( fkt[ j ] - fkt[ i ] );
 	}
@@ -415,7 +415,7 @@ public class SimpleFunctionAnalysis {
 	 * @param j
 	 * @return
 	 */
-	private static double getAvgSteepness( final double[] fkt, final int i, final int j ) {
+	private static float getAvgSteepness( final float[] fkt, final int i, final int j ) {
 		assert ( i <= j );
 		return ( fkt[ j ] - fkt[ i ] ) / ( j - i );
 	}
@@ -424,8 +424,8 @@ public class SimpleFunctionAnalysis {
 	 * @param fkt
 	 * @return
 	 */
-	public static double[] flipSign( final double[] fkt ) {
-		final double[] ret = new double[ fkt.length ];
+	public static float[] flipSign( final float[] fkt ) {
+		final float[] ret = new float[ fkt.length ];
 		for ( int i = 0; i < fkt.length; i++ ) {
 			ret[ i ] = fkt[ i ] * -1;
 		}
@@ -438,17 +438,17 @@ public class SimpleFunctionAnalysis {
 	 * @param fkt
 	 * @return
 	 */
-	public static ValuePair< Integer, Integer > getHighestMonotoneIncreasingSegment( final double[] fkt, final int i, final int j ) {
+	public static ValuePair< Integer, Integer > getHighestMonotoneIncreasingSegment( final float[] fkt, final int i, final int j ) {
 		int idxStart = i;
 		int idxEnd = j;
 
 		int idxLatestStart = i;
-		double maxHeight = 0;
+		float maxHeight = 0;
 
 		for ( int idx = i; idx < j; idx++ ) {
-			final double deltaH = getHeightDifference( fkt, idx, idx + 1 );
+			final float deltaH = getHeightDifference( fkt, idx, idx + 1 );
 			if ( deltaH < 0 || idx == j - 1 ) {
-				final double height = getHeightDifference( fkt, idxLatestStart, idx );
+				final float height = getHeightDifference( fkt, idxLatestStart, idx );
 				if ( maxHeight < height ) {
 					maxHeight = height;
 					idxStart = idxLatestStart;
@@ -471,8 +471,8 @@ public class SimpleFunctionAnalysis {
 	 * @param fkt
 	 * @return
 	 */
-	public static ValuePair< Integer, Integer > getHighestMonotoneDecreasingSegment( final double[] fkt, final int i, final int j ) {
-		final double[] inverseFkt = SimpleFunctionAnalysis.flipSign( fkt );
+	public static ValuePair< Integer, Integer > getHighestMonotoneDecreasingSegment( final float[] fkt, final int i, final int j ) {
+		final float[] inverseFkt = SimpleFunctionAnalysis.flipSign( fkt );
 		return getHighestMonotoneIncreasingSegment( inverseFkt, i, j );
 	}
 
@@ -480,9 +480,9 @@ public class SimpleFunctionAnalysis {
 	 * @param gapSepFkt
 	 * @return
 	 */
-	public static double getMedian( final double[] fkt, final int i, final int j ) {
+	public static float getMedian( final float[] fkt, final int i, final int j ) {
 		final int len = j - i + 1;
-		final double[] fktCopy = new double[ len ];
+		final float[] fktCopy = new float[ len ];
 		System.arraycopy( fkt, i, fktCopy, 0, len );
 		Arrays.sort( fktCopy );
 		return fktCopy[ len / 2 ];
@@ -493,8 +493,8 @@ public class SimpleFunctionAnalysis {
 	 *            the number that is added to each element of fkt
 	 * @return
 	 */
-	public static double[] elementWiseAdd( final double[] fkt, final double offset ) {
-		final double[] ret = new double[ fkt.length ];
+	public static float[] elementWiseAdd( final float[] fkt, final float offset ) {
+		final float[] ret = new float[ fkt.length ];
 		for ( int i = 0; i < fkt.length; i++ ) {
 			ret[ i ] = fkt[ i ] + offset;
 		}

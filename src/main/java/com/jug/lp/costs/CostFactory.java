@@ -17,59 +17,59 @@ public class CostFactory {
 
 	public static String latestCostEvaluation = "";
 
-	public static double getMigrationCost( final double oldPosition, final double newPosition, final double normalizer ) {
-		double deltaH = ( oldPosition - newPosition ) / normalizer;
-		double power = 0.0;
-		double costDeltaH = 0.0;
+	public static float getMigrationCost( final float oldPosition, final float newPosition, final float normalizer ) {
+		float deltaH = ( oldPosition - newPosition ) / normalizer;
+		float power = 0.0f;
+		float costDeltaH = 0.0f;
 		if ( deltaH > 0 ) { // upward migration
-			deltaH = Math.max( 0, deltaH - 0.05 ); // going upwards for up to 5% is for free...
-			power = 3.0; //was 5.0 on Saturday
+			deltaH = Math.max( 0, deltaH - 0.05f ); // going upwards for up to 5% is for free...
+			power = 3.0f;
 		} else { // downward migration
-			power = 12.0;
+			power = 12.0f;
 		}
 		deltaH = Math.abs( deltaH );
-		costDeltaH = deltaH * Math.pow( 1 + deltaH, power );
+		costDeltaH = deltaH * ( float ) Math.pow( 1 + deltaH, power );
 		latestCostEvaluation = String.format( "c_h = %.4f * %.4f^%.1f = %.4f", deltaH, 1 + deltaH, power, costDeltaH );
 		return costDeltaH;
 	}
 
-	public static double getGrowthCost( final double oldSize, final double newSize, final double normalizer ) {
-		double deltaL = ( newSize - oldSize ) / normalizer;
-		double power = 0.0;
-		double costDeltaL = 0.0;
+	public static float getGrowthCost( final float oldSize, final float newSize, final float normalizer ) {
+		float deltaL = ( newSize - oldSize ) / normalizer;
+		float power = 0.0f;
+		float costDeltaL = 0.0f;
 		if ( deltaL > 0 ) { // growth
-			deltaL = Math.max( 0, deltaL - 0.05 ); // growing up 5% is free
-			power = 4.0;
+			deltaL = Math.max( 0, deltaL - 0.05f ); // growing up 5% is free
+			power = 4.0f;
 		} else { // shrinkage
-			power = 12.0;
+			power = 12.0f;
 		}
 		deltaL = Math.abs( deltaL );
-		costDeltaL = deltaL * Math.pow( 1 + deltaL, power );
+		costDeltaL = deltaL * ( float ) Math.pow( 1 + deltaL, power );
 		latestCostEvaluation = String.format( "c_l = %.4f * %.4f^%.1f = %.4f", deltaL, 1 + deltaL, power, costDeltaL );
 		return costDeltaL;
 	}
 
-	public static double getIntensityMismatchCost( final double oldIntensity, final double newIntensity ) {
-		final double deltaV = Math.max( 0.0, newIntensity - oldIntensity ); // nur heller werden wird bestraft!
-		final double power = 1.0;
-		final double freeUntil = 0.1;
-		double costDeltaV = 0.0;
+	public static float getIntensityMismatchCost( final float oldIntensity, final float newIntensity ) {
+		final float deltaV = Math.max( 0.0f, newIntensity - oldIntensity ); // nur heller werden wird bestraft!
+		final float power = 1.0f;
+		final float freeUntil = 0.1f;
+		float costDeltaV = 0.0f;
 		if ( deltaV > freeUntil ) { // significant jump
-			costDeltaV = deltaV * Math.pow( 1.0 + ( deltaV - freeUntil ), power );
+			costDeltaV = deltaV * ( float ) Math.pow( 1.0 + ( deltaV - freeUntil ), power );
 		}
 //		latestCostEvaluation = String.format( "c_v = %.4f * %.4f^%.1f = %.4f", deltaV, 1 + deltaV, power, costDeltaV );
 		latestCostEvaluation = String.format( "c_v = 0.0" );
-		return 0.0 * costDeltaV;
+		return 0.0f * costDeltaV;
 	}
 
-	public static double getUnevenDivisionCost( final double sizeFirstChild, final double sizeSecondChild ) {
-		final double deltaS = Math.abs( sizeFirstChild - sizeSecondChild ) / Math.min( sizeFirstChild, sizeSecondChild );
-		double power = 2.0;
-		double costDeltaL = 0.0;
+	public static float getUnevenDivisionCost( final float sizeFirstChild, final float sizeSecondChild ) {
+		final float deltaS = Math.abs( sizeFirstChild - sizeSecondChild ) / Math.min( sizeFirstChild, sizeSecondChild );
+		float power = 2.0f;
+		float costDeltaL = 0.0f;
 		if ( deltaS > 1.15 ) {
-			power = 7.0;
+			power = 7.0f;
 		}
-		costDeltaL = Math.pow( deltaS, power );
+		costDeltaL = ( float ) Math.pow( deltaS, power );
 
 		latestCostEvaluation = String.format( "c_d = %.4f^%.1f = %.4f", deltaS, power, costDeltaL );
 		return costDeltaL;
@@ -80,7 +80,7 @@ public class CostFactory {
 	 * @param gapSepFkt
 	 * @return
 	 */
-	public static double getIntensitySegmentationCost( final Component< ?, ? > ctNode, final double[] gapSepFkt ) {
+	public static float getIntensitySegmentationCost( final Component< ?, ? > ctNode, final float[] gapSepFkt ) {
 		final Pair< Integer, Integer > segInterval = ComponentTreeUtils.getTreeNodeInterval( ctNode );
 		final int a = segInterval.getA().intValue();
 		final int b = segInterval.getB().intValue();
@@ -93,21 +93,21 @@ public class CostFactory {
 			aReduced = bReduced = SimpleFunctionAnalysis.getMin( gapSepFkt, a, b ).a.intValue();
 		}
 
-		final double l = gapSepFkt[ a ];
-		final double r = gapSepFkt[ b ];
+		final float l = gapSepFkt[ a ];
+		final float r = gapSepFkt[ b ];
 
-		final double maxReduced = SimpleFunctionAnalysis.getMax( gapSepFkt, aReduced, bReduced ).b.doubleValue();
-		final double min = SimpleFunctionAnalysis.getMin( gapSepFkt, a, b ).b.doubleValue();
+		final float maxReduced = SimpleFunctionAnalysis.getMax( gapSepFkt, aReduced, bReduced ).b.floatValue();
+		final float min = SimpleFunctionAnalysis.getMin( gapSepFkt, a, b ).b.floatValue();
 
-		final double maxRimHeight = Math.max( l, r ) - min;
-		final double reducedMaxHeight = maxReduced - min;
-		double cost = -( maxRimHeight - reducedMaxHeight ) + MotherMachine.MIN_GAP_CONTRAST;
+		final float maxRimHeight = Math.max( l, r ) - min;
+		final float reducedMaxHeight = maxReduced - min;
+		float cost = -( maxRimHeight - reducedMaxHeight ) + MotherMachine.MIN_GAP_CONTRAST;
 
 		// Special case: min-value is above average gap-sep-fkt value (happens often at the very top)
-		final double avgFktValue = SimpleFunctionAnalysis.getSum( gapSepFkt ) / ( gapSepFkt.length - 1 );
-//		final double distAboveAvg = Math.max( 0.0, min - avgFktValue );
-		final double medianSegmentValue = SimpleFunctionAnalysis.getMedian( gapSepFkt, a, b );
-		final double distAboveAvg = Math.max( 0.0, medianSegmentValue - avgFktValue );
+		final float avgFktValue = SimpleFunctionAnalysis.getSum( gapSepFkt ) / ( gapSepFkt.length - 1 );
+//		final float distAboveAvg = Math.max( 0.0, min - avgFktValue );
+		final float medianSegmentValue = SimpleFunctionAnalysis.getMedian( gapSepFkt, a, b );
+		final float distAboveAvg = Math.max( 0.0f, medianSegmentValue - avgFktValue );
 		cost += ( distAboveAvg + 0.05 ) * Math.pow( 1 + ( distAboveAvg + 0.05 ), 8.0 );
 
 		// cell is too small
@@ -122,31 +122,31 @@ public class CostFactory {
 	 * @param gapSepFkt
 	 * @return
 	 */
-	public static double getParamaxflowSegmentationCost( final Component< ?, ? > ctNode, final double[] gapSepFkt ) {
+	public static float getParamaxflowSegmentationCost( final Component< ?, ? > ctNode, final float[] gapSepFkt ) {
 		final Pair< Integer, Integer > segInterval = ComponentTreeUtils.getTreeNodeInterval( ctNode );
 		final int a = segInterval.getA().intValue();
 		final int b = segInterval.getB().intValue();
 
-		final double plateauDerivativeThreshold = 0.0000; //some epsilon
+		final float plateauDerivativeThreshold = 0.0000f; //some epsilon
 		int aReduced = SimpleFunctionAnalysis.getRighthandLocalMinOrPlateau( gapSepFkt, a, plateauDerivativeThreshold ).a.intValue();
 		int bReduced = SimpleFunctionAnalysis.getLefthandLocalMinOrPlateau( gapSepFkt, b, plateauDerivativeThreshold ).a.intValue();
 		if ( aReduced > bReduced ) {
 			aReduced = bReduced = SimpleFunctionAnalysis.getMin( gapSepFkt, a, b ).a.intValue();
 		}
 
-		final double avgBottomVal = SimpleFunctionAnalysis.getAvg( gapSepFkt, a, b );
-		double maxReduced = SimpleFunctionAnalysis.getMax( gapSepFkt, aReduced, bReduced ).b.doubleValue();
+		final float avgBottomVal = SimpleFunctionAnalysis.getAvg( gapSepFkt, a, b );
+		float maxReduced = SimpleFunctionAnalysis.getMax( gapSepFkt, aReduced, bReduced ).b.floatValue();
 		maxReduced = Math.max( maxReduced, avgBottomVal ); // tricky but I like it!
 
-		final double segmentLengthInPercentGL = ( b - a ) / ( ( double ) gapSepFkt.length );
+		final float segmentLengthInPercentGL = ( b - a ) / ( ( float ) gapSepFkt.length );
 
 		// Special case: min-value is above average gap-sep-fkt value (happens often at the very top)
-		final double avgFktValue = SimpleFunctionAnalysis.getAvg( gapSepFkt );
-		final double distAboveAvg = Math.max( 0.0, avgBottomVal - avgFktValue );
-		final double penaltyHeight = distAboveAvg * Math.pow( 1.0 + distAboveAvg, 5 );
-		final double incentiveHeight = ( 1.0 - maxReduced );
+		final float avgFktValue = SimpleFunctionAnalysis.getAvg( gapSepFkt );
+		final float distAboveAvg = Math.max( 0.0f, avgBottomVal - avgFktValue );
+		final float penaltyHeight = distAboveAvg * ( float ) Math.pow( 1.0 + distAboveAvg, 5 );
+		final float incentiveHeight = ( 1.0f - maxReduced );
 
-		double cost = ( penaltyHeight * segmentLengthInPercentGL ) - ( incentiveHeight * segmentLengthInPercentGL );
+		float cost = ( penaltyHeight * segmentLengthInPercentGL ) - ( incentiveHeight * segmentLengthInPercentGL );
 
 		// cell is too small
 		if ( a > 0 && b + 1 < gapSepFkt.length && b - a < MotherMachine.MIN_CELL_LENGTH ) { // if a==0 or b==gapSepFkt.len, only a part of the cell is seen!

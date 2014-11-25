@@ -90,4 +90,36 @@ public class Util {
 		// write the image as a PNG
 		ImageIO.write( image, "png", new File( filename ) );
 	}
+
+	/**
+	 * @param farray
+	 * @return
+	 */
+	public static double[] makeDoubleArray( final float[] farray ) {
+		if ( farray == null ) { return null; }
+		if ( farray.length == 0 ) { return new double[] {}; }
+
+		final double[] ret = new double[ farray.length ];
+		for ( int i = 0; i < farray.length; i++ ) {
+			ret[ i ] = farray[ i ];
+		}
+		return ret;
+	}
+
+	/**
+	 * @param farray
+	 * @return
+	 */
+	public static double[][] makeDoubleArray2d( final float[][] farray ) {
+		if ( farray == null ) { return null; }
+		if ( farray.length == 0 ) { return new double[][] {}; }
+
+		final double[][] ret = new double[ farray.length ][ farray[ 0 ].length ];
+		for ( int i = 0; i < farray.length; i++ ) {
+			for ( int j = 0; j < farray[ 0 ].length; j++ ) {
+				ret[ i ][ j ] = farray[ i ][ j ];
+			}
+		}
+		return ret;
+	}
 }

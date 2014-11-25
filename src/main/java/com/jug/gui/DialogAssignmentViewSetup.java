@@ -17,7 +17,6 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
-
 /**
  * @author jug
  */
@@ -65,7 +64,7 @@ public class DialogAssignmentViewSetup extends JDialog implements ActionListener
 		horizontalHelper.add( tfMax );
 		verticalHelper.add( horizontalHelper );
 
-		bOk = new JButton("OK");
+		bOk = new JButton( "OK" );
 		bOk.addActionListener( this );
 		this.rootPane.setDefaultButton( bOk );
 		bCancel = new JButton( "Cancel" );
@@ -99,17 +98,16 @@ public class DialogAssignmentViewSetup extends JDialog implements ActionListener
 	 */
 	@Override
 	public void actionPerformed( final ActionEvent e ) {
-		double valueMin, valueMax;
+		float valueMin, valueMax;
 		if ( e.getSource().equals( bOk ) ) {
 			try {
-				valueMin = Double.parseDouble( tfMin.getText() );
-				valueMax = Double.parseDouble( tfMax.getText() );
+				valueMin = Float.parseFloat( tfMin.getText() );
+				valueMax = Float.parseFloat( tfMax.getText() );
 				model.setCostFilterMin( valueMin );
 				model.setCostFilterMax( valueMax );
 				this.setVisible( false );
 				this.dispose();
-			}
-			catch ( final NumberFormatException nfe ) {
+			} catch ( final NumberFormatException nfe ) {
 				this.getContentPane().add( new JLabel( "Input format not valid!" ), BorderLayout.NORTH );
 			}
 		}

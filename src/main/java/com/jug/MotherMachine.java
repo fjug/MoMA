@@ -51,7 +51,7 @@ import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform2D;
 import net.imglib2.realtransform.RealViews;
 import net.imglib2.type.numeric.ARGBType;
-import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
@@ -75,7 +75,7 @@ import com.jug.ops.cursor.FindLocationAboveThreshold;
 import com.jug.ops.numerictype.VarOfRai;
 import com.jug.segmentation.GrowthLineSegmentationMagic;
 import com.jug.util.DataMover;
-import com.jug.util.DoubleTypeImgLoader;
+import com.jug.util.FloatTypeImgLoader;
 
 /**
  * @author jug
@@ -92,36 +92,36 @@ public class MotherMachine {
 	 * Parameter: sigma for gaussian blurring in x-direction of the raw image
 	 * data. Used while searching the growth line centers.
 	 */
-	public static double SIGMA_GL_DETECTION_X = 15.0;
+	public static float SIGMA_GL_DETECTION_X = 20f;
 
-	public static double SIGMA_GL_DETECTION_Y = 3.0;
+	public static float SIGMA_GL_DETECTION_Y = 0f;
 
 	/**
 	 * Parameter: sigma for gaussian blurring in x-direction of the raw image
 	 * data. Used while searching the gaps between bacteria.
 	 */
-	private static double SIGMA_PRE_SEGMENTATION_X = 0.0; // 3.5;
+	private static float SIGMA_PRE_SEGMENTATION_X = 0f;
 
-	private static double SIGMA_PRE_SEGMENTATION_Y = 0.0; // 0.5;
+	private static float SIGMA_PRE_SEGMENTATION_Y = 0f;
 
 	/**
 	 * Parameter: later border in pixels - well centers detected too close to
 	 * the left and right image border will be neglected. Reason: detection not
 	 * reliable if well is truncated.
 	 */
-	public static int GL_OFFSET_LATERAL = 5;
+	public static int GL_OFFSET_LATERAL = 20;
 
 	/**
 	 * Prior knowledge: hard offset in detected well center lines - will be cut
 	 * of from top.
 	 */
-	public static int GL_OFFSET_TOP = 40;
+	public static int GL_OFFSET_TOP = 35;
 
 	/**
 	 * Prior knowledge: hard offset in detected well center lines - will be cut
 	 * of from bottom.
 	 */
-	public static int GL_OFFSET_BOTTOM = 20;
+	public static int GL_OFFSET_BOTTOM = 30;
 
 	/**
 	 * Maximum offset in x direction (with respect to growth line center) to
@@ -151,7 +151,7 @@ public class MotherMachine {
 	/**
 	 * Prior knowledge: minimal contrast of an gap (also used for MSERs)
 	 */
-	public static double MIN_GAP_CONTRAST = 0.02; // This is set to a very low
+	public static float MIN_GAP_CONTRAST = 0.02f; // This is set to a very low
 													// value that will basically
 													// not filter anything...
 	/**
@@ -161,7 +161,7 @@ public class MotherMachine {
 	 * classification is flat, the original (simple) mehod might still offer
 	 * some modulation!
 	 */
-	public static double SEGMENTATION_MIX_CT_INTO_PMFRF = 0.25;
+	public static float SEGMENTATION_MIX_CT_INTO_PMFRF = 0.25f;
 
 	/**
 	 * String pointing at the weka-segmenter model file that should be used for
@@ -290,17 +290,17 @@ public class MotherMachine {
 		final Option headless = new Option( "h", "headless", false, "start without user interface (note: input-folder must be given!)" );
 		headless.setRequired( false );
 
-		final Option numChannelsOption = new Option( "c", "channels", true, "number of channels to be loaded and analyzed." );
-		numChannelsOption.setRequired( true );
-
-		final Option minChannelIdxOption = new Option( "cmin", "min_channel", true, "the smallest channel index (usually 0 or 1, default is 1)." );
-		minChannelIdxOption.setRequired( false );
-
 		final Option timeFirst = new Option( "tmin", "min_time", true, "first time-point to be processed" );
 		timeFirst.setRequired( false );
 
 		final Option timeLast = new Option( "tmax", "max_time", true, "last time-point to be processed" );
 		timeFirst.setRequired( false );
+
+		final Option numChannelsOption = new Option( "c", "channels", true, "number of channels to be loaded and analyzed." );
+		numChannelsOption.setRequired( true );
+
+		final Option minChannelIdxOption = new Option( "cmin", "min_channel", true, "the smallest channel index (usually 0 or 1, default is 1)." );
+		minChannelIdxOption.setRequired( false );
 
 		final Option infolder = new Option( "i", "infolder", true, "folder to read data from" );
 		infolder.setRequired( false );
@@ -322,7 +322,7 @@ public class MotherMachine {
 			cmd = parser.parse( options, args );
 		} catch ( final ParseException e1 ) {
 			final HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp( "... -i [in-folder] -o [out-folder] -f [filter-string] [-headless]", "", options, "Error: " + e1.getMessage() );
+			formatter.printHelp( "... -i [in-folder] -o [out-folder] -c <num-channels> -cmin [start-channel-ids] -tmin [idx] -tmax [idx] [-headless]", "", options, "Error: " + e1.getMessage() );
 			System.exit( 0 );
 		}
 
@@ -375,13 +375,13 @@ public class MotherMachine {
 			STATS_OUTPUT_PATH = outputFolder.getAbsolutePath();
 		}
 
-		int minChannelIdx = 1;
-		if ( cmd.hasOption( "minc" ) ) {
-			minChannelIdx = Integer.parseInt( cmd.getOptionValue( "minc" ) );
+		int minChannelIdx = 0;
+		if ( cmd.hasOption( "cmin" ) ) {
+			minChannelIdx = Integer.parseInt( cmd.getOptionValue( "cmin" ) );
 		}
-		final int numChannels = 1;
+		int numChannels = 1;
 		if ( cmd.hasOption( "c" ) ) {
-			minChannelIdx = Integer.parseInt( cmd.getOptionValue( "c" ) );
+			numChannels = Integer.parseInt( cmd.getOptionValue( "c" ) );
 		}
 
 		int minTime = -1;
@@ -437,12 +437,12 @@ public class MotherMachine {
 		GL_OFFSET_TOP = Integer.parseInt( props.getProperty( "GL_OFFSET_TOP", Integer.toString( GL_OFFSET_TOP ) ) );
 		GL_OFFSET_LATERAL = Integer.parseInt( props.getProperty( "GL_OFFSET_LATERAL", Integer.toString( GL_OFFSET_LATERAL ) ) );
 		MIN_CELL_LENGTH = Integer.parseInt( props.getProperty( "MIN_CELL_LENGTH", Integer.toString( MIN_CELL_LENGTH ) ) );
-		MIN_GAP_CONTRAST = Double.parseDouble( props.getProperty( "MIN_GAP_CONTRAST", Double.toString( MIN_GAP_CONTRAST ) ) );
-		SIGMA_PRE_SEGMENTATION_X = Double.parseDouble( props.getProperty( "SIGMA_PRE_SEGMENTATION_X", Double.toString( SIGMA_PRE_SEGMENTATION_X ) ) );
-		SIGMA_PRE_SEGMENTATION_Y = Double.parseDouble( props.getProperty( "SIGMA_PRE_SEGMENTATION_Y", Double.toString( SIGMA_PRE_SEGMENTATION_Y ) ) );
-		SIGMA_GL_DETECTION_X = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION_X", Double.toString( SIGMA_GL_DETECTION_X ) ) );
-		SIGMA_GL_DETECTION_Y = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION_Y", Double.toString( SIGMA_GL_DETECTION_Y ) ) );
-		SEGMENTATION_MIX_CT_INTO_PMFRF = Double.parseDouble( props.getProperty( "SEGMENTATION_MIX_CT_INTO_PMFRF", Double.toString( SEGMENTATION_MIX_CT_INTO_PMFRF ) ) );
+		MIN_GAP_CONTRAST = Float.parseFloat( props.getProperty( "MIN_GAP_CONTRAST", Float.toString( MIN_GAP_CONTRAST ) ) );
+		SIGMA_PRE_SEGMENTATION_X = Float.parseFloat( props.getProperty( "SIGMA_PRE_SEGMENTATION_X", Float.toString( SIGMA_PRE_SEGMENTATION_X ) ) );
+		SIGMA_PRE_SEGMENTATION_Y = Float.parseFloat( props.getProperty( "SIGMA_PRE_SEGMENTATION_Y", Float.toString( SIGMA_PRE_SEGMENTATION_Y ) ) );
+		SIGMA_GL_DETECTION_X = Float.parseFloat( props.getProperty( "SIGMA_GL_DETECTION_X", Float.toString( SIGMA_GL_DETECTION_X ) ) );
+		SIGMA_GL_DETECTION_Y = Float.parseFloat( props.getProperty( "SIGMA_GL_DETECTION_Y", Float.toString( SIGMA_GL_DETECTION_Y ) ) );
+		SEGMENTATION_MIX_CT_INTO_PMFRF = Float.parseFloat( props.getProperty( "SEGMENTATION_MIX_CT_INTO_PMFRF", Float.toString( SEGMENTATION_MIX_CT_INTO_PMFRF ) ) );
 		CLASSIFIER_MODEL_FILE = props.getProperty( "CLASSIFIER_MODEL_FILE", CLASSIFIER_MODEL_FILE );
 //		STATS_OUTPUT_PATH = props.getProperty( "STATS_OUTPUT_PATH", STATS_OUTPUT_PATH );
 		DEFAULT_PATH = props.getProperty( "DEFAULT_PATH", DEFAULT_PATH );
@@ -554,10 +554,10 @@ public class MotherMachine {
 
 	private double dCorrectedSlope;
 
-	private Img< DoubleType > imgRaw;
-	private List< Img< DoubleType >> rawChannelImgs;
+	private Img< FloatType > imgRaw;
+	private List< Img< FloatType >> rawChannelImgs;
 
-	private Img< DoubleType > imgTemp;
+	private Img< FloatType > imgTemp;
 
 	private Img< ARGBType > imgAnnotated;
 
@@ -595,7 +595,7 @@ public class MotherMachine {
 	/**
 	 * @return the imgRaw
 	 */
-	public Img< DoubleType > getImgRaw() {
+	public Img< FloatType > getImgRaw() {
 		return imgRaw;
 	}
 
@@ -603,14 +603,14 @@ public class MotherMachine {
 	 * @param imgRaw
 	 *            the imgRaw to set
 	 */
-	public void setImgRaw( final Img< DoubleType > imgRaw ) {
+	public void setImgRaw( final Img< FloatType > imgRaw ) {
 		this.imgRaw = imgRaw;
 	}
 
 	/**
 	 * @return the imgTemp
 	 */
-	public Img< DoubleType > getImgTemp() {
+	public Img< FloatType > getImgTemp() {
 		return imgTemp;
 	}
 
@@ -618,7 +618,7 @@ public class MotherMachine {
 	 * @param imgTemp
 	 *            the imgTemp to set
 	 */
-	public void setImgTemp( final Img< DoubleType > imgTemp ) {
+	public void setImgTemp( final Img< FloatType > imgTemp ) {
 		this.imgTemp = imgTemp;
 	}
 
@@ -1004,7 +1004,7 @@ public class MotherMachine {
 		if ( numChannels == 0 ) { throw new Exception( "At least one color channel must be loaded!" ); }
 
 		// load channels separately into Img objects
-		rawChannelImgs = new ArrayList< Img< DoubleType >>();
+		rawChannelImgs = new ArrayList< Img< FloatType >>();
 		for ( int cIdx = minChannelIdx; cIdx < minChannelIdx + numChannels; cIdx++ ) {
 
 			// load tiffs from folder
@@ -1012,9 +1012,9 @@ public class MotherMachine {
 			System.out.print( String.format( "Loading tiff sequence for channel, identified by '%s', from '%s'...", filter, path ) );
 			try {
 				if ( cIdx == minChannelIdx ) {
-					rawChannelImgs.add( DoubleTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, true, filter ) );
+					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, true, filter ) );
 				} else {
-					rawChannelImgs.add( DoubleTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, true, filter ) );
+					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, true, filter ) );
 				}
 			} catch ( final Exception e ) {
 				e.printStackTrace();
@@ -1068,7 +1068,7 @@ public class MotherMachine {
 	/**
 	 * Resets imgTemp to contain the raw data from imgRaw.
 	 */
-	public void resetImgAnnotatedLike( final Img< DoubleType > img ) {
+	public void resetImgAnnotatedLike( final Img< FloatType > img ) {
 		imgAnnotated = DataMover.createEmptyArrayImgLike( img, new ARGBType() );
 	}
 
@@ -1086,16 +1086,16 @@ public class MotherMachine {
 		assert ( imgRaw.numDimensions() == 3 );
 
 		// new raw image
-		Img< DoubleType > rawNew;
+		Img< FloatType > rawNew;
 
 		// find out how slanted the given stack is...
-		final List< Cursor< DoubleType >> points = new Loops< DoubleType, Cursor< DoubleType >>().forEachHyperslice( Views.hyperSlice( imgRaw, 2, 0 ), 0, new FindLocationAboveThreshold< DoubleType >( new DoubleType( 0.33 ) ) );
+		final List< Cursor< FloatType >> points = new Loops< FloatType, Cursor< FloatType >>().forEachHyperslice( Views.hyperSlice( imgRaw, 2, 0 ), 0, new FindLocationAboveThreshold< FloatType >( new FloatType( 0.33f ) ) );
 
 		final SimpleRegression regression = new SimpleRegression();
 		final long[] pos = new long[ 2 ];
 		int i = 0;
 		final double[] plotData = new double[ points.size() ];
-		for ( final Cursor< DoubleType > c : points ) {
+		for ( final Cursor< FloatType > c : points ) {
 			c.localize( pos );
 			regression.addData( i, -pos[ 0 ] );
 			plotData[ i ] = -pos[ 0 ];
@@ -1136,12 +1136,12 @@ public class MotherMachine {
 		rawNew = imgRaw.factory().create( new long[] { maxX - minX, maxY - minY, imgRaw.dimension( 2 ) }, imgRaw.firstElement() );
 
 		for ( i = 0; i < imgRaw.dimension( 2 ); i++ ) {
-			final RandomAccessibleInterval< DoubleType > viewZSlize = Views.hyperSlice( imgRaw, 2, i );
-			final RandomAccessible< DoubleType > raInfZSlize = Views.extendValue( viewZSlize, new DoubleType( 0.0 ) );
-			final RealRandomAccessible< DoubleType > rraInterpolatedZSlize = Views.interpolate( raInfZSlize, new NLinearInterpolatorFactory< DoubleType >() );
-			final RandomAccessible< DoubleType > raRotatedZSlize = RealViews.affine( rraInterpolatedZSlize, affine );
+			final RandomAccessibleInterval< FloatType > viewZSlize = Views.hyperSlice( imgRaw, 2, i );
+			final RandomAccessible< FloatType > raInfZSlize = Views.extendValue( viewZSlize, new FloatType( 0.0f ) );
+			final RealRandomAccessible< FloatType > rraInterpolatedZSlize = Views.interpolate( raInfZSlize, new NLinearInterpolatorFactory< FloatType >() );
+			final RandomAccessible< FloatType > raRotatedZSlize = RealViews.affine( rraInterpolatedZSlize, affine );
 
-			final RandomAccessibleInterval< DoubleType > raiRotatedAndTruncatedZSlize = Views.zeroMin( Views.interval( raRotatedZSlize, new long[] { minX, minY }, new long[] { maxX, maxY } ) );
+			final RandomAccessibleInterval< FloatType > raiRotatedAndTruncatedZSlize = Views.zeroMin( Views.interval( raRotatedZSlize, new long[] { minX, minY }, new long[] { maxX, maxY } ) );
 
 			DataMover.copy( raiRotatedAndTruncatedZSlize, Views.iterable( Views.hyperSlice( rawNew, 2, i ) ) );
 		}
@@ -1164,7 +1164,7 @@ public class MotherMachine {
 		assert ( imgRaw.numDimensions() == 3 );
 
 		// return image
-		Img< DoubleType > rawNew = null;
+		Img< FloatType > rawNew = null;
 
 		// crop positions to be evaluated
 		long top = 0, bottom = imgRaw.dimension( 1 );
@@ -1174,11 +1174,11 @@ public class MotherMachine {
 		final long[] lZPositions = new long[] { 0, imgRaw.dimension( 2 ) - 1 };
 		for ( final long lZPos : lZPositions ) {
 			// find out how slanted the given stack is...
-			final List< DoubleType > points = new Loops< DoubleType, DoubleType >().forEachHyperslice( Views.hyperSlice( imgRaw, 2, lZPos ), 1, new VarOfRai< DoubleType >() );
+			final List< FloatType > points = new Loops< FloatType, FloatType >().forEachHyperslice( Views.hyperSlice( imgRaw, 2, lZPos ), 1, new VarOfRai< FloatType >() );
 
 			final double[] y = new double[ points.size() ];
 			int i = 0;
-			for ( final DoubleType dtPoint : points ) {
+			for ( final FloatType dtPoint : points ) {
 				y[ i ] = dtPoint.get();
 				i++;
 			}
@@ -1220,12 +1220,12 @@ public class MotherMachine {
 
 		// and copy it there
 		for ( int i = 0; i < imgRaw.dimension( 2 ); i++ ) {
-			final RandomAccessibleInterval< DoubleType > viewZSlize = Views.hyperSlice( imgRaw, 2, i );
-			final RandomAccessibleInterval< DoubleType > viewCroppedZSlize = Views.zeroMin( Views.interval( viewZSlize, new long[] { left, top }, new long[] { bottom, right } ) );
+			final RandomAccessibleInterval< FloatType > viewZSlize = Views.hyperSlice( imgRaw, 2, i );
+			final RandomAccessibleInterval< FloatType > viewCroppedZSlize = Views.zeroMin( Views.interval( viewZSlize, new long[] { left, top }, new long[] { bottom, right } ) );
 
 			DataMover.copy( viewCroppedZSlize, Views.iterable( Views.hyperSlice( rawNew, 2, i ) ) );
 			// Normalize.normalize(Views.iterable( Views.hyperSlice(ret, 2, i)
-			// ), new DoubleType(0.0), new DoubleType(1.0));
+			// ), new FloatType(0.0), new FloatType(1.0));
 		}
 
 		// set new, straightened image to be the new imgRaw
@@ -1237,7 +1237,7 @@ public class MotherMachine {
 	 * growth-line data.
 	 * 
 	 * @param img
-	 *            DoubleType image stack.
+	 *            FloatType image stack.
 	 */
 	private void subtractBackgroundInRaw() {
 
@@ -1251,19 +1251,19 @@ public class MotherMachine {
 				final int glfY1 = 0; // gl.getFirstPoint().getIntPosition(1);
 				final int glfY2 = ( int ) imgRaw.dimension( 1 ) - 1; // gl.getLastPoint().getIntPosition(1);
 
-				final IntervalView< DoubleType > frame = Views.hyperSlice( imgRaw, 2, f );
+				final IntervalView< FloatType > frame = Views.hyperSlice( imgRaw, 2, f );
 
-				double rowAvgs[] = new double[ glfY2 - glfY1 + 1 ];
+				float rowAvgs[] = new float[ glfY2 - glfY1 + 1 ];
 				int colCount = 0;
 				// Look to the left if you are not the first GLF
 				if ( glfX > MotherMachine.BGREM_TEMPLATE_XMAX ) {
-					final IntervalView< DoubleType > leftBackgroundWindow = Views.interval( frame, new long[] { glfX - MotherMachine.BGREM_TEMPLATE_XMAX, glfY1 }, new long[] { glfX - MotherMachine.BGREM_TEMPLATE_XMIN, glfY2 } );
+					final IntervalView< FloatType > leftBackgroundWindow = Views.interval( frame, new long[] { glfX - MotherMachine.BGREM_TEMPLATE_XMAX, glfY1 }, new long[] { glfX - MotherMachine.BGREM_TEMPLATE_XMIN, glfY2 } );
 					rowAvgs = addRowSumsFromInterval( leftBackgroundWindow, rowAvgs );
 					colCount += ( MotherMachine.BGREM_TEMPLATE_XMAX - MotherMachine.BGREM_TEMPLATE_XMIN );
 				}
 				// Look to the right if you are not the last GLF
 				if ( glfX < imgRaw.dimension( 0 ) - MotherMachine.BGREM_TEMPLATE_XMAX ) {
-					final IntervalView< DoubleType > rightBackgroundWindow = Views.interval( frame, new long[] { glfX + MotherMachine.BGREM_TEMPLATE_XMIN, glfY1 }, new long[] { glfX + MotherMachine.BGREM_TEMPLATE_XMAX, glfY2 } );
+					final IntervalView< FloatType > rightBackgroundWindow = Views.interval( frame, new long[] { glfX + MotherMachine.BGREM_TEMPLATE_XMIN, glfY1 }, new long[] { glfX + MotherMachine.BGREM_TEMPLATE_XMAX, glfY2 } );
 					rowAvgs = addRowSumsFromInterval( rightBackgroundWindow, rowAvgs );
 					colCount += ( MotherMachine.BGREM_TEMPLATE_XMAX - MotherMachine.BGREM_TEMPLATE_XMIN );
 				}
@@ -1276,19 +1276,19 @@ public class MotherMachine {
 				// right
 				final long x1 = Math.max( 0, glfX - MotherMachine.BGREM_X_OFFSET );
 				final long x2 = Math.min( frame.dimension( 0 ) - 1, glfX + MotherMachine.BGREM_X_OFFSET );
-				final IntervalView< DoubleType > growthLineArea = Views.interval( frame, new long[] { x1, glfY1 }, new long[] { x2, glfY2 } );
+				final IntervalView< FloatType > growthLineArea = Views.interval( frame, new long[] { x1, glfY1 }, new long[] { x2, glfY2 } );
 				removeValuesFromRows( growthLineArea, rowAvgs );
 				// Normalize the zone we removed the background from...
-				Normalize.normalize( Views.iterable( growthLineArea ), new DoubleType( 0.0 ), new DoubleType( 1.0 ) );
+				Normalize.normalize( Views.iterable( growthLineArea ), new FloatType( 0.0f ), new FloatType( 1.0f ) );
 			}
 		}
 	}
 
-	private void normalizePerFrame( final Img< DoubleType > img, final int topOffset, final int bottomOffset ) {
+	private void normalizePerFrame( final Img< FloatType > img, final int topOffset, final int bottomOffset ) {
 		for ( int f = 0; f < img.dimension( 2 ); f++ ) {
-			final IntervalView< DoubleType > slice = Views.hyperSlice( img, 2, f );
-			final IntervalView< DoubleType > roi = Views.interval( slice, new long[] { img.min( 0 ), img.min( 1 ) + topOffset }, new long[] { img.max( 0 ), img.max( 1 ) - bottomOffset } );
-			Normalize.normalize( Views.iterable( roi ), new DoubleType( 0.0 ), new DoubleType( 1.0 ) );
+			final IntervalView< FloatType > slice = Views.hyperSlice( img, 2, f );
+			final IntervalView< FloatType > roi = Views.interval( slice, new long[] { img.min( 0 ), img.min( 1 ) + topOffset }, new long[] { img.max( 0 ), img.max( 1 ) - bottomOffset } );
+			Normalize.normalize( Views.iterable( roi ), new FloatType( 0.0f ), new FloatType( 1.0f ) );
 		}
 	}
 
@@ -1298,10 +1298,10 @@ public class MotherMachine {
 	 * @param view
 	 * @param rowSums
 	 */
-	private double[] addRowSumsFromInterval( final IntervalView< DoubleType > view, final double[] rowSums ) {
+	private float[] addRowSumsFromInterval( final IntervalView< FloatType > view, final float[] rowSums ) {
 		for ( int i = 0; i < view.dimension( 1 ); i++ ) {
-			final IntervalView< DoubleType > row = Views.hyperSlice( view, 1, i );
-			final Cursor< DoubleType > cursor = Views.iterable( row ).cursor();
+			final IntervalView< FloatType > row = Views.hyperSlice( view, 1, i );
+			final Cursor< FloatType > cursor = Views.iterable( row ).cursor();
 			while ( cursor.hasNext() ) {
 				rowSums[ i ] += cursor.next().get();
 			}
@@ -1315,11 +1315,11 @@ public class MotherMachine {
 	 * @param view
 	 * @param values
 	 */
-	private void removeValuesFromRows( final IntervalView< DoubleType > view, final double[] values ) {
+	private void removeValuesFromRows( final IntervalView< FloatType > view, final float[] values ) {
 		for ( int i = 0; i < view.dimension( 1 ); i++ ) {
-			final Cursor< DoubleType > cursor = Views.iterable( Views.hyperSlice( view, 1, i ) ).cursor();
+			final Cursor< FloatType > cursor = Views.iterable( Views.hyperSlice( view, 1, i ) ).cursor();
 			while ( cursor.hasNext() ) {
-				cursor.next().set( new DoubleType( Math.max( 0, cursor.get().get() - values[ i ] ) ) );
+				cursor.next().set( new FloatType( Math.max( 0, cursor.get().get() - values[ i ] ) ) );
 			}
 		}
 	}
@@ -1348,7 +1348,7 @@ public class MotherMachine {
 		sigmas[ 0 ] = SIGMA_GL_DETECTION_X;
 		sigmas[ 1 ] = SIGMA_GL_DETECTION_Y;
 		try {
-			Gauss3.gauss( sigmas, Views.extendMirrorDouble( imgTemp ), imgTemp );
+			Gauss3.gauss( sigmas, Views.extendZero( imgTemp ), imgTemp );
 		} catch ( final IncompatibleTypeException e ) {
 			e.printStackTrace();
 		}
@@ -1357,11 +1357,11 @@ public class MotherMachine {
 
 		final List< List< GrowthLineFrame >> collectionOfFrames = new ArrayList< List< GrowthLineFrame >>();
 
-		for ( long frameIdx = 0; frameIdx < imgTemp.dimension( 3 ); frameIdx++ ) {
-			final IntervalView< DoubleType > ivFrame = Views.hyperSlice( imgTemp, 3, frameIdx );
+		for ( long frameIdx = 0; frameIdx < imgTemp.dimension( 2 ); frameIdx++ ) {
+			final IntervalView< FloatType > ivFrame = Views.hyperSlice( imgTemp, 2, frameIdx );
 
 			// Find maxima per image row (per frame)
-			frameWellCenters = new Loops< DoubleType, List< Point >>().forEachHyperslice( ivFrame, 1, new FindLocalMaxima< DoubleType >() );
+			frameWellCenters = new Loops< FloatType, List< Point >>().forEachHyperslice( ivFrame, 1, new FindLocalMaxima< FloatType >() );
 
 			// Delete detected points that are too lateral
 			for ( int y = 0; y < frameWellCenters.size(); y++ ) {

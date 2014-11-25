@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import net.imglib2.algorithm.componenttree.Component;
-import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
 
 import com.jug.lp.AbstractAssignment;
 import com.jug.lp.GrowthLineTrackingILP;
@@ -26,8 +26,8 @@ public class GrowthLine {
 	private final List< GrowthLineFrame > frames;
 	private GrowthLineTrackingILP ilp; //<
 
-	// Hypothesis< Component< DoubleType, ? > >,
-	// AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > ilp;
+	// Hypothesis< Component< FloatType, ? > >,
+	// AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > ilp;
 
 	// -------------------------------------------------------------------------------------
 	// setters and getters
@@ -115,7 +115,7 @@ public class GrowthLine {
 	 *         to a CSV-file.
 	 */
 	public Vector< String > getDataVector() {
-		final Vector<String> dataVector = new Vector<String>();
+		final Vector< String > dataVector = new Vector< String >();
 
 		int sumOfCells = 0;
 		if ( getIlp() != null ) {
@@ -127,8 +127,8 @@ public class GrowthLine {
 				int exits = 0;
 				int divisions = 0;
 
-				for ( final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > set : getIlp().getOptimalRightAssignments( glf.getTime() ).values() ) {
-					for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> ora : set ) {
+				for ( final Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > set : getIlp().getOptimalRightAssignments( glf.getTime() ).values() ) {
+					for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> ora : set ) {
 						cells++;
 						if ( ora.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION )
 							divisions++;
@@ -142,7 +142,7 @@ public class GrowthLine {
 					sumOfCells += divisions;
 				}
 
-				dataVector.add( ""+sumOfCells );
+				dataVector.add( "" + sumOfCells );
 			}
 		} else {
 			for ( final GrowthLineFrame glf : getFrames() ) {

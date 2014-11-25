@@ -16,7 +16,7 @@ import gurobi.GRBConstr;
 public class Hypothesis< T > {
 
 	private final T wrappedHypothesis;
-	private final double costs;
+	private final float costs;
 
 	/**
 	 * Used to store a 'segment in solution constraint' after it was added to
@@ -25,7 +25,7 @@ public class Hypothesis< T > {
 	 */
 	private GRBConstr segmentSpecificConstraint = null;
 
-	public Hypothesis( final T elementToWrap, final double costs ) {
+	public Hypothesis( final T elementToWrap, final float costs ) {
 		// setSegmentHypothesis( elementToWrap );
 		this.wrappedHypothesis = elementToWrap;
 		this.costs = costs;
@@ -50,7 +50,7 @@ public class Hypothesis< T > {
 	/**
 	 * @return the costs
 	 */
-	public double getCosts() {
+	public float getCosts() {
 		return costs;
 	}
 

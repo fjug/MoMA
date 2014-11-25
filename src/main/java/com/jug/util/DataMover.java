@@ -13,12 +13,12 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.ARGBType;
-import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
 
 /**
  * @author jug
- *
+ * 
  */
 public class DataMover {
 
@@ -80,13 +80,13 @@ public class DataMover {
 	 * <code>target</code>. (The source <i>exists</i> on all places the target
 	 * has to be filled.)
 	 * 
-	 * <b>Supported conversions are:</b> <li>From <code>DoubleType</code>... <li>
+	 * <b>Supported conversions are:</b> <li>From <code>FloatType</code>... <li>
 	 * ...to <code>ARGBType</code>; source range is expected to be subset or
 	 * equal to <code>[0,1]</code>. If values <0 or >1 are found the source
 	 * image will be scanned for maximal and minimal values and the converted
 	 * image will be normalized, filling the entire target range
 	 * <code>[0,255]</code> in all 3 color channels. <li>From
-	 * <code>ARGBType</code>... <li>...to <code>DoubleType</code>; conversion
+	 * <code>ARGBType</code>... <li>...to <code>FloatType</code>; conversion
 	 * ignores A, and computed double value like this:
 	 * <code>v = ( 0.2989R + 0.5870G + 0.1140B ) / 255</code>, which leads to a
 	 * target <code>Img</code> that lies within <code>[0,1]</code>.
@@ -116,9 +116,9 @@ public class DataMover {
 		// implemented conversion cases follow here...
 
 		boolean throwException = false;
-		if ( sourceType instanceof DoubleType ) {
+		if ( sourceType instanceof FloatType ) {
 
-			// DoubleType --> ARGBType
+			// FloatType --> ARGBType
 			if ( targetType instanceof ARGBType ) {
 				final Cursor< TT > targetCursor = target.localizingCursor();
 				final RandomAccess< ST > sourceRandomAccess = source.randomAccess();
@@ -127,9 +127,8 @@ public class DataMover {
 					targetCursor.fwd();
 					sourceRandomAccess.setPosition( targetCursor );
 					try {
-						v = ( int ) Math.round( ( ( DoubleType ) sourceRandomAccess.get() ).get() * 255 );
-					}
-					catch ( final ArrayIndexOutOfBoundsException e ) {
+						v = Math.round( ( ( FloatType ) sourceRandomAccess.get() ).get() * 255 );
+					} catch ( final ArrayIndexOutOfBoundsException e ) {
 						v = 255; // If image-sizes do not match we pad with white pixels...
 					}
 					if ( v > 255 ) { throw new Exception( "TODO: in this case (source in not within [0,1]) I did not finish the code!!! Now would likely be a good time... ;)" ); }
@@ -140,7 +139,7 @@ public class DataMover {
 			}
 		} else if ( sourceType instanceof ARGBType ) {
 
-			// ARGBType --> DoubleType
+			// ARGBType --> FloatType
 			if ( targetType instanceof ARGBType ) {
 				final Cursor< TT > targetCursor = target.localizingCursor();
 				final RandomAccess< ST > sourceRandomAccess = source.randomAccess();

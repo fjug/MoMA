@@ -12,13 +12,12 @@ import gurobi.GRBVar;
 
 import java.util.List;
 
-
 /**
  * Partially implemented class for everything that wants to be an assignment.
  * The main purpose of such a class is to store the value of the corresponding
  * Gurobi assignment variable and the ability to add assignment specific
  * constraints to the ILP (model).
- *
+ * 
  * @author jug
  */
 public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
@@ -36,7 +35,7 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 
 	/**
 	 * Creates an assignment...
-	 *
+	 * 
 	 * @param type
 	 * @param cost
 	 */
@@ -46,7 +45,6 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 		setGRBModel( model );
 	}
 
-
 	/**
 	 * @return the type
 	 */
@@ -55,7 +53,8 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	}
 
 	/**
-	 * @param type the type to set
+	 * @param type
+	 *            the type to set
 	 */
 	public void setType( final int type ) {
 		this.type = type;
@@ -64,7 +63,7 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	/**
 	 * This function is for example used when exporting a FactorGraph
 	 * that describes the entire optimization problem at hand.
-	 *
+	 * 
 	 * @return a variable index that is unique for the indicator
 	 *         variable used for this assignment.
 	 * @throws Exception
@@ -95,7 +94,7 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 * One can set a variable id.
 	 * This is used for exporting purposes like e.g. by
 	 * <code>FactorGraphFileBuilder</code>.
-	 *
+	 * 
 	 * @param varId
 	 */
 	public void setVarId( final int varId ) {
@@ -114,8 +113,8 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 * @return the cost
 	 * @throws GRBException
 	 */
-	public double getCost() throws GRBException {
-		return getGRBVar().get( GRB.DoubleAttr.Obj );
+	public float getCost() throws GRBException {
+		return ( float ) getGRBVar().get( GRB.DoubleAttr.Obj );
 	}
 
 	/**
@@ -123,7 +122,7 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 *            the cost to set
 	 * @throws GRBException
 	 */
-	public void setCost( final double cost ) throws GRBException {
+	public void setCost( final float cost ) throws GRBException {
 		getGRBVar().set( GRB.DoubleAttr.ObjVal, cost );
 	}
 
@@ -138,7 +137,7 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	/**
 	 * Abstract method that will, once implemented, add a set of assignment
 	 * related constraints to the ILP (model) later to be solved by Gurobi.
-	 *
+	 * 
 	 * @throws GRBException
 	 */
 	public abstract void addConstraintsToLP() throws GRBException;
@@ -193,8 +192,7 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 			System.out.print( "Running ILP with new ground-(un)truth knowledge..." );
 			model.optimize();
 			System.out.println( " ...done!" );
-		}
-		catch ( final GRBException e ) {
+		} catch ( final GRBException e ) {
 			e.printStackTrace();
 		}
 	}
@@ -205,7 +203,7 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	private void addOrRemoveGroundTroothConstraint( final boolean add ) {
 		try {
 			if ( add ) {
-				final double value = ( this.isGroundUntruth ) ? 0.0 : 1.0;
+				final float value = ( this.isGroundUntruth ) ? 0f : 1f;
 
 				final GRBLinExpr exprGroundTruth = new GRBLinExpr();
 				exprGroundTruth.addTerm( 1.0, getGRBVar() );
@@ -213,8 +211,7 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 			} else {
 				model.remove( constrGroundTruth );
 			}
-		}
-		catch ( final GRBException e ) {
+		} catch ( final GRBException e ) {
 			e.printStackTrace();
 		}
 	}

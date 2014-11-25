@@ -22,7 +22,7 @@ import net.imglib2.display.projector.IterableIntervalProjector2D;
 import net.imglib2.display.screenimage.awt.ARGBScreenImage;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.ARGBType;
-import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
@@ -41,7 +41,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 	private final int h;
 	private IterableIntervalProjector2D< ?, ? > projector;
 	private ARGBScreenImage screenImage;
-	private IntervalView< DoubleType > view;
+	private IntervalView< FloatType > view;
 	private GrowthLineFrame glf;
 
 	// tracking the mouse (when over)
@@ -81,12 +81,12 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 	 * @param glf
 	 *            the GrowthLineFrameto be displayed
 	 * @param viewImg
-	 *            an IntervalView<DoubleType> containing the desired view
+	 *            an IntervalView<FloatType> containing the desired view
 	 *            onto the raw image data
 	 */
-	public void setScreenImage( final GrowthLineFrame glf, final IntervalView< DoubleType > viewImg ) {
+	public void setScreenImage( final GrowthLineFrame glf, final IntervalView< FloatType > viewImg ) {
 		setEmptyScreenImage();
-		this.projector = new IterableIntervalProjector2D< DoubleType, ARGBType >( 0, 1, viewImg, screenImage, new RealARGBConverter< DoubleType >( 0, 1 ) );
+		this.projector = new IterableIntervalProjector2D< FloatType, ARGBType >( 0, 1, viewImg, screenImage, new RealARGBConverter< FloatType >( 0, 1 ) );
 		this.view = viewImg;
 		this.glf = glf;
 		this.repaint();
@@ -119,7 +119,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 			if ( projector != null ) {
 				projector.map();
 			}
-//			glf.drawCenterLine( screenImage, view );
+			glf.drawCenterLine( screenImage, view );
 			//TODO NOT nice... do something against that, please!
 			final int t = glf.getParent().getFrames().indexOf( glf );
 			glf.drawOptimalSegmentation( screenImage, view, glf.getParent().getIlp().getOptimalSegmentation( t ) );
@@ -141,10 +141,10 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 		String strToShow = "";
 		String str2ToShow = " ";
 		if ( !this.isDragging && this.isMouseOver && glf != null && glf.getParent().getIlp() != null ) {
-			double cost = Double.NaN;
+			float cost = Float.NaN;
 			//TODO NOT nice... do something against that, please!
 			final int t = glf.getTime();
-			Hypothesis< Component< DoubleType, ? >> hyp = glf.getParent().getIlp().getOptimalSegmentationAtLocation( t, this.mousePosY );
+			Hypothesis< Component< FloatType, ? >> hyp = glf.getParent().getIlp().getOptimalSegmentationAtLocation( t, this.mousePosY );
 			if ( hyp != null ) {
 				cost = hyp.getCosts();
 				strToShow = String.format( "c=%.4f", cost );
@@ -153,7 +153,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 			// figure out which hyps are at current location
 			hyp = glf.getParent().getIlp().getLowestInTreeHypAt( t, this.mousePosY );
 			if ( hyp != null ) {
-				final Component< DoubleType, ? > comp = hyp.getWrappedHypothesis();
+				final Component< FloatType, ? > comp = hyp.getWrappedHypothesis();
 				glf.drawOptionalSegmentation( screenImage, view, comp );
 				if ( str2ToShow.endsWith( "-" ) ) {
 					str2ToShow += "/+";
@@ -193,9 +193,9 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 		final GrowthLineTrackingILP ilp = glf.getParent().getIlp();
 
 		if ( e.isControlDown() ) {
-			final List< Hypothesis< Component< DoubleType, ? >>> hyps2avoid = ilp.getSegmentsAtLocation( t, this.mousePosY );
+			final List< Hypothesis< Component< FloatType, ? >>> hyps2avoid = ilp.getSegmentsAtLocation( t, this.mousePosY );
 			try {
-				for ( final Hypothesis< Component< DoubleType, ? >> hyp2avoid : hyps2avoid ) {
+				for ( final Hypothesis< Component< FloatType, ? >> hyp2avoid : hyps2avoid ) {
 					if ( hyp2avoid.getSegmentSpecificConstraint() != null ) {
 						ilp.model.remove( hyp2avoid.getSegmentSpecificConstraint() );
 					}
@@ -205,8 +205,8 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 				e1.printStackTrace();
 			}
 		} else {
-			final Hypothesis< Component< DoubleType, ? >> hyp2add = ilp.getLowestInTreeHypAt( t, this.mousePosY );
-			final List< Hypothesis< Component< DoubleType, ? >>> hyps2remove = ilp.getOptimalSegmentationsInConflict( t, hyp2add );
+			final Hypothesis< Component< FloatType, ? >> hyp2add = ilp.getLowestInTreeHypAt( t, this.mousePosY );
+			final List< Hypothesis< Component< FloatType, ? >>> hyps2remove = ilp.getOptimalSegmentationsInConflict( t, hyp2add );
 
 			try {
 				if ( hyp2add.getSegmentSpecificConstraint() != null ) {

@@ -12,7 +12,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import net.imglib2.algorithm.componenttree.Component;
-import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
 
 import com.jug.lp.AbstractAssignment;
 import com.jug.lp.GrowthLineTrackingILP;
@@ -37,7 +37,7 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 	private AssignmentView inactiveExitAssignments;
 	private AssignmentView fixedAssignments;
 
-	private HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >> data;
+	private HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >> data;
 
 	private final MotherMachineGui gui;
 
@@ -91,7 +91,7 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 	 *            a <code>HashMap</code> containing pairs of segmentation
 	 *            hypothesis at some time-point t and assignments towards t+1.
 	 */
-	public void display( final HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >> hashMap ) {
+	public void display( final HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >> hashMap ) {
 		this.data = hashMap;
 		activeAssignments.setData( data, true );
 		inactiveMappingAssignments.setData( data, false );

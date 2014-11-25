@@ -13,20 +13,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.imglib2.algorithm.componenttree.Component;
-import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
 
 import com.jug.MotherMachine;
 
 /**
  * @author jug
  */
-public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > {
+public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< FloatType, ? > > > {
 
-	private final List< Hypothesis< Component< DoubleType, ? >>> Hup;
+	private final List< Hypothesis< Component< FloatType, ? >>> Hup;
 	@SuppressWarnings( "unused" )
-	private final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > >, Hypothesis< Component< DoubleType, ? > > > nodes;
-	private final HypothesisNeighborhoods< Hypothesis< Component< DoubleType, ? > >, AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > edges;
-	private final Hypothesis< Component< DoubleType, ? >> who;
+	private final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< FloatType, ? > > >, Hypothesis< Component< FloatType, ? > > > nodes;
+	private final HypothesisNeighborhoods< Hypothesis< Component< FloatType, ? > >, AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > edges;
+	private final Hypothesis< Component< FloatType, ? >> who;
 
 	private static int dcId = 0;
 
@@ -38,7 +38,7 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< D
 	 * @param who
 	 * @throws GRBException
 	 */
-	public ExitAssignment( final int t, final GRBVar ilpVariable, final GRBModel model, final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > >, Hypothesis< Component< DoubleType, ? > > > nodes, final HypothesisNeighborhoods< Hypothesis< Component< DoubleType, ? > >, AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > edges, final List< Hypothesis< Component< DoubleType, ? >>> Hup, final Hypothesis< Component< DoubleType, ? >> who ) throws GRBException {
+	public ExitAssignment( final int t, final GRBVar ilpVariable, final GRBModel model, final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< FloatType, ? > > >, Hypothesis< Component< FloatType, ? > > > nodes, final HypothesisNeighborhoods< Hypothesis< Component< FloatType, ? > >, AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > edges, final List< Hypothesis< Component< FloatType, ? >>> Hup, final Hypothesis< Component< FloatType, ? >> who ) throws GRBException {
 		super( GrowthLineTrackingILP.ASSIGNMENT_EXIT, ilpVariable, model );
 		this.Hup = Hup;
 		this.edges = edges;
@@ -58,9 +58,9 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< D
 
 		expr.addTerm( Hup.size(), this.getGRBVar() );
 
-		for ( final Hypothesis< Component< DoubleType, ? >> upperHyp : Hup ) {
+		for ( final Hypothesis< Component< FloatType, ? >> upperHyp : Hup ) {
 			if ( edges.getRightNeighborhood( upperHyp ) != null ) {
-				for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> a_j : edges.getRightNeighborhood( upperHyp ) ) {
+				for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> a_j : edges.getRightNeighborhood( upperHyp ) ) {
 					if ( a_j.getType() == GrowthLineTrackingILP.ASSIGNMENT_EXIT ) {
 						continue;
 					}
@@ -90,9 +90,9 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< D
 		coeffs.add( new Integer( Hup.size() ) );
 		varIds.add( new Integer( this.getVarIdx() ) );
 
-		for ( final Hypothesis< Component< DoubleType, ? >> upperHyp : Hup ) {
+		for ( final Hypothesis< Component< FloatType, ? >> upperHyp : Hup ) {
 			if ( edges.getRightNeighborhood( upperHyp ) != null ) {
-				for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> a_j : edges.getRightNeighborhood( upperHyp ) ) {
+				for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> a_j : edges.getRightNeighborhood( upperHyp ) ) {
 					if ( a_j.getType() == GrowthLineTrackingILP.ASSIGNMENT_EXIT ) {
 						continue;
 					}
@@ -115,7 +115,7 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< D
 	 * 
 	 * @return the associated segmentation-hypothesis.
 	 */
-	public Hypothesis< Component< DoubleType, ? >> getAssociatedHypothesis() {
+	public Hypothesis< Component< FloatType, ? >> getAssociatedHypothesis() {
 		return who;
 	}
 }

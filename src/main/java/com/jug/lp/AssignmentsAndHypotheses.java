@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  * @author jug
  */
@@ -56,7 +55,7 @@ public class AssignmentsAndHypotheses< A extends AbstractAssignment< H >, H exte
 	 * This shrinks down to appending an inner <code>List</code> to
 	 * <code>a_t</code> and <code>h_t</code>.
 	 */
-	public void addTimeStep () {
+	public void addTimeStep() {
 		a_t.add( new ArrayList< A >() );
 		h_t.add( new ArrayList< H >() );
 	}
@@ -65,7 +64,7 @@ public class AssignmentsAndHypotheses< A extends AbstractAssignment< H >, H exte
 	 * Adds an assignment to <code>a_t</code>. If <code>a_t</code> does not
 	 * contain <code>t</code> time-steps this function will add the missing
 	 * amount.
-	 *
+	 * 
 	 * @param t
 	 *            a number denoting the time at which the given assignment
 	 *            should be added.
@@ -83,7 +82,7 @@ public class AssignmentsAndHypotheses< A extends AbstractAssignment< H >, H exte
 	/**
 	 * Returns all time-points in a <code>List</code>, containing all stored
 	 * assignments in a <code>List</code>.
-	 *
+	 * 
 	 * @return <code>a_t</code>
 	 */
 	public List< List< A > > getAllAssignments() {
@@ -94,7 +93,7 @@ public class AssignmentsAndHypotheses< A extends AbstractAssignment< H >, H exte
 	 * Returns a <code>List</code> containing all assignments stored at
 	 * time-point t.
 	 * By definition those are all the assignments between t and t+1.
-	 *
+	 * 
 	 * @param t
 	 *            a number denoting the time at which the given assignment
 	 *            should be returned.
@@ -106,12 +105,11 @@ public class AssignmentsAndHypotheses< A extends AbstractAssignment< H >, H exte
 		return a_t.get( t );
 	}
 
-
 	/**
 	 * Adds a hypothesis to <code>h_t</code>. If <code>h_t</code> does not
 	 * contain <code>t</code> time-steps this function will add the missing
 	 * amount.
-	 *
+	 * 
 	 * @param t
 	 *            a number denoting the time at which the given assignment
 	 *            should be added.
@@ -133,7 +131,7 @@ public class AssignmentsAndHypotheses< A extends AbstractAssignment< H >, H exte
 	/**
 	 * Returns all time-points in a <code>List</code>, containing all stored
 	 * segmentation hypothesis in an inner <code>List</code>.
-	 *
+	 * 
 	 * @return <code>h_t</code>
 	 */
 	public List< List< H > > getAllHypotheses() {
@@ -143,15 +141,15 @@ public class AssignmentsAndHypotheses< A extends AbstractAssignment< H >, H exte
 	/**
 	 * Returns a <code>List</code> containing all hypothesis stored at
 	 * time-point t.
-	 *
+	 * 
 	 * @param t
 	 *            a number denoting the time at which the given assignment
 	 *            should be returned.
 	 * @return <code>h_t.get(t);</code>
 	 */
 	public List< H > getHypothesesAt( final int t ) {
-		assert ( t < h_t.size() );
-		if ( t >= 0 ) {
+
+		if ( t >= 0 && t < h_t.size() ) {
 			return h_t.get( t );
 		} else {
 			return null;
@@ -162,7 +160,7 @@ public class AssignmentsAndHypotheses< A extends AbstractAssignment< H >, H exte
 	/**
 	 * Finds an <code>Hypothesis</code> that wraps the given <code>Object</code>
 	 * .
-	 *
+	 * 
 	 * @param something
 	 *            any <code>Object</code> you expect to be wrapped inside a
 	 *            hypothesis.

@@ -22,7 +22,7 @@ import javax.swing.event.MouseInputListener;
 
 import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
-import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
 
 import com.jug.MotherMachine;
 import com.jug.lp.AbstractAssignment;
@@ -72,14 +72,14 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	private int filterAssignmentType;
 
 	private boolean doFilterDataByCost = false;
-	private double filterMinCost = -100.0;
-	private double filterMaxCost = 100.0;
+	private float filterMinCost = -100f;
+	private float filterMaxCost = 100f;
 
 	private boolean doFilterDataByIdentity = false;
 	private boolean doAddToFilter = false; // if 'true' all assignments at the mouse location will be added to the filter next time repaint is called...
-	private final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > filteredAssignments;
+	private final Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > filteredAssignments;
 
-	private HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >> data;
+	private HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >> data;
 
 	private boolean isMouseOver = false;
 	private int mousePosX;
@@ -89,7 +89,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	private boolean isDragging = false;
 	private int dragX;
 	private int dragY;
-	private double dragStepWeight = 0;
+	private float dragStepWeight = 0;
 
 	private boolean doAddAsGroundTruth;
 	private boolean doAddAsGroundUntruth;
@@ -112,7 +112,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 * @param filterMinCost
 	 * @param filterMaxCost
 	 */
-	public AssignmentView( final int height, final double filterMinCost, final double filterMaxCost ) {
+	public AssignmentView( final int height, final float filterMinCost, final float filterMaxCost ) {
 		this.offsetY = MotherMachine.GL_OFFSET_TOP;
 		this.width = 90;
 		this.height = height;
@@ -125,7 +125,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		this.setCostFilterMin( filterMinCost );
 		this.setCostFilterMax( filterMaxCost );
 
-		this.filteredAssignments = new HashSet< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >();
+		this.filteredAssignments = new HashSet< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >();
 	}
 
 	// -------------------------------------------------------------------------------------
@@ -134,7 +134,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	/**
 	 * @return the filterMinCost
 	 */
-	public double getCostFilterMin() {
+	public float getCostFilterMin() {
 		return filterMinCost;
 	}
 
@@ -142,14 +142,14 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 * @param filterMinCost
 	 *            the filterMinCost to set
 	 */
-	public void setCostFilterMin( final double filterMinCost ) {
+	public void setCostFilterMin( final float filterMinCost ) {
 		this.filterMinCost = filterMinCost;
 	}
 
 	/**
 	 * @return the filterMaxCost
 	 */
-	public double getCostFilterMax() {
+	public float getCostFilterMax() {
 		return filterMaxCost;
 	}
 
@@ -157,7 +157,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 * @param filterMaxCost
 	 *            the filterMaxCost to set
 	 */
-	public void setCostFilterMax( final double filterMaxCost ) {
+	public void setCostFilterMax( final float filterMaxCost ) {
 		this.filterMaxCost = filterMaxCost;
 	}
 
@@ -171,7 +171,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 *            a <code>HashMap</code> containing pairs of segmentation
 	 *            hypothesis at some time-point t and assignments towards t+1.
 	 */
-	public void display( final HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >> data, final boolean doFilterActive ) {
+	public void display( final HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >> data, final boolean doFilterActive ) {
 		doFilterDataByType = false;
 		doFilterDataByCost = false;
 		setData( data, doFilterActive );
@@ -187,7 +187,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 *            a <code>HashMap</code> containing pairs of segmentation
 	 *            hypothesis at some time-point t and assignments towards t+1.
 	 */
-	public void display( final HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >> data, final boolean doFilterActive, final double minCostToShow, final double maxCostToShow ) {
+	public void display( final HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >> data, final boolean doFilterActive, final float minCostToShow, final float maxCostToShow ) {
 		doFilterDataByType = false;
 		setData( data, doFilterActive );
 
@@ -210,7 +210,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 *            <code>GrowthLineTrackingILP.ASSIGNMENT_DIVISION</code>, or
 	 *            <code>GrowthLineTrackingILP.ASSIGNMENT_EXIT</code>.
 	 */
-	public void display( final HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >> data, final boolean doFilterActive, final int typeToFilter ) {
+	public void display( final HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >> data, final boolean doFilterActive, final int typeToFilter ) {
 		assert ( typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_EXIT || typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_MAPPING || typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
 		this.display( data, doFilterActive, typeToFilter, this.getCostFilterMin(), this.getCostFilterMax() );
 	}
@@ -227,7 +227,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 *            <code>GrowthLineTrackingILP.ASSIGNMENT_DIVISION</code>, or
 	 *            <code>GrowthLineTrackingILP.ASSIGNMENT_EXIT</code>.
 	 */
-	public void display( final HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >> data, final boolean doFilterActive, final int typeToFilter, final double minCostToShow, final double maxCostToShow ) {
+	public void display( final HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >> data, final boolean doFilterActive, final int typeToFilter, final float minCostToShow, final float maxCostToShow ) {
 		assert ( typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_EXIT || typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_MAPPING || typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
 		doFilterDataByType = true;
 		this.filterAssignmentType = typeToFilter;
@@ -251,8 +251,8 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		if ( data == null ) return;
 
 		this.currentCostLine = 0;
-		for ( final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > setOfAssignments : data.values() ) {
-			for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> assignment : setOfAssignments ) {
+		for ( final Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > setOfAssignments : data.values() ) {
+			for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assignment : setOfAssignments ) {
 				if ( doFilterDataByType && assignment.getType() != filterAssignmentType ) {
 					continue;
 				}
@@ -287,7 +287,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 * @param g
 	 * @param assignment
 	 */
-	private void drawAssignment( final Graphics g, final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> assignment ) {
+	private void drawAssignment( final Graphics g, final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assignment ) {
 
 		// Just return in case the given component is in the
 		// set of filtered assignments.
@@ -318,8 +318,8 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 * @param size
 	 */
 	private void drawMappingAssignment( final Graphics g, final Graphics2D g2, final MappingAssignment ma, final Dimension size ) {
-		final Hypothesis< Component< DoubleType, ? >> leftHyp = ma.getSourceHypothesis();
-		final Hypothesis< Component< DoubleType, ? >> rightHyp = ma.getDestinationHypothesis();
+		final Hypothesis< Component< FloatType, ? >> leftHyp = ma.getSourceHypothesis();
+		final Hypothesis< Component< FloatType, ? >> rightHyp = ma.getDestinationHypothesis();
 
 		final Pair< Integer, Integer > limitsLeft = ComponentTreeUtils.getTreeNodeInterval( leftHyp.getWrappedHypothesis() );
 		final Pair< Integer, Integer > limitsRight = ComponentTreeUtils.getTreeNodeInterval( rightHyp.getWrappedHypothesis() );
@@ -368,7 +368,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 			} else {
 				// otherwise we show the costs by hovering over
 				try {
-					final double cost = ma.getCost();
+					final float cost = ma.getCost();
 					if ( ma.isGroundTruth() ) {
 						g2.setPaint( Color.GREEN.darker() );
 					} else if ( ma.isGroundUntruth() ) {
@@ -416,9 +416,9 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 * @param size
 	 */
 	private void drawDivisionAssignment( final Graphics g, final Graphics2D g2, final DivisionAssignment da, final Dimension size ) {
-		final Hypothesis< Component< DoubleType, ? >> leftHyp = da.getSourceHypothesis();
-		final Hypothesis< Component< DoubleType, ? >> rightHypUpper = da.getUpperDesinationHypothesis();
-		final Hypothesis< Component< DoubleType, ? >> rightHypLower = da.getLowerDesinationHypothesis();
+		final Hypothesis< Component< FloatType, ? >> leftHyp = da.getSourceHypothesis();
+		final Hypothesis< Component< FloatType, ? >> rightHypUpper = da.getUpperDesinationHypothesis();
+		final Hypothesis< Component< FloatType, ? >> rightHypLower = da.getLowerDesinationHypothesis();
 
 		final Pair< Integer, Integer > limitsLeft = ComponentTreeUtils.getTreeNodeInterval( leftHyp.getWrappedHypothesis() );
 		final Pair< Integer, Integer > limitsRightUpper = ComponentTreeUtils.getTreeNodeInterval( rightHypUpper.getWrappedHypothesis() );
@@ -477,7 +477,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 			} else {
 				// otherwise we show the costs by hovering over
 				try {
-					final double cost = da.getCost();
+					final float cost = da.getCost();
 					if ( da.isGroundTruth() ) {
 						g2.setPaint( Color.GREEN.darker() );
 					} else if ( da.isGroundUntruth() ) {
@@ -525,7 +525,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 * @param size
 	 */
 	private void drawExitAssignment( final Graphics g, final Graphics2D g2, final ExitAssignment ea, final Dimension size ) {
-		final Hypothesis< Component< DoubleType, ? >> hyp = ea.getAssociatedHypothesis();
+		final Hypothesis< Component< FloatType, ? >> hyp = ea.getAssociatedHypothesis();
 		final Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( hyp.getWrappedHypothesis() );
 
 		final int x1 = 0;
@@ -560,7 +560,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 			} else {
 				// otherwise we show the costs by hovering over
 				try {
-					final double cost = ea.getCost();
+					final float cost = ea.getCost();
 					g2.drawString( String.format( "c=%.4f", cost ), 10, this.mousePosY - 10 - this.currentCostLine * 20 );
 					this.currentCostLine++;
 				} catch ( final GRBException e ) {
@@ -597,12 +597,12 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 * @param data
 	 * @param doFilterActive
 	 */
-	public void setData( final HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >> data, final boolean doFilterActive ) {
+	public void setData( final HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >> data, final boolean doFilterActive ) {
 		if ( data != null && doFilterActive ) {
-			this.data = new HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >>();
-			for ( final Hypothesis< Component< DoubleType, ? >> hypo : data.keySet() ) {
-				final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > activeSet = new HashSet< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >();
-				for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> ass : data.get( hypo ) ) {
+			this.data = new HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >>();
+			for ( final Hypothesis< Component< FloatType, ? >> hypo : data.keySet() ) {
+				final Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > activeSet = new HashSet< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >();
+				for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> ass : data.get( hypo ) ) {
 					try {
 						if ( ass.isChoosen() || ass.isGroundTruth() ) {
 							activeSet.add( ass );
@@ -634,7 +634,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 			}
 		}
 
-		// unmod. double_click  --  show filter window thing
+		// unmod. float_click  --  show filter window thing
 		if ( e.getClickCount() == 2 && !e.isShiftDown() ) {
 			new DialogAssignmentViewSetup( this, e.getXOnScreen(), e.getYOnScreen() ).setVisible( true );
 		}
@@ -711,12 +711,12 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	public void mouseDragged( final MouseEvent e ) {
 		this.doFilterDataByCost = true;
 
-		final double minstep = 0.1;
-		final double xsensitivity = 15.0;
+		final float minstep = 0.1f;
+		final float xsensitivity = 15.0f;
 		final int dX = e.getX() - this.dragX;
 		final int dY = this.dragY - e.getY();
 
-		final double fac = Math.pow( 2, Math.abs( ( xsensitivity + dX ) / xsensitivity ) );
+		final float fac = ( float ) Math.pow( 2, Math.abs( ( xsensitivity + dX ) / xsensitivity ) );
 		if ( dX > 0 ) {
 			this.dragStepWeight = minstep * fac;
 		} else {

@@ -6,7 +6,7 @@ package com.jug.segmentation;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.integer.LongType;
-import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.SubsampleIntervalView;
 import net.imglib2.view.Views;
 
@@ -15,15 +15,15 @@ import net.imglib2.view.Views;
  */
 public class GrowthLineSegmentationMagic {
 
-	static SilentWekaSegmenter< DoubleType > gapClassifier;
+	static SilentWekaSegmenter< FloatType > gapClassifier;
 	private static long numSolutions;
 
 	public static void setClassifier( final String folder, final String file ) {
-		gapClassifier = new SilentWekaSegmenter< DoubleType >( folder, file );
+		gapClassifier = new SilentWekaSegmenter< FloatType >( folder, file );
 	}
 
-	public static RandomAccessibleInterval< DoubleType > returnClassification( final RandomAccessibleInterval< DoubleType > rai ) {
-		final RandomAccessibleInterval< DoubleType > classified = gapClassifier.classifyPixels( rai, true );
+	public static RandomAccessibleInterval< FloatType > returnClassification( final RandomAccessibleInterval< FloatType > rai ) {
+		final RandomAccessibleInterval< FloatType > classified = gapClassifier.classifyPixels( rai, true );
 
 //		ImageJFunctions.show( classified );
 
@@ -38,15 +38,15 @@ public class GrowthLineSegmentationMagic {
 			max[ 2 ]++;
 		}
 
-		final SubsampleIntervalView< DoubleType > subsampleGapClass = ( SubsampleIntervalView< DoubleType > ) Views.subsample( Views.interval( classified, min, max ), 1, 1, 2 );
+		final SubsampleIntervalView< FloatType > subsampleGapClass = ( SubsampleIntervalView< FloatType > ) Views.subsample( Views.interval( classified, min, max ), 1, 1, 2 );
 
 //		ImageJFunctions.show( subsampleGapClass );
 
 		return subsampleGapClass;
 	}
 
-	private static RandomAccessibleInterval< LongType > returnParamaxflowBaby( final RandomAccessibleInterval< DoubleType > rai, final boolean withClassificationOfGaps ) {
-		final ParaMaxFlow< DoubleType > paramaxflow = new ParaMaxFlow< DoubleType >( rai, ( withClassificationOfGaps ) ? returnClassification( rai ) : null, false, -1.0, 0.45, 0.15, 1.0, 1.0, 1.0, 0.10, 0.0, 0.5, 10.0, 0.0, 0.5, 10.0 );
+	private static RandomAccessibleInterval< LongType > returnParamaxflowBaby( final RandomAccessibleInterval< FloatType > rai, final boolean withClassificationOfGaps ) {
+		final ParaMaxFlow< FloatType > paramaxflow = new ParaMaxFlow< FloatType >( rai, ( withClassificationOfGaps ) ? returnClassification( rai ) : null, false, -1.0, 0.45, 0.15, 1.0, 1.0, 1.0, 0.10, 0.0, 0.5, 10.0, 0.0, 0.5, 10.0 );
 
 		numSolutions = paramaxflow.solve( -1000000, 1000000 );
 
@@ -60,11 +60,11 @@ public class GrowthLineSegmentationMagic {
 		return sumRegions;
 	}
 
-	public static RandomAccessibleInterval< LongType > returnParamaxflowRegionSums( final RandomAccessibleInterval< DoubleType > rai ) {
+	public static RandomAccessibleInterval< LongType > returnParamaxflowRegionSums( final RandomAccessibleInterval< FloatType > rai ) {
 		return returnParamaxflowBaby( rai, false );
 	}
 
-	public static RandomAccessibleInterval< LongType > returnClassificationBoostedParamaxflowRegionSums( final RandomAccessibleInterval< DoubleType > rai ) {
+	public static RandomAccessibleInterval< LongType > returnClassificationBoostedParamaxflowRegionSums( final RandomAccessibleInterval< FloatType > rai ) {
 		return returnParamaxflowBaby( rai, true );
 	}
 

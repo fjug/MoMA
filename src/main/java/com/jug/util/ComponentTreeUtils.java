@@ -12,12 +12,12 @@ import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.algorithm.componenttree.ComponentForest;
 import net.imglib2.algorithm.componenttree.ComponentTree;
-import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.ValuePair;
 
 /**
  * @author jug
- *
+ * 
  */
 public class ComponentTreeUtils {
 
@@ -54,7 +54,7 @@ public class ComponentTreeUtils {
 	 * @param hyp
 	 * @return
 	 */
-	public static boolean isAbove( final Component< DoubleType, ? > candidate, final Component< DoubleType, ? > reference ) {
+	public static boolean isAbove( final Component< FloatType, ? > candidate, final Component< FloatType, ? > reference ) {
 		final Pair< Integer, Integer > candMinMax = getTreeNodeInterval( candidate );
 		final Pair< Integer, Integer > refMinMax = getTreeNodeInterval( reference );
 		return candMinMax.getB().intValue() < refMinMax.getA().intValue();
@@ -65,7 +65,7 @@ public class ComponentTreeUtils {
 	 * @param hyp
 	 * @return
 	 */
-	public static boolean isBelow( final Component< DoubleType, ? > candidate, final Component< DoubleType, ? > reference ) {
+	public static boolean isBelow( final Component< FloatType, ? > candidate, final Component< FloatType, ? > reference ) {
 		final Pair< Integer, Integer > candMinMax = getTreeNodeInterval( candidate );
 		final Pair< Integer, Integer > refMinMax = getTreeNodeInterval( reference );
 		return candMinMax.getA().intValue() > refMinMax.getB().intValue();
@@ -77,7 +77,7 @@ public class ComponentTreeUtils {
 	 * Note that this function really only makes sense if the comp.-tree was
 	 * built on a one-dimensional image (as it is the case for my current
 	 * MotherMachine stuff...)
-	 *
+	 * 
 	 * @param node
 	 *            the node in question.
 	 * @return a <code>Pair</code> or two <code>Integers</code> giving the
@@ -96,11 +96,11 @@ public class ComponentTreeUtils {
 		return new ValuePair< Integer, Integer >( new Integer( min ), new Integer( max ) );
 	}
 
-	// public static double[] getFunctionValues( final Component<
-	// DoubleType, ? > node ) {
+	// public static float[] getFunctionValues( final Component<
+	// FloatType, ? > node ) {
 	// Pair< Integer, Integer > interval = getTreeNodeInterval( node );
 	//
-	// double[] ret = new double[ interval.b.intValue() - interval.a.intValue()
+	// float[] ret = new float[ interval.b.intValue() - interval.a.intValue()
 	// ];
 	//
 	// final Iterator< Localizable > componentIterator = node.iterator();
@@ -116,10 +116,10 @@ public class ComponentTreeUtils {
 	 * @param to
 	 * @return
 	 */
-	public static List< Component< DoubleType, ? >> getRightNeighbors( final Component< DoubleType, ? > node ) {
-		final ArrayList< Component< DoubleType, ? >> ret = new ArrayList< Component< DoubleType, ? >>();
+	public static List< Component< FloatType, ? >> getRightNeighbors( final Component< FloatType, ? > node ) {
+		final ArrayList< Component< FloatType, ? >> ret = new ArrayList< Component< FloatType, ? >>();
 
-		Component< DoubleType, ? > rightNeighbor = getRightNeighbor( node );
+		Component< FloatType, ? > rightNeighbor = getRightNeighbor( node );
 		if ( rightNeighbor != null ) {
 			ret.add( rightNeighbor );
 			while ( rightNeighbor.getChildren().size() > 0 ) {
@@ -135,11 +135,11 @@ public class ComponentTreeUtils {
 	 * @param node
 	 * @return
 	 */
-	private static Component< DoubleType, ? > getRightNeighbor( final Component< DoubleType, ? > node ) {
+	private static Component< FloatType, ? > getRightNeighbor( final Component< FloatType, ? > node ) {
 		// TODO Note that we do not find the right neighbor in case the
 		// component tree has several roots and the
 		// right neighbor is somewhere down another root.
-		final Component< DoubleType, ? > father = node.getParent();
+		final Component< FloatType, ? > father = node.getParent();
 
 		if ( father != null ) {
 			final int idx = father.getChildren().indexOf( node );

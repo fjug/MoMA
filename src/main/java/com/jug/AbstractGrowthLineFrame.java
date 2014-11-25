@@ -28,7 +28,7 @@ import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.integer.LongType;
-import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.ValuePair;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
@@ -52,7 +52,7 @@ import com.jug.util.filteredcomponents.FilteredComponent;
  *         series (2d+t) representation of an growth line is
  *         <code>GrowthLine</code>.
  */
-public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, C > > {
+public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C > > {
 
 	private class CompareComponentTreeNodes< T extends Type< T > > implements Comparator< Component< T, ? > > {
 
@@ -66,18 +66,18 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 			// FilteredComponent
 			if ( false || o1 instanceof FilteredComponent< ? > && o2 instanceof FilteredComponent< ? > ) { // igitt...
 																											// instanceof!
-				final FilteredComponent< DoubleType > fc1 = ( FilteredComponent< DoubleType > ) o1;
-				final FilteredComponent< DoubleType > fc2 = ( FilteredComponent< DoubleType > ) o2;
+				final FilteredComponent< FloatType > fc1 = ( FilteredComponent< FloatType > ) o1;
+				final FilteredComponent< FloatType > fc2 = ( FilteredComponent< FloatType > ) o2;
 				return ( int ) ( ( fc1.maxValue().get() - fc1.minValue().get() ) - fc2.maxValue().get() - fc2.minValue().get() ) * -1;
 			}
 
 			// MSER
 			// if ( false || o1 instanceof MserComponentTreeNode< ? > && o2
 			// instanceof MserComponentTreeNode< ? >) { // igitt... instanceof!
-			// final MserComponentTreeNode<DoubleType> mser1 =
-			// (MserComponentTreeNode<DoubleType>) o1;
-			// final MserComponentTreeNode<DoubleType> mser2 =
-			// (MserComponentTreeNode<DoubleType>) o2;
+			// final MserComponentTreeNode<FloatType> mser1 =
+			// (MserComponentTreeNode<FloatType>) o1;
+			// final MserComponentTreeNode<FloatType> mser2 =
+			// (MserComponentTreeNode<FloatType>) o2;
 			// return (int) ( (mser1.maxValue().get()-mser1.minValue().get()) -
 			// mser2.maxValue().get()-mser2.minValue().get() ) * -1;
 			// }
@@ -95,9 +95,9 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * GrowthLine.
 	 */
 	private List< Point > imgLocations;
-	private double[] simpleSepValues; // lazy evaluation -- gets computed when
+	private float[] simpleSepValues; // lazy evaluation -- gets computed when
 										// getSimpleGapSeparationValues is called...
-	private double[] awesomeSepValues; // lazy evaluation -- gets computed when
+	private float[] awesomeSepValues; // lazy evaluation -- gets computed when
 										// getAwesomeGapSeparationValues is called...
 	private GrowthLine parent;
 	private ComponentForest< C > componentTree;
@@ -198,19 +198,19 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * 
 	 * @param img
 	 *            - an Img.
-	 * @return a double array containing the image intensities in
+	 * @return a float array containing the image intensities in
 	 *         <code>img</code> at the points given in wellPoints.
 	 */
-	private double[] getInvertedIntensitiesAtImgLocations( final RandomAccessibleInterval< DoubleType > img, final boolean imgIsPreCropped ) {
-		final double[] ret = new double[ imgLocations.size() ];
-		final RandomAccess< DoubleType > ra = img.randomAccess();
+	private float[] getInvertedIntensitiesAtImgLocations( final RandomAccessibleInterval< FloatType > img, final boolean imgIsPreCropped ) {
+		final float[] ret = new float[ imgLocations.size() ];
+		final RandomAccess< FloatType > ra = img.randomAccess();
 
 		//here now a trick to make <3d images also comply to the code below
-		IntervalView< DoubleType > ivImg = Views.interval( img, img );
+		IntervalView< FloatType > ivImg = Views.interval( img, img );
 		for ( int i = 0; i < 3 - img.numDimensions(); i++ ) {
 			ivImg = Views.addDimension( ivImg, 0, 0 );
 		}
-		final RandomAccess< DoubleType > raImg3d = ivImg.randomAccess();
+		final RandomAccess< FloatType > raImg3d = ivImg.randomAccess();
 
 		int i = 0;
 		for ( final Point p_orig : imgLocations ) {
@@ -220,7 +220,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 				p.move( MotherMachineGui.GL_WIDTH_TO_SHOW / 2 - getAvgXpos(), 0 );
 			}
 			raImg3d.setPosition( p );
-			ret[ i++ ] = 1.0 - raImg3d.get().get();
+			ret[ i++ ] = 1.0f - raImg3d.get().get();
 		}
 		return ret;
 	}
@@ -277,13 +277,13 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * 
 	 * @param img
 	 */
-	public void generateSimpleSegmentationHypotheses( final Img< DoubleType > img ) {
+	public void generateSimpleSegmentationHypotheses( final Img< FloatType > img ) {
 
-		final double[] fkt = getSimpleGapSeparationValues( img );
+		final float[] fkt = getSimpleGapSeparationValues( img );
 
 		if ( fkt.length > 0 ) {
-			final RandomAccessibleInterval< DoubleType > raiFkt = new ArrayImgFactory< DoubleType >().create( new int[] { fkt.length }, new DoubleType() );
-			final RandomAccess< DoubleType > ra = raiFkt.randomAccess();
+			final RandomAccessibleInterval< FloatType > raiFkt = new ArrayImgFactory< FloatType >().create( new int[] { fkt.length }, new FloatType() );
+			final RandomAccess< FloatType > ra = raiFkt.randomAccess();
 			for ( int i = 0; i < fkt.length; i++ ) {
 				ra.setPosition( i, 0 );
 				ra.get().set( fkt[ i ] );
@@ -300,13 +300,13 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * 
 	 * @param img
 	 */
-	public void generateAwesomeSegmentationHypotheses( final Img< DoubleType > img ) {
+	public void generateAwesomeSegmentationHypotheses( final Img< FloatType > img ) {
 
-		final double[] fkt = getAwesomeGapSeparationValues( img );
+		final float[] fkt = getAwesomeGapSeparationValues( img );
 
 		if ( fkt.length > 0 ) {
-			final RandomAccessibleInterval< DoubleType > raiFkt = new ArrayImgFactory< DoubleType >().create( new int[] { fkt.length }, new DoubleType() );
-			final RandomAccess< DoubleType > ra = raiFkt.randomAccess();
+			final RandomAccessibleInterval< FloatType > raiFkt = new ArrayImgFactory< FloatType >().create( new int[] { fkt.length }, new FloatType() );
+			final RandomAccess< FloatType > ra = raiFkt.randomAccess();
 			for ( int i = 0; i < fkt.length; i++ ) {
 				ra.setPosition( i, 0 );
 				ra.get().set( fkt[ i ] );
@@ -317,9 +317,9 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 		}
 	}
 
-	protected abstract ComponentForest< C > buildIntensityTree( final RandomAccessibleInterval< DoubleType > raiFkt );
+	protected abstract ComponentForest< C > buildIntensityTree( final RandomAccessibleInterval< FloatType > raiFkt );
 
-	protected abstract ComponentForest< C > buildParaMaxFlowSumTree( final RandomAccessibleInterval< DoubleType > raiFkt );
+	protected abstract ComponentForest< C > buildParaMaxFlowSumTree( final RandomAccessibleInterval< FloatType > raiFkt );
 
 	/**
 	 * So far this function is pretty stupid: I traverse the entire component
@@ -331,25 +331,25 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * @return null, if there are less components in the tree then the callee
 	 *         requested
 	 */
-	public List< Component< DoubleType, ? > > getComponentHypothesis( final int numComponents ) {
+	public List< Component< FloatType, ? > > getComponentHypothesis( final int numComponents ) {
 		if ( componentTree == null ) return null;
 
-		final PriorityQueue< Component< DoubleType, ? > > queue = new PriorityQueue< Component< DoubleType, ? > >( 1, new CompareComponentTreeNodes< DoubleType >() );
-		final List< Component< DoubleType, ? > > listNext = new LinkedList< Component< DoubleType, ? > >();
+		final PriorityQueue< Component< FloatType, ? > > queue = new PriorityQueue< Component< FloatType, ? > >( 1, new CompareComponentTreeNodes< FloatType >() );
+		final List< Component< FloatType, ? > > listNext = new LinkedList< Component< FloatType, ? > >();
 		queue.addAll( componentTree.roots() );
 		listNext.addAll( componentTree.roots() );
 
 		// go down the tree until you find the right amount of components
 		// return from within loop, on failure break and return null
 		while ( !listNext.isEmpty() ) {
-			final Component< DoubleType, ? > node = listNext.remove( 0 );
+			final Component< FloatType, ? > node = listNext.remove( 0 );
 			listNext.addAll( node.getChildren() );
 			queue.addAll( node.getChildren() );
 		}
 
 		if ( queue.size() < numComponents ) { return null; }
 
-		final ArrayList< Component< DoubleType, ? > > ret = new ArrayList< Component< DoubleType, ? > >( numComponents );
+		final ArrayList< Component< FloatType, ? > > ret = new ArrayList< Component< FloatType, ? > >( numComponents );
 		for ( int i = 0; i < numComponents; i++ ) {
 			ret.add( queue.poll() );
 		}
@@ -361,10 +361,10 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * @param wellPoints
 	 * @return
 	 */
-	public double[] getCenterLineValues( final Img< DoubleType > img ) {
-		final RandomAccess< DoubleType > raImg = img.randomAccess();
+	public float[] getCenterLineValues( final Img< FloatType > img ) {
+		final RandomAccess< FloatType > raImg = img.randomAccess();
 
-		final double[] dIntensity = new double[ imgLocations.size() ];
+		final float[] dIntensity = new float[ imgLocations.size() ];
 		for ( int i = 0; i < imgLocations.size(); i++ ) {
 			raImg.setPosition( imgLocations.get( i ) );
 			dIntensity[ i ] = raImg.get().get();
@@ -377,10 +377,10 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * @param wellPoints
 	 * @return
 	 */
-	public double[] getMirroredCenterLineValues( final Img< DoubleType > img ) {
-		final RandomAccess< DoubleType > raImg = img.randomAccess();
+	public float[] getMirroredCenterLineValues( final Img< FloatType > img ) {
+		final RandomAccess< FloatType > raImg = img.randomAccess();
 		final List< Point > mirroredImgLocations = getMirroredImgLocations();
-		final double[] dIntensity = new double[ mirroredImgLocations.size() ];
+		final float[] dIntensity = new float[ mirroredImgLocations.size() ];
 		for ( int i = 0; i < mirroredImgLocations.size(); i++ ) {
 			raImg.setPosition( mirroredImgLocations.get( i ) );
 			dIntensity[ i ] = raImg.get().get();
@@ -394,11 +394,11 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * @param img
 	 * @return
 	 */
-	public double[] getSimpleGapSeparationValues( final Img< DoubleType > img ) {
+	public float[] getSimpleGapSeparationValues( final Img< FloatType > img ) {
 		return getSimpleGapSeparationValues( img, false );
 	}
 
-	public double[] getSimpleGapSeparationValues( final Img< DoubleType > img, final boolean forceRecomputation ) {
+	public float[] getSimpleGapSeparationValues( final Img< FloatType > img, final boolean forceRecomputation ) {
 		if ( simpleSepValues == null ) {
 			if ( img == null ) return null;
 			simpleSepValues = getMaxTiltedLineAveragesInRectangleAlongAvgCenter( img );
@@ -413,31 +413,31 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * @param img
 	 * @return
 	 */
-	public double[] getAwesomeGapSeparationValues( final Img< DoubleType > img ) {
+	public float[] getAwesomeGapSeparationValues( final Img< FloatType > img ) {
 		if ( img == null ) return null;
 
 		// I will pray for forgiveness... in March... I promise... :(
-		IntervalView< DoubleType > paramaxflowSumImageDoubleTyped = getParamaxflowSumImageDoubleTyped( null );
-		if ( paramaxflowSumImageDoubleTyped == null ) {
+		IntervalView< FloatType > paramaxflowSumImageFloatTyped = getParamaxflowSumImageFloatTyped( null );
+		if ( paramaxflowSumImageFloatTyped == null ) {
 			final long left = getOffsetX() - MotherMachineGui.GL_WIDTH_TO_SHOW / 2;
 			final long right = getOffsetX() + MotherMachineGui.GL_WIDTH_TO_SHOW / 2;
 			final long top = img.min( 1 );
 			final long bottom = img.max( 1 );
-			final IntervalView< DoubleType > viewCropped = Views.interval( Views.hyperSlice( img, 2, getOffsetF() ), new long[] { left, top }, new long[] { right, bottom } );
-			paramaxflowSumImageDoubleTyped = getParamaxflowSumImageDoubleTyped( viewCropped );
+			final IntervalView< FloatType > viewCropped = Views.interval( Views.hyperSlice( img, 2, getOffsetF() ), new long[] { left, top }, new long[] { right, bottom } );
+			paramaxflowSumImageFloatTyped = getParamaxflowSumImageFloatTyped( viewCropped );
 		}
 
-		awesomeSepValues = getInvertedIntensitiesAtImgLocations( paramaxflowSumImageDoubleTyped, true );
+		awesomeSepValues = getInvertedIntensitiesAtImgLocations( paramaxflowSumImageFloatTyped, true );
 
 		// special case: simple value is better then trained random forest: leave some simple value in there and 
 		// it might help to divide at right spots
 		if ( MotherMachine.SEGMENTATION_MIX_CT_INTO_PMFRF > 0.00001 ) {
-			final double percSimpleToStay = MotherMachine.SEGMENTATION_MIX_CT_INTO_PMFRF;
+			final float percSimpleToStay = MotherMachine.SEGMENTATION_MIX_CT_INTO_PMFRF;
 			if ( simpleSepValues == null ) {
 				simpleSepValues = getSimpleGapSeparationValues( img );
 			}
 			for ( int i = 0; i < Math.min( simpleSepValues.length, awesomeSepValues.length ); i++ ) {
-				awesomeSepValues[ i ] = percSimpleToStay * simpleSepValues[ i ] + ( 1.0 - percSimpleToStay ) * awesomeSepValues[ i ];
+				awesomeSepValues[ i ] = percSimpleToStay * simpleSepValues[ i ] + ( 1.0f - percSimpleToStay ) * awesomeSepValues[ i ];
 			}
 		}
 
@@ -452,7 +452,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * @return
 	 */
 	@SuppressWarnings( "unused" )
-	private double[] getMaxTiltedLineAveragesInRectangleAlongAvgCenter( final Img< DoubleType > img ) {
+	private float[] getMaxTiltedLineAveragesInRectangleAlongAvgCenter( final Img< FloatType > img ) {
 		return getMaxTiltedLineAveragesInRectangleAlongAvgCenter( img, false );
 	}
 
@@ -464,9 +464,9 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 * @return
 	 */
 	@SuppressWarnings( "unused" )
-	private double[] getMaxTiltedLineAveragesInRectangleAlongAvgCenter( final RandomAccessibleInterval< DoubleType > img, final boolean imgIsPreCropped ) {
+	private float[] getMaxTiltedLineAveragesInRectangleAlongAvgCenter( final RandomAccessibleInterval< FloatType > img, final boolean imgIsPreCropped ) {
 		// special case: growth line does not exist in this frame
-		if ( imgLocations.size() == 0 ) return new double[ 0 ];
+		if ( imgLocations.size() == 0 ) return new float[ 0 ];
 
 		final int maxOffsetX = 9;
 		final int maxOffsetY = 9;
@@ -480,34 +480,34 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 		}
 
 		//here now a trick to make <3d images also comply to the code below
-		IntervalView< DoubleType > ivImg = Views.interval( img, img );
+		IntervalView< FloatType > ivImg = Views.interval( img, img );
 		for ( int i = 0; i < 3 - img.numDimensions(); i++ ) {
 			ivImg = Views.addDimension( ivImg, 0, 0 );
 		}
 
-		final RealRandomAccessible< DoubleType > rrImg = Views.interpolate( Views.hyperSlice( ivImg, 2, centerZ ), new NLinearInterpolatorFactory< DoubleType >() );
-		final RealRandomAccess< DoubleType > rraImg = rrImg.realRandomAccess();
+		final RealRandomAccessible< FloatType > rrImg = Views.interpolate( Views.hyperSlice( ivImg, 2, centerZ ), new NLinearInterpolatorFactory< FloatType >() );
+		final RealRandomAccess< FloatType > rraImg = rrImg.realRandomAccess();
 
-		final double[] dIntensity = new double[ imgLocations.size() ]; //  + 1
+		final float[] dIntensity = new float[ imgLocations.size() ]; //  + 1
 		for ( int i = 0; i < imgLocations.size(); i++ ) {
 			final int centerY = imgLocations.get( i ).getIntPosition( 1 );
 
 			int nextAverageIdx = 0;
-			final double[] diagonalAverages = new double[ maxOffsetY * 2 + 1 ];
+			final float[] diagonalAverages = new float[ maxOffsetY * 2 + 1 ];
 			for ( int currentOffsetY = -maxOffsetY; currentOffsetY <= maxOffsetY; currentOffsetY++ ) {
-				double summedIntensities = 0;
+				float summedIntensities = 0;
 				int summands = 0;
 				for ( int currentOffsetX = -maxOffsetX; currentOffsetX <= maxOffsetX; currentOffsetX++ ) {
-					final double x = centerX + currentOffsetX;
-					final double y = centerY + ( ( double ) currentOffsetY / maxOffsetX ) * currentOffsetX;
-					rraImg.setPosition( new double[] { x, y } );
+					final float x = centerX + currentOffsetX;
+					final float y = centerY + ( ( float ) currentOffsetY / maxOffsetX ) * currentOffsetX;
+					rraImg.setPosition( new float[] { x, y } );
 					summedIntensities += rraImg.get().get();
 					summands++;
 				}
 				diagonalAverages[ nextAverageIdx ] = summedIntensities / summands;
 				nextAverageIdx++;
 			}
-			final double maxDiagonalAvg = SimpleFunctionAnalysis.getMax( diagonalAverages ).b.doubleValue();
+			final float maxDiagonalAvg = SimpleFunctionAnalysis.getMax( diagonalAverages ).b.floatValue();
 
 			// dIntensity[i] = maxDiagonalAvg - totalAverageIntensity;
 			// dIntensity[i] = maxDiagonalAvg - minIntensity;
@@ -540,7 +540,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 *            the active view on that Img (in order to know the pixel
 	 *            offsets)
 	 */
-	public void drawCenterLine( final Img< ARGBType > img, final IntervalView< DoubleType > view ) {
+	public void drawCenterLine( final Img< ARGBType > img, final IntervalView< FloatType > view ) {
 		final RandomAccess< ARGBType > raAnnotationImg = img.randomAccess();
 
 		long offsetX = 0;
@@ -581,7 +581,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	 *            component-tree-nodes that represent the optimal segmentation
 	 *            (the one returned by the solution to the ILP).
 	 */
-	public void drawOptimalSegmentation( final Img< ARGBType > img, final IntervalView< DoubleType > view, final List< Hypothesis< Component< DoubleType, ? >>> optimalSegmentation ) {
+	public void drawOptimalSegmentation( final Img< ARGBType > img, final IntervalView< FloatType > view, final List< Hypothesis< Component< FloatType, ? >>> optimalSegmentation ) {
 		final RandomAccess< ARGBType > raAnnotationImg = img.randomAccess();
 
 		long offsetX = 0;
@@ -600,8 +600,8 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 			}
 		}
 
-		for ( final Hypothesis< Component< DoubleType, ? >> hyp : optimalSegmentation ) {
-			final Component< DoubleType, ? > ctn = hyp.getWrappedHypothesis();
+		for ( final Hypothesis< Component< FloatType, ? >> hyp : optimalSegmentation ) {
+			final Component< FloatType, ? > ctn = hyp.getWrappedHypothesis();
 			if ( hyp.getSegmentSpecificConstraint() != null ) {
 				ArgbDrawingUtils.taintForcedComponentTreeNode( ctn, raAnnotationImg, offsetX + getAvgXpos(), offsetY + MotherMachine.GL_OFFSET_TOP );
 			} else {
@@ -610,7 +610,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 		}
 	}
 
-	public void drawOptionalSegmentation( final Img< ARGBType > img, final IntervalView< DoubleType > view, final Component< DoubleType, ? > optionalSegmentation ) {
+	public void drawOptionalSegmentation( final Img< ARGBType > img, final IntervalView< FloatType > view, final Component< FloatType, ? > optionalSegmentation ) {
 		final RandomAccess< ARGBType > raAnnotationImg = img.randomAccess();
 
 		long offsetX = 0;
@@ -674,7 +674,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 	/**
 	 * @return
 	 */
-	public IntervalView< LongType > getParamaxflowSumImage( final IntervalView< DoubleType > viewGLF ) {
+	public IntervalView< LongType > getParamaxflowSumImage( final IntervalView< FloatType > viewGLF ) {
 		if ( paramaxflowSumImage == null ) {
 			if ( viewGLF == null ) { return null; }
 			if ( !MotherMachine.USE_CLASSIFIER_FOR_PMF ) {
@@ -688,13 +688,13 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 		return Views.interval( paramaxflowSumImage, Views.zeroMin( viewGLF ) );
 	}
 
-	public IntervalView< DoubleType > getParamaxflowSumImageDoubleTyped( final IntervalView< DoubleType > viewGLF ) {
+	public IntervalView< FloatType > getParamaxflowSumImageFloatTyped( final IntervalView< FloatType > viewGLF ) {
 		if ( paramaxflowSumImage == null ) {
 			if ( viewGLF == null ) { return null; }
 			getParamaxflowSumImage( viewGLF );
 		}
 
-		return Views.interval( Converters.convert( paramaxflowSumImage, new RealDoubleNormalizeConverter( this.paramaxflowSolutions ), new DoubleType() ), paramaxflowSumImage );
+		return Views.interval( Converters.convert( paramaxflowSumImage, new RealDoubleNormalizeConverter( this.paramaxflowSolutions ), new FloatType() ), paramaxflowSumImage );
 	}
 
 	/**
@@ -706,9 +706,9 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 
 	public int getSolutionStats_numCells() {
 		int cells = 0;
-		for ( final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > set : getParent().getIlp().getOptimalRightAssignments( this.getTime() ).values() ) {
+		for ( final Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > set : getParent().getIlp().getOptimalRightAssignments( this.getTime() ).values() ) {
 
-			for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> ora : set ) {
+			for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> ora : set ) {
 				cells++;
 			}
 		}
@@ -717,9 +717,9 @@ public abstract class AbstractGrowthLineFrame< C extends Component< DoubleType, 
 
 	public Vector< ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > >> getSolutionStats_limitsAndRightAssType() {
 		final Vector< ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > >> ret = new Vector< ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > >>();
-		for ( final Hypothesis< Component< DoubleType, ? > > hyp : getParent().getIlp().getOptimalRightAssignments( this.getTime() ).keySet() ) {
+		for ( final Hypothesis< Component< FloatType, ? > > hyp : getParent().getIlp().getOptimalRightAssignments( this.getTime() ).keySet() ) {
 
-			final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> aa = getParent().getIlp().getOptimalRightAssignments( this.getTime() ).get( hyp ).iterator().next();
+			final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> aa = getParent().getIlp().getOptimalRightAssignments( this.getTime() ).get( hyp ).iterator().next();
 
 			int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
 			final Iterator< Localizable > componentIterator = hyp.getWrappedHypothesis().iterator();
