@@ -14,6 +14,7 @@ import javax.swing.event.ChangeListener;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.FloatType;
 
+import com.jug.MotherMachine;
 import com.jug.lp.AbstractAssignment;
 import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.Hypothesis;
@@ -78,10 +79,12 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 		fixedAssignments.setFilterGroundTruth( true );
 
 		this.add( "OPT", activeAssignments );
-		this.add( "M", inactiveMappingAssignments );
-		this.add( "D", inactiveDivisionAssignments );
-		this.add( "E", inactiveExitAssignments );
-		this.add( "GT", fixedAssignments );
+		if ( !MotherMachine.instance.HEADLESS ) {
+			this.add( "M", inactiveMappingAssignments );
+			this.add( "D", inactiveDivisionAssignments );
+			this.add( "E", inactiveExitAssignments );
+			this.add( "GT", fixedAssignments );
+		}
 	}
 
 	/**
