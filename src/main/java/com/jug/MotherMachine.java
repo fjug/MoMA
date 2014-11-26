@@ -1046,13 +1046,15 @@ public class MotherMachine {
 		generateAllSimpleSegmentationHypotheses();
 		System.out.println( " done!" );
 
-		System.out.println( "Generating Integer Linear Programs..." );
-		generateILPs();
-		System.out.println( " done!" );
+		if ( HEADLESS ) {
+			System.out.println( "Generating Integer Linear Programs..." );
+			generateILPs();
+			System.out.println( " done!" );
 
-		System.out.println( "Running Integer Linear Programs..." );
-		runILPs();
-		System.out.println( " done!" );
+			System.out.println( "Running Integer Linear Programs..." );
+			runILPs();
+			System.out.println( " done!" );
+		}
 	}
 
 	/**
@@ -1377,7 +1379,7 @@ public class MotherMachine {
 			int maxWellCenters = 0;
 			int maxWellCentersIdx = 0;
 			for ( int y = 0; y < frameWellCenters.size(); y++ ) {
-				if ( y < GL_OFFSET_TOP || y > frameWellCenters.size() - 1 - GL_OFFSET_BOTTOM ) {
+				if ( y < GL_OFFSET_TOP || y >= imgTemp.dimension( 1 ) - GL_OFFSET_BOTTOM ) {
 					frameWellCenters.get( y ).clear();
 				} else {
 					if ( maxWellCenters < frameWellCenters.get( y ).size() ) {
@@ -1387,7 +1389,7 @@ public class MotherMachine {
 				}
 			}
 
-			// add all the remaining points to 'glCenterPoints'
+			// add filtered points to 'glCenterPoints'
 			this.glCenterPoints.add( frameWellCenters );
 
 			// ------ DISTRIBUTE POINTS TO CORRESPONDING GROWTH LINES -------
@@ -1418,7 +1420,7 @@ public class MotherMachine {
 
 				final List< Point > maximaPerImgRow = frameWellCenters.get( y );
 				if ( maximaPerImgRow.size() == 0 ) {
-					break;
+					continue;
 				}
 				// find best matching well for first point
 				final int posX = frameWellCenters.get( y ).get( 0 ).getIntPosition( 0 );
@@ -1447,7 +1449,7 @@ public class MotherMachine {
 
 				final List< Point > maximaPerImgRow = frameWellCenters.get( y );
 				if ( maximaPerImgRow.size() == 0 ) {
-					break;
+					continue;
 				}
 				// find best matching well for first point
 				final int posX = frameWellCenters.get( y ).get( 0 ).getIntPosition( 0 );
@@ -1625,4 +1627,10 @@ public class MotherMachine {
 		}
 	}
 
+	/**
+	 * @return the rawChannelImgs
+	 */
+	public List< Img< FloatType >> getRawChannelImgs() {
+		return rawChannelImgs;
+	}
 }

@@ -1073,7 +1073,7 @@ public class GrowthLineTrackingILP {
 	 *         next time-point.
 	 * @throws GRBException
 	 */
-	private AbstractAssignment< Hypothesis< Component< FloatType, ? > > > getOptimalRightAssignment( final Hypothesis< Component< FloatType, ? > > hypothesis ) throws GRBException {
+	public AbstractAssignment< Hypothesis< Component< FloatType, ? > > > getOptimalRightAssignment( final Hypothesis< Component< FloatType, ? > > hypothesis ) throws GRBException {
 		return findActiveAssignment( edgeSets.getRightNeighborhood( hypothesis ) );
 	}
 

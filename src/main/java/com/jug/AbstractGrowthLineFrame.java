@@ -402,9 +402,30 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 		if ( simpleSepValues == null ) {
 			if ( img == null ) return null;
 			simpleSepValues = getMaxTiltedLineAveragesInRectangleAlongAvgCenter( img );
+			simpleSepValues = avoidMotherCellSegmentationFlickering( simpleSepValues );
 //			sepValues = getInvertedIntensities( img );
 		}
 		return simpleSepValues;
+	}
+
+	/**
+	 * Bottom cell segments where often pretty bad. Why?
+	 * Because the GL stops there and below come dark, dark pixels.
+	 * This is a way out. (How well this does in cases where the bottom cell
+	 * moves up considerably has to be seen...)
+	 * 
+	 * @param fkt
+	 * @return
+	 */
+	private float[] avoidMotherCellSegmentationFlickering( final float[] fkt ) {
+		final int[] maximaLocations = SimpleFunctionAnalysis.getMaxima( fkt, 1, 1 );
+		final int lastMaximaLoc = maximaLocations[ maximaLocations.length - 1 ];
+
+		for ( int i = lastMaximaLoc; i < fkt.length; i++ ) {
+			fkt[ i ] = Math.max( fkt[ i - 1 ] + 0.0005f, fkt[ i ] );
+		}
+
+		return fkt;
 	}
 
 	/**
@@ -451,7 +472,6 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	 * @param wellPoints
 	 * @return
 	 */
-	@SuppressWarnings( "unused" )
 	private float[] getMaxTiltedLineAveragesInRectangleAlongAvgCenter( final Img< FloatType > img ) {
 		return getMaxTiltedLineAveragesInRectangleAlongAvgCenter( img, false );
 	}
@@ -463,7 +483,6 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	 * @param wellPoints
 	 * @return
 	 */
-	@SuppressWarnings( "unused" )
 	private float[] getMaxTiltedLineAveragesInRectangleAlongAvgCenter( final RandomAccessibleInterval< FloatType > img, final boolean imgIsPreCropped ) {
 		// special case: growth line does not exist in this frame
 		if ( imgLocations.size() == 0 ) return new float[ 0 ];
@@ -740,5 +759,32 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			}
 		} );
 		return ret;
+	}
+
+	public Vector< ValuePair< Integer, Hypothesis< Component< FloatType, ? > >>> getSortedActiveHypsAndPos() {
+		final Vector< ValuePair< Integer, Hypothesis< Component< FloatType, ? > >>> positionedHyps = new Vector< ValuePair< Integer, Hypothesis< Component< FloatType, ? > >>>();
+
+		for ( final Hypothesis< Component< FloatType, ? > > hyp : getParent().getIlp().getOptimalRightAssignments( this.getTime() ).keySet() ) {
+			// find out where this hypothesis is located along the GL
+			int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
+			final Iterator< Localizable > componentIterator = hyp.getWrappedHypothesis().iterator();
+			while ( componentIterator.hasNext() ) {
+				final int ypos = componentIterator.next().getIntPosition( 0 );
+				min = Math.min( min, ypos );
+				max = Math.max( max, ypos );
+			}
+
+			positionedHyps.add( new ValuePair< Integer, Hypothesis< Component< FloatType, ? >> >( -max, hyp ) );
+		}
+
+		Collections.sort( positionedHyps, new Comparator< ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> >() {
+
+			@Override
+			public int compare( final ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> o1, final ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> o2 ) {
+				return o1.a.compareTo( o2.a );
+			}
+		} );
+
+		return positionedHyps;
 	}
 }

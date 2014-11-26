@@ -19,6 +19,8 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Vector;
 
 import javax.swing.AbstractAction;
@@ -54,8 +56,11 @@ import org.math.plot.Plot2DPanel;
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
 import com.jug.MotherMachine;
+import com.jug.lp.AbstractAssignment;
+import com.jug.lp.DivisionAssignment;
 import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.Hypothesis;
+import com.jug.lp.MappingAssignment;
 import com.jug.util.ComponentTreeUtils;
 import com.jug.util.SimpleFunctionAnalysis;
 import com.jug.util.Util;
@@ -179,7 +184,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		sliderTime.setValue( 1 );
 		model.setCurrentGLF( sliderTime.getValue() );
 		sliderTime.addChangeListener( this );
-		if ( sliderTime.getMaximum() < 300 ) {
+		if ( sliderTime.getMaximum() < 200 ) {
 			sliderTime.setMajorTickSpacing( 10 );
 			sliderTime.setMinorTickSpacing( 2 );
 		} else {
@@ -1235,6 +1240,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		if ( doExport ) {
 			exportTrackingImagesAndHtml( file, startFrame, endFrame );
 			exportTracks( new File( file.getPath().substring( 0, file.getPath().length() - 5 ) + ".csv" ) );
+			try {
+				exportCellStats( new File( file.getPath().substring( 0, file.getPath().length() - 5 ) + "_CellStats.csv" ) );
+			} catch ( final GRBException e ) {
+				e.printStackTrace();
+			}
 		}
 		// ----------------------------------------------------------------------------------------------------
 
@@ -1432,9 +1442,137 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	/**
 	 * @param self
 	 * @param file
+	 * @throws GRBException
 	 */
-	public void exportTracks( final File file ) {
-		final String loadedDataFolder = MotherMachine.props.getProperty( "import_path", "BUG -- could not get property 'import_path' while exporting figure data..." );
+	public void exportCellStats( final File file ) throws GRBException {
+
+		final class StartingPoint {
+
+			public int id = -1;
+			public int pid = -1;
+			public int tbirth = -1;
+			public int frame = 0;
+
+			public Hypothesis< Component< FloatType, ? >> hyp;
+
+			public StartingPoint( final Hypothesis< Component< FloatType, ? >> hyp, final int id, final int pid, final int tbirth ) {
+				this.hyp = hyp;
+				this.id = id;
+				this.pid = pid;
+				this.tbirth = tbirth;
+				this.frame = 0;
+			}
+
+			public StartingPoint( final StartingPoint point, final Hypothesis< Component< FloatType, ? >> newHyp ) {
+				this.hyp = newHyp;
+				this.id = point.id;
+				this.pid = point.pid;
+				this.tbirth = point.tbirth;
+				this.frame = point.frame + 1;
+			}
+
+			@Override
+			public StartingPoint clone() {
+				return new StartingPoint( this.hyp, this.id, this.pid, this.tbirth );
+			}
+
+			@Override
+			public String toString() {
+				return String.format( "id=%4d ; pid=%4d ; birth-frame=%4d", id, pid, tbirth );
+			}
+		}
+		final String loadedDataFolder = MotherMachine.props.getProperty( "import_path", "BUG -- could not get property 'import_path' while exporting cell statistics..." );
+		final int numCurrGL = sliderGL.getValue();
+		final Vector< String > linesToExport = new Vector< String >();
+
+		final GrowthLineFrame firstGLF = model.getCurrentGL().getFrames().get( 0 );
+		final GrowthLineTrackingILP ilp = firstGLF.getParent().getIlp();
+		final Vector< ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> > segmentsInFirstFrame = firstGLF.getSortedActiveHypsAndPos();
+		final List< StartingPoint > startingPoints = new ArrayList< StartingPoint >();
+
+		int cellIdCounter = 0;
+		final LinkedList< StartingPoint > queue = new LinkedList< StartingPoint >();
+
+		for ( final ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> valuePair : segmentsInFirstFrame ) {
+
+			final StartingPoint point = new StartingPoint( valuePair.b, cellIdCounter++, -1, -1 );
+			startingPoints.add( point );
+
+			final StartingPoint prepPoint = new StartingPoint( point, point.hyp );
+			queue.add( prepPoint );
+		}
+		while ( !queue.isEmpty() ) {
+			final StartingPoint prepPoint = queue.poll();
+
+			final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> rightAssmt = ilp.getOptimalRightAssignment( prepPoint.hyp );
+
+			if ( rightAssmt == null ) {
+				continue;
+			}
+			if ( rightAssmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ) {
+				final MappingAssignment ma = ( MappingAssignment ) rightAssmt;
+				queue.add( new StartingPoint( prepPoint, ma.getDestinationHypothesis() ) );
+			}
+			if ( rightAssmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION ) {
+				final DivisionAssignment da = ( DivisionAssignment ) rightAssmt;
+
+				prepPoint.pid = prepPoint.id;
+				prepPoint.tbirth = prepPoint.frame;
+
+				cellIdCounter += 1;
+				prepPoint.id = cellIdCounter;
+				startingPoints.add( prepPoint.clone() );
+				queue.add( new StartingPoint( prepPoint, da.getLowerDesinationHypothesis() ) );
+
+				cellIdCounter += 1;
+				prepPoint.id = cellIdCounter;
+				startingPoints.add( prepPoint.clone() );
+				queue.add( new StartingPoint( prepPoint, da.getUpperDesinationHypothesis() ) );
+			}
+		}
+
+		// Line 1: import folder
+		linesToExport.add( loadedDataFolder );
+
+		// Line 2: GL-id
+		linesToExport.add( "GLidx = " + numCurrGL );
+
+		// Line 3: #cells
+		linesToExport.add( "numCells = " + startingPoints.size() );
+
+		// Line 4: #channels
+		linesToExport.add( "numChannels = " + MotherMachine.instance.getRawChannelImgs().size() );
+
+		// Export all cells (we found all their starting segments above)
+		for ( int c = 0; c < startingPoints.size(); c++ ) {
+			linesToExport.add( startingPoints.get( c ).toString() );
+		}
+
+		System.out.println( "Exporting collected cell-statistics..." );
+		Writer out = null;
+		try {
+			out = new OutputStreamWriter( new FileOutputStream( file ) );
+
+			for ( final String line : linesToExport ) {
+				out.write( line );
+				out.write( "\n" );
+			}
+			out.close();
+		} catch ( final FileNotFoundException e1 ) {
+			JOptionPane.showMessageDialog( this, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
+			e1.printStackTrace();
+		} catch ( final IOException e1 ) {
+			JOptionPane.showMessageDialog( this, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
+			e1.printStackTrace();
+		}
+		System.out.println( "...done!" );
+	}
+
+	/**
+	 * @param file
+	 */
+	private void exportTracks( final File file ) {
+		final String loadedDataFolder = MotherMachine.props.getProperty( "import_path", "BUG -- could not get property 'import_path' while exporting tracks..." );
 		final int numCurrGL = sliderGL.getValue();
 		final int numGLFs = model.getCurrentGL().getFrames().size();
 		final Vector< Vector< String >> dataToExport = new Vector< Vector< String >>();
