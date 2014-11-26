@@ -14,10 +14,10 @@ import javax.swing.event.ChangeListener;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.FloatType;
 
-import com.jug.MotherMachine;
 import com.jug.lp.AbstractAssignment;
 import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.Hypothesis;
+import com.jug.util.OSValidator;
 
 /**
  * @author jug
@@ -79,7 +79,7 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 		fixedAssignments.setFilterGroundTruth( true );
 
 		this.add( "OPT", activeAssignments );
-		if ( !MotherMachine.instance.HEADLESS ) {
+		if ( OSValidator.isMac() ) {
 			this.add( "M", inactiveMappingAssignments );
 			this.add( "D", inactiveDivisionAssignments );
 			this.add( "E", inactiveExitAssignments );
