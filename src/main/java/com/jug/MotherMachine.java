@@ -391,7 +391,7 @@ public class MotherMachine {
 			maxTime = Integer.parseInt( cmd.getOptionValue( "tmax" ) );
 		}
 
-		System.out.print( String.format( "Loading tiff sequence (%d time points):", maxTime - minTime + 1 ) );
+		System.out.print( String.format( "Loading tiff sequence (%d time points):", maxTime - minTime ) );
 
 		// ******** CHECK GUROBI ********* CHECK GUROBI ********* CHECK GUROBI *********
 		final String jlp = System.getProperty( "java.library.path" );

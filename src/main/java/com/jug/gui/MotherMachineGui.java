@@ -44,8 +44,10 @@ import javax.swing.filechooser.FileFilter;
 
 import loci.formats.gui.ExtensionFileFilter;
 import net.imglib2.Localizable;
+import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.algorithm.componenttree.ComponentForest;
+import net.imglib2.img.Img;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.ValuePair;
 import net.imglib2.view.IntervalView;
@@ -125,6 +127,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 	private JSlider sliderGL;
 	private JSlider sliderTime;
+	private JLabel lblCurrentTime;
 
 	private JTabbedPane tabsViews;
 	private CountOverviewPanel panelCountingView;
@@ -196,7 +199,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		sliderTime.setBorder( BorderFactory.createEmptyBorder( 0, 0, 0, 3 ) );
 		panelHorizontalHelper = new JPanel( new BorderLayout() );
 		panelHorizontalHelper.setBorder( BorderFactory.createEmptyBorder( 5, 10, 0, 5 ) );
-		panelHorizontalHelper.add( new JLabel( " t = " ), BorderLayout.WEST );
+		lblCurrentTime = new JLabel( String.format( " t = %4d", sliderTime.getValue() ) );
+		panelHorizontalHelper.add( lblCurrentTime, BorderLayout.WEST );
 		panelHorizontalHelper.add( sliderTime, BorderLayout.CENTER );
 		panelContent.add( panelHorizontalHelper, BorderLayout.SOUTH );
 
@@ -235,7 +239,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		// --- Controls ----------------------------------
 		btnRedoAllHypotheses = new JButton( "Resegment" );
 		btnRedoAllHypotheses.addActionListener( this );
-		btnOptimize = new JButton( "(Re)optimize" );
+		btnOptimize = new JButton( "(re)Optimize" );
 		btnOptimize.addActionListener( this );
 		btnOptimizeAll = new JButton( "Optimize All" );
 		btnOptimizeAll.addActionListener( this );
@@ -719,7 +723,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		}
 
 		if ( e.getSource().equals( sliderTime ) ) {
-			model.setCurrentGLF( sliderTime.getValue() );
+			this.lblCurrentTime.setText( String.format( " t = %4d", sliderTime.getValue() ) );
+			this.model.setCurrentGLF( sliderTime.getValue() );
 			if ( model.getCurrentGL().getIlp() != null ) {
 				final int rhs = model.getCurrentGL().getIlp().getSegmentsInFrameCountConstraintRHS( sliderTime.getValue() );
 				if ( rhs == -1 ) {
@@ -874,7 +879,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					boolean done = false;
 					while ( !done ) {
 						try {
-							final String str = JOptionPane.showInputDialog( "Number of first GL to be processed:", "" + firstGLtoProcess );
+							final String str = ( String ) JOptionPane.showInputDialog( self, "Number of first GL to be processed:", "Start at...", JOptionPane.QUESTION_MESSAGE, null, null, "" + firstGLtoProcess );
 							if ( str == null ) return; // User decided to hit cancel!
 							firstGLtoProcess = Integer.parseInt( str );
 							done = true;
@@ -885,7 +890,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					done = false;
 					while ( !done ) {
 						try {
-							final String str = JOptionPane.showInputDialog( "Number of last GL to be processed:", "" + lastGLtoProcess );
+							final String str = ( String ) JOptionPane.showInputDialog( self, "Number of last GL to be processed:", "End with...", JOptionPane.QUESTION_MESSAGE, null, null, "" + lastGLtoProcess );
 							if ( str == null ) return; // User decided to hit cancel!
 							lastGLtoProcess = Integer.parseInt( str );
 							done = true;
@@ -896,7 +901,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					done = false;
 					String seg_methods_to_do = "123";
 					while ( !done ) {
-						seg_methods_to_do = JOptionPane.showInputDialog( "Process CT ('1'), PMF ('2'), PMFRF ('3'), or a subset (e.g. '13')?", seg_methods_to_do );
+						seg_methods_to_do = ( String ) JOptionPane.showInputDialog( self, "Process CT ('1'), PMF ('2'), PMFRF ('3'), or a subset (e.g. '13')?", "Segmentations to do...", JOptionPane.QUESTION_MESSAGE, null, null, seg_methods_to_do );
 						if ( seg_methods_to_do == null ) return; // User decided to hit cancel!
 						if ( seg_methods_to_do.matches( "(.*)1(.*)" ) || seg_methods_to_do.matches( "(.*)2(.*)" ) || seg_methods_to_do.matches( "(.*)3(.*)" ) ) {
 							done = true;
@@ -1212,7 +1217,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				boolean done = false;
 				while ( !done ) {
 					try {
-						final String str = JOptionPane.showInputDialog( "First frame to be exported:", "" + startFrame );
+						final String str = ( String ) JOptionPane.showInputDialog( self, "First frame to be exported:", "Start at...", JOptionPane.QUESTION_MESSAGE, null, null, "" + startFrame );
 						if ( str == null ) return; // User decided to hit cancel!
 						startFrame = Integer.parseInt( str );
 						done = true;
@@ -1223,7 +1228,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				done = false;
 				while ( !done ) {
 					try {
-						final String str = JOptionPane.showInputDialog( "Last frame to be exported:", "" + endFrame );
+						final String str = ( String ) JOptionPane.showInputDialog( self, "Last frame to be exported:", "End with...", JOptionPane.QUESTION_MESSAGE, null, null, "" + endFrame );
 						if ( str == null ) return; // User decided to hit cancel!
 						endFrame = Integer.parseInt( str );
 						done = true;
@@ -1446,16 +1451,19 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 */
 	public void exportCellStats( final File file ) throws GRBException {
 
-		final class StartingPoint {
+		final class SegmentRecord {
 
+			private static final int ENDOFTRACKING = 1234;
+			public boolean exists = true;
 			public int id = -1;
 			public int pid = -1;
 			public int tbirth = -1;
 			public int frame = 0;
 
 			public Hypothesis< Component< FloatType, ? >> hyp;
+			private int terminated_by = Integer.MIN_VALUE;
 
-			public StartingPoint( final Hypothesis< Component< FloatType, ? >> hyp, final int id, final int pid, final int tbirth ) {
+			public SegmentRecord( final Hypothesis< Component< FloatType, ? >> hyp, final int id, final int pid, final int tbirth ) {
 				this.hyp = hyp;
 				this.id = id;
 				this.pid = pid;
@@ -1463,8 +1471,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				this.frame = 0;
 			}
 
-			public StartingPoint( final StartingPoint point, final Hypothesis< Component< FloatType, ? >> newHyp ) {
-				this.hyp = newHyp;
+			public SegmentRecord( final SegmentRecord point ) {
+				this.hyp = point.hyp;
 				this.id = point.id;
 				this.pid = point.pid;
 				this.tbirth = point.tbirth;
@@ -1472,15 +1480,63 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			}
 
 			@Override
-			public StartingPoint clone() {
-				return new StartingPoint( this.hyp, this.id, this.pid, this.tbirth );
+			public SegmentRecord clone() {
+				final SegmentRecord ret = new SegmentRecord( this.hyp, this.id, this.pid, this.tbirth );
+				ret.exists = this.exists;
+				ret.frame = this.frame;
+				ret.terminated_by = this.terminated_by;
+				return ret;
 			}
 
 			@Override
 			public String toString() {
-				return String.format( "id=%4d ; pid=%4d ; birth-frame=%4d", id, pid, tbirth );
+				return String.format( "id=%d; pid=%d; birth-frame=%d", id, pid, tbirth );
+			}
+
+			/**
+			 * @return
+			 */
+			public SegmentRecord nextSegmentInTime( final GrowthLineTrackingILP ilp ) {
+				SegmentRecord ret = this;
+
+				try {
+					final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> rightAssmt = ilp.getOptimalRightAssignment( this.hyp );
+					if ( rightAssmt == null ) {
+						exists = false;
+						terminated_by = SegmentRecord.ENDOFTRACKING;
+					} else if ( rightAssmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ) {
+						final MappingAssignment ma = ( MappingAssignment ) rightAssmt;
+						ret = new SegmentRecord( this );
+						ret.hyp = ma.getDestinationHypothesis();
+					} else {
+						terminated_by = rightAssmt.getType();
+						exists = false;
+					}
+				} catch ( final GRBException ge ) {
+					exists = false;
+					System.err.println( ge.getMessage() );
+				}
+				return ret;
+			}
+
+			/**
+			 * @return true if the current segment is valid.
+			 */
+			public boolean exists() {
+				return exists;
+			}
+
+			/**
+			 * @param channel
+			 * @return
+			 */
+			public float[] computeChannelHistogram( final Img< FloatType > channel ) {
+				final float[] ret = new float[] { 0f, 5f, 10f, 15f, 20f, 25f, 30f, 35f, 40f, 45f, 50f, 55f };
+
+				return ret;
 			}
 		}
+
 		final String loadedDataFolder = MotherMachine.props.getProperty( "import_path", "BUG -- could not get property 'import_path' while exporting cell statistics..." );
 		final int numCurrGL = sliderGL.getValue();
 		final Vector< String > linesToExport = new Vector< String >();
@@ -1488,46 +1544,53 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		final GrowthLineFrame firstGLF = model.getCurrentGL().getFrames().get( 0 );
 		final GrowthLineTrackingILP ilp = firstGLF.getParent().getIlp();
 		final Vector< ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> > segmentsInFirstFrame = firstGLF.getSortedActiveHypsAndPos();
-		final List< StartingPoint > startingPoints = new ArrayList< StartingPoint >();
+		final List< SegmentRecord > startingPoints = new ArrayList< SegmentRecord >();
 
-		int cellIdCounter = 0;
-		final LinkedList< StartingPoint > queue = new LinkedList< StartingPoint >();
+		int nextCellId = 0;
+		final LinkedList< SegmentRecord > queue = new LinkedList< SegmentRecord >();
 
 		for ( final ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> valuePair : segmentsInFirstFrame ) {
 
-			final StartingPoint point = new StartingPoint( valuePair.b, cellIdCounter++, -1, -1 );
+			final SegmentRecord point = new SegmentRecord( valuePair.b, nextCellId++, -1, -1 );
 			startingPoints.add( point );
 
-			final StartingPoint prepPoint = new StartingPoint( point, point.hyp );
+			final SegmentRecord prepPoint = new SegmentRecord( point );
+			prepPoint.hyp = point.hyp;
 			queue.add( prepPoint );
 		}
 		while ( !queue.isEmpty() ) {
-			final StartingPoint prepPoint = queue.poll();
+			final SegmentRecord prepPoint = queue.poll();
 
 			final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> rightAssmt = ilp.getOptimalRightAssignment( prepPoint.hyp );
 
 			if ( rightAssmt == null ) {
 				continue;
 			}
+			// MAPPING -- JUST DROP SEGMENT STATS
 			if ( rightAssmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ) {
 				final MappingAssignment ma = ( MappingAssignment ) rightAssmt;
-				queue.add( new StartingPoint( prepPoint, ma.getDestinationHypothesis() ) );
+				final SegmentRecord next = new SegmentRecord( prepPoint );
+				next.hyp = ma.getDestinationHypothesis();
+				queue.add( next );
 			}
+			// DIVISON -- NEW CELLS ARE BORN CURRENT ONE ENDS
 			if ( rightAssmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION ) {
 				final DivisionAssignment da = ( DivisionAssignment ) rightAssmt;
 
 				prepPoint.pid = prepPoint.id;
 				prepPoint.tbirth = prepPoint.frame;
 
-				cellIdCounter += 1;
-				prepPoint.id = cellIdCounter;
+				prepPoint.id = nextCellId;
+				prepPoint.hyp = da.getLowerDesinationHypothesis();
 				startingPoints.add( prepPoint.clone() );
-				queue.add( new StartingPoint( prepPoint, da.getLowerDesinationHypothesis() ) );
+				queue.add( new SegmentRecord( prepPoint ) );
+				nextCellId++;
 
-				cellIdCounter += 1;
-				prepPoint.id = cellIdCounter;
+				prepPoint.id = nextCellId;
+				prepPoint.hyp = da.getLowerDesinationHypothesis();
 				startingPoints.add( prepPoint.clone() );
-				queue.add( new StartingPoint( prepPoint, da.getUpperDesinationHypothesis() ) );
+				queue.add( new SegmentRecord( prepPoint ) );
+				nextCellId++;
 			}
 		}
 
@@ -1544,8 +1607,43 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		linesToExport.add( "numChannels = " + MotherMachine.instance.getRawChannelImgs().size() );
 
 		// Export all cells (we found all their starting segments above)
-		for ( int c = 0; c < startingPoints.size(); c++ ) {
-			linesToExport.add( startingPoints.get( c ).toString() );
+		for ( int cid = 0; cid < startingPoints.size(); cid++ ) {
+			SegmentRecord segmentRecord = startingPoints.get( cid );
+
+			linesToExport.add( segmentRecord.toString() );
+			do {
+				final Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( segmentRecord.hyp.getWrappedHypothesis() );
+				final int height = limits.getB() - limits.getA();
+				linesToExport.add( String.format( "\tframe=\t%d; cell_height=%d", segmentRecord.frame, height ) );
+
+				// export info per image channel
+				for ( int c = 0; c < MotherMachine.instance.getRawChannelImgs().size(); c++ ) {
+					final Img< FloatType > channel = MotherMachine.instance.getRawChannelImgs().get( c );
+					final float[] hist = segmentRecord.computeChannelHistogram( channel );
+					String histStr = "\t\tChannel" + c;
+					for ( final float value : hist ) {
+						histStr += String.format( "; %8.2f", value );
+					}
+					linesToExport.add( histStr );
+				}
+				segmentRecord = segmentRecord.nextSegmentInTime( ilp );
+			}
+			while ( segmentRecord.exists() );
+
+			if ( segmentRecord.terminated_by == GrowthLineTrackingILP.ASSIGNMENT_EXIT ) {
+				linesToExport.add( "\tEXIT\n" );
+			} else if ( segmentRecord.terminated_by == GrowthLineTrackingILP.ASSIGNMENT_DIVISION ) {
+				linesToExport.add( "\tDIVISION\n" );
+			} else if ( segmentRecord.terminated_by == SegmentRecord.ENDOFTRACKING ) {
+				// UGLY TRICK ALERT: remember the trick to fix the tracking towards the last frame?
+				// Yes, we double the last frame. This also means that we should not export this fake frame, ergo we remove it here!
+				for ( int i = 0; i < MotherMachine.instance.getRawChannelImgs().size() + 1; i++ ) {
+					linesToExport.remove( linesToExport.size() - 1 );
+				}
+				linesToExport.add( "\tENDOFDATA\n" );
+			} else {
+				linesToExport.add( "\tGUROBI_EXCEPTION\n" );
+			}
 		}
 
 		System.out.println( "Exporting collected cell-statistics..." );
