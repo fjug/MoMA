@@ -238,10 +238,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.RIGHT, 5, 0 ) );
 		panelHorizontalHelper.add( btnRedoAllHypotheses );
 		panelHorizontalHelper.add( btnOptimize );
-//		panelHorizontalHelper.add( btnOptimizeAll );
 		panelHorizontalHelper.add( btnExportAllStats );
-//		panelHorizontalHelper.add( btnGenerateAllPaperStats );
-//		panelHorizontalHelper.add( btnOptimizeRemainingAndExport );
 //		panelHorizontalHelper.add( btnSaveFG );
 		add( panelHorizontalHelper, BorderLayout.SOUTH );
 
@@ -757,29 +754,30 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		}
 		if ( e.getSource().equals( btnRedoAllHypotheses ) ) {
 
-			final int choiceAwesome = JOptionPane.showOptionDialog( this, "Do you want to reset to PMFRF segmentations?\n(Otherwise fast CT segments will be built.)", "PMFRF or CT?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null );
-			if ( choiceAwesome != JOptionPane.CANCEL_OPTION ) {
-				final int choiceAllGLs = JOptionPane.showOptionDialog( this, "Do generate segmentation hypotheses for ALL GLs?", "For ALL GLs?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null );
+//			final int choiceAwesome = JOptionPane.showOptionDialog( this, "Do you want to reset to PMFRF segmentations?\n(Otherwise fast CT segments will be built.)", "PMFRF or CT?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null );
+			final DialogResegmentSetup dSetup = new DialogResegmentSetup( this, true, true );
+			dSetup.ask();
+			if ( !dSetup.wasCanceled() ) {
 				final JSlider sliderGL = this.sliderGL;
 
 				final Thread t = new Thread( new Runnable() {
 
 					@Override
 					public void run() {
-						if ( choiceAllGLs == JOptionPane.YES_OPTION ) {
+						if ( dSetup.allFrames() ) {
 							for ( int i = sliderGL.getMinimum(); i <= sliderGL.getMaximum(); i++ ) {
 								sliderGL.setValue( i );
 								dataToDisplayChanged();
-								if ( choiceAwesome == JOptionPane.YES_OPTION ) {
+								if ( dSetup.doPMFRF() ) {
 									activateAwesomeHypothesesForCurrentGL();
-								} else if ( choiceAwesome == JOptionPane.NO_OPTION ) {
+								} else {
 									activateSimpleHypotheses();
 								}
 							}
-						} else if ( choiceAllGLs == JOptionPane.NO_OPTION ) {
-							if ( choiceAwesome == JOptionPane.YES_OPTION ) {
+						} else {
+							if ( dSetup.doPMFRF() ) {
 								activateAwesomeHypothesesForCurrentGL();
-							} else if ( choiceAwesome == JOptionPane.NO_OPTION ) {
+							} else {
 								activateSimpleHypotheses();
 							}
 						}
@@ -899,17 +897,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			glf.generateSimpleSegmentationHypotheses( model.mm.getImgTemp() );
 		}
 		System.out.println( "" );
-	}
-
-	/**
-	 * Goes over all glfs of the current gl and activates the awesome,
-	 * RF-classified + paramaxflow hypotheses.
-	 */
-	private void activateAwesomeHypotheses( final int firstGLtoProcess, final int lastGLtoProcess ) {
-		for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
-			final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
-			activateAwesomeHypothesesForGL( gl );
-		}
 	}
 
 	/**

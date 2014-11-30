@@ -10,6 +10,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -78,7 +79,7 @@ public class DialogAssignmentViewSetup extends JDialog implements ActionListener
 	}
 
 	private void setKeySetup() {
-		this.rootPane.getInputMap( rootPane.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( "ESCAPE" ), "closeAction" );
+		this.rootPane.getInputMap( JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( "ESCAPE" ), "closeAction" );
 
 		this.rootPane.getActionMap().put( "closeAction", new AbstractAction() {
 
