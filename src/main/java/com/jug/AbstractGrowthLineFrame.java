@@ -33,7 +33,6 @@ import net.imglib2.util.ValuePair;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
-import com.jug.gui.MotherMachineGui;
 import com.jug.lp.AbstractAssignment;
 import com.jug.lp.Hypothesis;
 import com.jug.segmentation.GrowthLineSegmentationMagic;
@@ -217,7 +216,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			final Point p = new Point( p_orig );
 			if ( imgIsPreCropped ) {
 				p.setPosition( 0, 2 );
-				p.move( MotherMachineGui.GL_WIDTH_TO_SHOW / 2 - getAvgXpos(), 0 );
+				p.move( MotherMachine.GL_PIXEL_PADDING_IN_VIEWS + MotherMachine.GL_WIDTH_IN_PIXELS / 2 - getAvgXpos(), 0 );
 			}
 			raImg3d.setPosition( p );
 			ret[ i++ ] = 1.0f - raImg3d.get().get();
@@ -440,8 +439,8 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 		// I will pray for forgiveness... in March... I promise... :(
 		IntervalView< FloatType > paramaxflowSumImageFloatTyped = getParamaxflowSumImageFloatTyped( null );
 		if ( paramaxflowSumImageFloatTyped == null ) {
-			final long left = getOffsetX() - MotherMachineGui.GL_WIDTH_TO_SHOW / 2;
-			final long right = getOffsetX() + MotherMachineGui.GL_WIDTH_TO_SHOW / 2;
+			final long left = getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2;
+			final long right = getOffsetX() + MotherMachine.GL_WIDTH_IN_PIXELS / 2;
 			final long top = img.min( 1 );
 			final long bottom = img.max( 1 );
 			final IntervalView< FloatType > viewCropped = Views.interval( Views.hyperSlice( img, 2, getOffsetF() ), new long[] { left, top }, new long[] { right, bottom } );
@@ -494,7 +493,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 		int centerZ = imgLocations.get( 0 ).getIntPosition( 2 );
 
 		if ( imgIsPreCropped ) {
-			centerX = MotherMachineGui.GL_WIDTH_TO_SHOW / 2;
+			centerX = MotherMachine.GL_PIXEL_PADDING_IN_VIEWS + MotherMachine.GL_WIDTH_IN_PIXELS / 2;
 			centerZ = 0;
 		}
 
@@ -569,7 +568,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			if ( view.min( 0 ) == 0 ) {
 				// In case I give the cropped paramaxflow-baby I lost the offset and must do ugly shit...
 				// I promise this is only done because I need to finish the f****** paper!
-				offsetX = -( this.getAvgXpos() - MotherMachineGui.GL_WIDTH_TO_SHOW / 2 );
+				offsetX = -( this.getAvgXpos() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS );
 				offsetY = view.min( 1 );
 			} else {
 				offsetX = view.min( 0 );
@@ -611,7 +610,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			if ( view.min( 0 ) == 0 ) {
 				// In case I give the cropped paramaxflow-baby I lost the offset and must do ugly shit...
 				// I promise this is only done because I need to finish the f****** paper!
-				offsetX = -( this.getAvgXpos() - MotherMachineGui.GL_WIDTH_TO_SHOW / 2 );
+				offsetX = -( this.getAvgXpos() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS );
 				offsetY = view.min( 1 );
 			} else {
 				offsetX = view.min( 0 );
@@ -640,7 +639,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			if ( view.min( 0 ) == 0 ) {
 				// In case I give the cropped paramaxflow-baby I lost the offset and must do ugly shit...
 				// I promise this is only done because I need to finish the f****** paper!
-				offsetX = -( this.getAvgXpos() - MotherMachineGui.GL_WIDTH_TO_SHOW / 2 );
+				offsetX = -( this.getAvgXpos() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS );
 				offsetY = view.min( 1 );
 			} else {
 				offsetX = view.min( 0 );

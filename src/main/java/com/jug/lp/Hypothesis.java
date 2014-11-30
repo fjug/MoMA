@@ -74,5 +74,4 @@ public class Hypothesis< T > {
 	public void setSegmentSpecificConstraint( final GRBConstr constr ) {
 		this.segmentSpecificConstraint = constr;
 	}
-
 }

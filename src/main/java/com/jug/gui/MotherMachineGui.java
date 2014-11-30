@@ -40,14 +40,15 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.filechooser.FileFilter;
 
 import loci.formats.gui.ExtensionFileFilter;
+import net.imglib2.IterableInterval;
 import net.imglib2.Localizable;
 import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.algorithm.componenttree.ComponentForest;
-import net.imglib2.img.Img;
+import net.imglib2.histogram.Histogram1d;
+import net.imglib2.histogram.Real1dBinMapper;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.ValuePair;
 import net.imglib2.view.IntervalView;
@@ -72,14 +73,7 @@ import com.jug.util.Util;
  */
 public class MotherMachineGui extends JPanel implements ChangeListener, ActionListener {
 
-	// -------------------------------------------------------------------------------------
-	// statics
-	// -------------------------------------------------------------------------------------
-	/**
-	 * Parameter: how many pixels wide is the image containing the selected
-	 * GrowthLine?
-	 */
-	public static final int GL_WIDTH_TO_SHOW = 50;
+	private static final long serialVersionUID = -1008974839249784873L;
 
 	// -------------------------------------------------------------------------------------
 	// fields
@@ -141,10 +135,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private JButton btnRedoAllHypotheses;
 	private JButton btnExchangeSegHyps;
 	private JButton btnOptimize;
-	private JButton btnOptimizeAll;
 	private JButton btnExportAllStats;
-	private JButton btnGenerateAllPaperStats;
-	private JButton btnOptimizeRemainingAndExport;
 	private JButton btnSaveFG;
 
 	private JCheckBox cbShowParaMaxFlowData;
@@ -179,7 +170,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		final JPanel panelContent = new JPanel( new BorderLayout() );
 		JPanel panelVerticalHelper;
 		JPanel panelHorizontalHelper;
-		final JLabel labelHelper;
 
 		// --- Slider for time and GL -------------
 
@@ -241,14 +231,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		btnRedoAllHypotheses.addActionListener( this );
 		btnOptimize = new JButton( "(re)Optimize" );
 		btnOptimize.addActionListener( this );
-		btnOptimizeAll = new JButton( "Optimize All" );
-		btnOptimizeAll.addActionListener( this );
 		btnExportAllStats = new JButton( "Export" );
 		btnExportAllStats.addActionListener( this );
-		btnGenerateAllPaperStats = new JButton( "Gen. Paper Stats" );
-		btnGenerateAllPaperStats.addActionListener( this );
-		btnOptimizeRemainingAndExport = new JButton( "Opt. Remaining & Export" );
-		btnOptimizeRemainingAndExport.addActionListener( this );
 		btnSaveFG = new JButton( "Save FG" );
 		btnSaveFG.addActionListener( this );
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.RIGHT, 5, 0 ) );
@@ -440,7 +424,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelHorizontalHelper.add( labelHelper );
 		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
 		// - - - - - -
-		imgCanvasActiveLeft = new Viewer2DCanvas( this, GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		imgCanvasActiveLeft = new Viewer2DCanvas( this, MotherMachine.GL_WIDTH_IN_PIXELS + 2 * MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, ( int ) model.mm.getImgRaw().dimension( 1 ) );
 		panelVerticalHelper.add( imgCanvasActiveLeft, BorderLayout.CENTER );
 		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
 		panelVerticalHelper.setBackground( Color.BLACK );
@@ -463,7 +447,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelHorizontalHelper.add( labelHelper );
 		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
 		// - - - - - -
-		imgCanvasActiveCenter = new Viewer2DCanvas( this, GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		imgCanvasActiveCenter = new Viewer2DCanvas( this, MotherMachine.GL_WIDTH_IN_PIXELS + 2 * MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, ( int ) model.mm.getImgRaw().dimension( 1 ) );
 		panelVerticalHelper.add( imgCanvasActiveCenter, BorderLayout.CENTER );
 		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 3, 3, 3, 3, Color.RED ) );
 		panelVerticalHelper.setBackground( Color.BLACK );
@@ -486,7 +470,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelHorizontalHelper.add( labelHelper );
 		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
 		// - - - - - -
-		imgCanvasActiveRight = new Viewer2DCanvas( this, GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		imgCanvasActiveRight = new Viewer2DCanvas( this, MotherMachine.GL_WIDTH_IN_PIXELS + 2 * MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, ( int ) model.mm.getImgRaw().dimension( 1 ) );
 		panelVerticalHelper.add( imgCanvasActiveRight, BorderLayout.CENTER );
 		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
 		panelVerticalHelper.setBackground( Color.BLACK );
@@ -605,12 +589,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			min = Math.min( min, pos );
 			max = Math.max( max, pos );
 		}
-		final int maxLocation = SimpleFunctionAnalysis.getMax( ydata, min, max ).a.intValue();
 		final int leftLocation = min;
 		final int rightLocation = max;
-		final float maxLocVal = ydata[ maxLocation ];
-		final float minVal = SimpleFunctionAnalysis.getMin( ydata, min, max ).b.floatValue();
-//					xydxdyCTNBorders[ i ] = new float[] { 0.5 * ( leftLocation + rightLocation ) + 1, 0.5 * ( minVal + maxLocVal ), rightLocation - leftLocation, maxLocVal - minVal };
 		boxDataArray[ index ] = new float[] { 0.5f * ( leftLocation + rightLocation ) + 1, 1.0f - level * 0.05f - 0.02f, rightLocation - leftLocation, 0.02f };
 	}
 
@@ -647,7 +627,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 			if ( model.getCurrentGLFsPredecessor() != null ) {
 				final GrowthLineFrame glf = model.getCurrentGLFsPredecessor();
-				viewImgLeftActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
+				viewImgLeftActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
 				imgCanvasActiveLeft.setScreenImage( glf, viewImgLeftActive );
 			} else {
 				// show something empty
@@ -658,7 +638,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 			if ( model.getCurrentGLFsSuccessor() != null && sliderTime.getValue() < sliderTime.getMaximum() ) { // hence copy of last frame for border-problem avoidance
 				final GrowthLineFrame glf = model.getCurrentGLFsSuccessor();
-				viewImgRightActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
+				viewImgRightActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
 				imgCanvasActiveRight.setScreenImage( glf, viewImgRightActive );
 			} else {
 				// show something empty
@@ -668,7 +648,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			// - -  t  - - - - - -
 
 			final GrowthLineFrame glf = model.getCurrentGLF();
-			viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
+			viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
 
 			final IntervalView< FloatType > paramaxflowSumImageFloatTyped = model.getCurrentGLF().getParamaxflowSumImageFloatTyped( null );
 			if ( paramaxflowSumImageFloatTyped != null && cbShowParaMaxFlowData.isSelected() ) {
@@ -832,361 +812,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			} );
 			t.start();
 		}
-		if ( e.getSource().equals( btnOptimizeAll ) ) {
-			final Thread t = new Thread( new Runnable() {
-
-				@Override
-				public void run() {
-					int i = 0;
-					final int glCount = model.mm.getGrowthLines().size();
-					for ( final GrowthLine gl : model.mm.getGrowthLines() ) {
-						i++;
-
-						System.out.println( "Filling in CT hypotheses where needed..." );
-						for ( final GrowthLineFrame glf : gl.getFrames() ) {
-							if ( glf.getComponentTree() == null ) {
-								glf.generateSimpleSegmentationHypotheses( MotherMachine.instance.getImgTemp() );
-							}
-						}
-
-						System.out.println( String.format( "Generating ILP #%d of %d...", i, glCount ) );
-						gl.generateILP();
-						System.out.println( String.format( "Running ILP #%d of %d...", i, glCount ) );
-						gl.runILP();
-					}
-					System.out.println( "...done!" );
-					dataToDisplayChanged();
-				}
-			} );
-			t.start();
-		}
 		if ( e.getSource().equals( btnExportAllStats ) ) {
 			exportAllStats();
-		}
-
-		if ( e.getSource().equals( btnGenerateAllPaperStats ) ) {
-			final MotherMachineGui self = this;
-			final Thread t = new Thread( new Runnable() {
-
-				@Override
-				public void run() {
-
-					// READ GL RANGE TO WORK ON
-					// ------------------------
-					int firstGLtoProcess = 0;
-					int lastGLtoProcess = ( MotherMachine.instance.getGrowthLines().size() - 1 );
-
-					boolean done = false;
-					while ( !done ) {
-						try {
-							final String str = ( String ) JOptionPane.showInputDialog( self, "Number of first GL to be processed:", "Start at...", JOptionPane.QUESTION_MESSAGE, null, null, "" + firstGLtoProcess );
-							if ( str == null ) return; // User decided to hit cancel!
-							firstGLtoProcess = Integer.parseInt( str );
-							done = true;
-						} catch ( final NumberFormatException e ) {
-							done = false;
-						}
-					}
-					done = false;
-					while ( !done ) {
-						try {
-							final String str = ( String ) JOptionPane.showInputDialog( self, "Number of last GL to be processed:", "End with...", JOptionPane.QUESTION_MESSAGE, null, null, "" + lastGLtoProcess );
-							if ( str == null ) return; // User decided to hit cancel!
-							lastGLtoProcess = Integer.parseInt( str );
-							done = true;
-						} catch ( final NumberFormatException e ) {
-							done = false;
-						}
-					}
-					done = false;
-					String seg_methods_to_do = "123";
-					while ( !done ) {
-						seg_methods_to_do = ( String ) JOptionPane.showInputDialog( self, "Process CT ('1'), PMF ('2'), PMFRF ('3'), or a subset (e.g. '13')?", "Segmentations to do...", JOptionPane.QUESTION_MESSAGE, null, null, seg_methods_to_do );
-						if ( seg_methods_to_do == null ) return; // User decided to hit cancel!
-						if ( seg_methods_to_do.matches( "(.*)1(.*)" ) || seg_methods_to_do.matches( "(.*)2(.*)" ) || seg_methods_to_do.matches( "(.*)3(.*)" ) ) {
-							done = true;
-						}
-					}
-
-					// READ OUTPUT FOLDER TO SAVE STATS TO
-					// -----------------------------------
-					final JFileChooser chooser = new JFileChooser( new File( MotherMachine.STATS_OUTPUT_PATH ).getParent() );
-					chooser.setDialogTitle( "Select output folder..." );
-					chooser.setFileFilter( new FileFilter() {
-
-						@Override
-						public final boolean accept( final File file ) {
-							return file.isDirectory();
-						}
-
-						@Override
-						public String getDescription() {
-							return "We only take directories";
-						}
-					} );
-					chooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-					chooser.setAcceptAllFileFilterUsed( false );
-
-					String foldername = "";
-					if ( chooser.showSaveDialog( self ) == JFileChooser.APPROVE_OPTION ) {
-						foldername = chooser.getSelectedFile().getAbsolutePath();
-						MotherMachine.STATS_OUTPUT_PATH = foldername;
-
-						if ( !foldername.endsWith( "/" ) ) {
-							foldername += '/';
-						}
-
-						MotherMachine.logStats = true;
-
-						// --------------------------------------------------------------------------------
-						// CT segmentation
-						// --------------------------------------------------------------------------------
-						if ( seg_methods_to_do.matches( "(.*)1(.*)" ) ) { // 1 == CT
-							try {
-								if ( MotherMachine.fileWriterForStats != null ) {
-									MotherMachine.fileWriterForStats.close();
-								}
-								MotherMachine.fileWriterForStats = new OutputStreamWriter( new FileOutputStream( foldername + "stats_CT_" + firstGLtoProcess + "-" + lastGLtoProcess + ".csv" ) );
-							} catch ( final FileNotFoundException e1 ) {
-								JOptionPane.showMessageDialog( self, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
-								e1.printStackTrace();
-								return;
-							} catch ( final IOException e1 ) {
-								JOptionPane.showMessageDialog( self, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
-								e1.printStackTrace();
-								return;
-							}
-
-							System.out.println( "CT\n======" );
-							MotherMachine.writeIntoStatsFile( "CT SEGMENTATION" );
-							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
-								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
-								for ( final GrowthLineFrame glf : gl.getFrames() ) {
-									System.out.print( "." );
-									glf.generateSimpleSegmentationHypotheses( MotherMachine.instance.getImgTemp() );
-								}
-								System.out.println( "" );
-								MotherMachine.writeIntoStatsFile( "GL" + i + ": done" );
-							}
-
-							// ILP building
-							MotherMachine.writeIntoStatsFile( "ILP GENERATION" );
-							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
-								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
-								gl.generateILP();
-								MotherMachine.writeIntoStatsFile( "GL" + i + ": done" );
-								System.out.println( "GL" + i + "'s ILP is set up." );
-							}
-
-							// Optimization
-							MotherMachine.writeIntoStatsFile( "OPTIMIZATION" );
-							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
-								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
-								gl.runILP();
-								MotherMachine.writeIntoStatsFile( "GL" + i + ": done" );
-								System.out.println( "Optimum found for GL " + i );
-							}
-
-							// Export results
-							MotherMachine.writeIntoStatsFile( "EXPORTING TRACKS" );
-							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
-								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
-								final File outfile = new File( foldername + "gl" + i + "_CT.csv" );
-								model.setCurrentGL( i );
-								exportTracks( outfile );
-							}
-						}
-
-						// --------------------------------------------------------------------------------
-						// PMF segmentation
-						// --------------------------------------------------------------------------------
-						if ( seg_methods_to_do.matches( "(.*)2(.*)" ) ) { // 2 == PMF
-							MotherMachine.USE_CLASSIFIER_FOR_PMF = false;
-
-							try {
-								if ( MotherMachine.fileWriterForStats != null ) {
-									MotherMachine.fileWriterForStats.close();
-								}
-								MotherMachine.fileWriterForStats = new OutputStreamWriter( new FileOutputStream( foldername + "stats_PMF_" + firstGLtoProcess + "-" + lastGLtoProcess + ".csv" ) );
-							} catch ( final FileNotFoundException e1 ) {
-								JOptionPane.showMessageDialog( self, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
-								e1.printStackTrace();
-								return;
-							} catch ( final IOException e1 ) {
-								JOptionPane.showMessageDialog( self, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
-								e1.printStackTrace();
-								return;
-							}
-
-							System.out.println( "\nPMF\n=======" );
-							MotherMachine.writeIntoStatsFile( "PMF SEGMENTATION" );
-							activateAwesomeHypotheses( firstGLtoProcess, lastGLtoProcess );
-
-							// ILP building
-							MotherMachine.writeIntoStatsFile( "ILP GENERATION" );
-							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
-								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
-								gl.generateILP();
-								MotherMachine.writeIntoStatsFile( "GL" + i + ": done" );
-								System.out.println( "GL" + i + "'s ILP is set up." );
-							}
-
-							// Optimization
-							MotherMachine.writeIntoStatsFile( "OPTIMIZATION" );
-							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
-								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
-								gl.runILP();
-								MotherMachine.writeIntoStatsFile( "GL" + i + ": done" );
-								System.out.println( "Optimum found for GL " + i );
-							}
-
-							// Export results
-							MotherMachine.writeIntoStatsFile( "EXPORTING TRACKS" );
-							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
-								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
-								final File outfile = new File( foldername + "gl" + i + "_PMFRF.csv" );
-								model.setCurrentGL( i );
-								exportTracks( outfile );
-							}
-						}
-
-						// --------------------------------------------------------------------------------
-						// PMFRF segmentation
-						// --------------------------------------------------------------------------------
-						if ( seg_methods_to_do.matches( "(.*)3(.*)" ) ) { // 3 == PMFRF
-							MotherMachine.USE_CLASSIFIER_FOR_PMF = true;
-
-							try {
-								if ( MotherMachine.fileWriterForStats != null ) {
-									MotherMachine.fileWriterForStats.close();
-								}
-								MotherMachine.fileWriterForStats = new OutputStreamWriter( new FileOutputStream( foldername + "stats_PMFRF_" + firstGLtoProcess + "-" + lastGLtoProcess + ".csv" ) );
-							} catch ( final FileNotFoundException e1 ) {
-								JOptionPane.showMessageDialog( self, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
-								e1.printStackTrace();
-								return;
-							} catch ( final IOException e1 ) {
-								JOptionPane.showMessageDialog( self, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
-								e1.printStackTrace();
-								return;
-							}
-
-							System.out.println( "\nPMFRF\n=======" );
-							MotherMachine.writeIntoStatsFile( "PMFRF SEGMENTATION" );
-							activateAwesomeHypotheses( firstGLtoProcess, lastGLtoProcess );
-
-							// ILP building
-							MotherMachine.writeIntoStatsFile( "ILP GENERATION" );
-							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
-								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
-								gl.generateILP();
-								MotherMachine.writeIntoStatsFile( "GL" + i + ": done" );
-								System.out.println( "GL" + i + "'s ILP is set up." );
-							}
-
-							// Optimization
-							MotherMachine.writeIntoStatsFile( "OPTIMIZATION" );
-							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
-								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
-								gl.runILP();
-								MotherMachine.writeIntoStatsFile( "GL" + i + ": done" );
-								System.out.println( "Optimum found for GL " + i );
-							}
-
-							// Export results
-							MotherMachine.writeIntoStatsFile( "EXPORTING TRACKS" );
-							for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
-								final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
-								final File outfile = new File( foldername + "gl" + i + "_PMFRF.csv" );
-								model.setCurrentGL( i );
-								exportTracks( outfile );
-							}
-						}
-
-						// STOP LOGGING (IS THAT USED ANYWHERE EXCEPT HERE ANYWAYS?)
-						MotherMachine.logStats = false;
-					}
-				}
-			} );
-			t.start();
-		}
-		if ( e.getSource().equals( btnOptimizeRemainingAndExport ) ) {
-			final MotherMachineGui self = this;
-			final Thread t = new Thread( new Runnable() {
-
-				@Override
-				public void run() {
-					final JFileChooser fc = new JFileChooser( MotherMachine.DEFAULT_PATH );
-					fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "csv", "CSV" }, "CVS-file" ) );
-
-					if ( fc.showSaveDialog( self ) == JFileChooser.APPROVE_OPTION ) {
-						File file = fc.getSelectedFile();
-						if ( !file.getAbsolutePath().endsWith( ".csv" ) && !file.getAbsolutePath().endsWith( ".CSV" ) ) {
-							file = new File( file.getAbsolutePath() + ".csv" );
-						}
-						MotherMachine.DEFAULT_PATH = file.getParent();
-
-						final Vector< Vector< String >> dataToExport = new Vector< Vector< String >>();
-
-						int i = 0;
-						final int glCount = model.mm.getGrowthLines().size();
-						for ( final GrowthLine gl : model.mm.getGrowthLines() ) {
-							i++;
-							if ( gl.getIlp() == null ) {
-								System.out.println( String.format( "\nGenerating ILP #%d of %d...", i, glCount ) );
-								gl.generateILP();
-								System.out.println( String.format( "Running ILP #%d of %d...", i, glCount ) );
-								gl.runILP();
-							}
-
-							dataToExport.add( gl.getDataVector() );
-						}
-
-						System.out.println( "Exporting data..." );
-						Writer out = null;
-						try {
-							out = new OutputStreamWriter( new FileOutputStream( file ) );
-
-							// writing header line
-							int rowNum = 0;
-							out.write( ", " );
-							for ( int colNum = 0; colNum < dataToExport.get( 0 ).size(); colNum++ ) {
-								out.write( String.format( "t=%d, ", rowNum ) );
-								rowNum++;
-							}
-							out.write( "\n" );
-							// writing GL-data-rows
-							int totalCellCount = 0;
-							for ( final Vector< String > rowInData : dataToExport ) {
-								rowNum++;
-								out.write( String.format( "GL%d, ", rowNum ) );
-								int lastValue = 0;
-								for ( final String datum : rowInData ) {
-									out.write( datum + ", " );
-									try {
-										lastValue = Integer.parseInt( datum );
-									} catch ( final NumberFormatException nfe ) {
-										lastValue = 0;
-									}
-								}
-								totalCellCount += lastValue;
-								out.write( "\n" );
-							}
-							out.write( "\nTotal cell count:, " + totalCellCount );
-							out.close();
-						} catch ( final FileNotFoundException e1 ) {
-							JOptionPane.showMessageDialog( self, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
-							e1.printStackTrace();
-						} catch ( final IOException e1 ) {
-							JOptionPane.showMessageDialog( self, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
-							e1.printStackTrace();
-						}
-						System.out.println( "...done!" );
-						dataToDisplayChanged();
-					}
-				}
-			} );
-			t.start();
 		}
 	}
 
@@ -1282,7 +909,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		for ( int i = firstGLtoProcess; i <= lastGLtoProcess; i++ ) {
 			final GrowthLine gl = MotherMachine.instance.getGrowthLines().get( i );
 			activateAwesomeHypothesesForGL( gl );
-			MotherMachine.writeIntoStatsFile( "GL" + i + ": done" );
 		}
 	}
 
@@ -1306,8 +932,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		final int numProcessors = 16; //Prefs.getThreads();
 		final int numThreads = Math.min( model.getCurrentGL().getFrames().size(), numProcessors );
-		final int numFurtherThreads = ( int ) Math.ceil( ( float ) ( numProcessors - numThreads ) / model.getCurrentGL().getFrames().size() ) + 1;
-
 		final Thread[] threads = new Thread[ numThreads ];
 
 		class ImageProcessingThread extends Thread {
@@ -1530,10 +1154,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			 * @param channel
 			 * @return
 			 */
-			public float[] computeChannelHistogram( final Img< FloatType > channel ) {
-				final float[] ret = new float[] { 0f, 5f, 10f, 15f, 20f, 25f, 30f, 35f, 40f, 45f, 50f, 55f };
-
-				return ret;
+			public long[] computeChannelHistogram( final IterableInterval< FloatType > view, final float min, final float max ) {
+				final Histogram1d< FloatType > histogram = new Histogram1d< FloatType >( view, new Real1dBinMapper< FloatType >( min, max, 20, false ) );
+				return histogram.toLongArray();
 			}
 		}
 
@@ -1604,7 +1227,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		linesToExport.add( "numCells = " + startingPoints.size() );
 
 		// Line 4: #channels
-		linesToExport.add( "numChannels = " + MotherMachine.instance.getRawChannelImgs().size() );
+		linesToExport.add( "numChannels = " + MotherMachine.instance.getRawChannelImgs().size() + "\n" );
 
 		// Export all cells (we found all their starting segments above)
 		for ( int cid = 0; cid < startingPoints.size(); cid++ ) {
@@ -1614,15 +1237,22 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			do {
 				final Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( segmentRecord.hyp.getWrappedHypothesis() );
 				final int height = limits.getB() - limits.getA();
-				linesToExport.add( String.format( "\tframe=\t%d; cell_height=%d", segmentRecord.frame, height ) );
+				linesToExport.add( String.format( "\tframe=%d; cell_height=%d\t", segmentRecord.frame, height ) );
 
 				// export info per image channel
 				for ( int c = 0; c < MotherMachine.instance.getRawChannelImgs().size(); c++ ) {
-					final Img< FloatType > channel = MotherMachine.instance.getRawChannelImgs().get( c );
-					final float[] hist = segmentRecord.computeChannelHistogram( channel );
-					String histStr = "\t\tChannel" + c;
-					for ( final float value : hist ) {
-						histStr += String.format( "; %8.2f", value );
+					final IntervalView< FloatType > channelFrame = Views.hyperSlice( MotherMachine.instance.getRawChannelImgs().get( c ), 2, segmentRecord.frame );
+					final IterableInterval< FloatType > segmentBoxInChannel = Util.getSegmentBoxInImg( channelFrame, segmentRecord.hyp, firstGLF.getAvgXpos() );
+
+					final FloatType min = new FloatType();
+					final FloatType max = new FloatType();
+					Util.computeMinMax( segmentBoxInChannel, min, max );
+					final long[] hist = segmentRecord.computeChannelHistogram( segmentBoxInChannel, min.get(), max.get() );
+
+					String histStr = "\t\tch=" + c;
+					histStr += String.format( "; min=%8.3f; max=%8.3f", min.get(), max.get() );
+					for ( final long value : hist ) {
+						histStr += String.format( "; %5d", value );
 					}
 					linesToExport.add( histStr );
 				}

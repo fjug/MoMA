@@ -9,10 +9,20 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 
 import javax.imageio.ImageIO;
 
+import net.imglib2.IterableInterval;
+import net.imglib2.Pair;
 import net.imglib2.Point;
+import net.imglib2.type.Type;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.IntervalView;
+import net.imglib2.view.Views;
+
+import com.jug.MotherMachine;
+import com.jug.lp.Hypothesis;
 
 /**
  * @author jug
@@ -122,4 +132,66 @@ public class Util {
 		}
 		return ret;
 	}
+
+	/**
+	 * 
+	 * @param input
+	 * @param min
+	 * @param max
+	 */
+	public static < T extends Comparable< T > & Type< T > > void computeMinMax( final Iterable< T > input, final T min, final T max ) {
+		// create a cursor for the image (the order does not matter)
+		final Iterator< T > iterator = input.iterator();
+
+		// initialize min and max with the first image value
+		T type = iterator.next();
+
+		min.set( type );
+		max.set( type );
+
+		// loop over the rest of the data and determine min and max value
+		while ( iterator.hasNext() ) {
+			// we need this type more than once
+			type = iterator.next();
+
+			if ( type.compareTo( min ) < 0 ) min.set( type );
+
+			if ( type.compareTo( max ) > 0 ) max.set( type );
+		}
+	}
+
+	/**
+	 * @param channelFrame
+	 * @param hyp
+	 * @return
+	 */
+	public static IterableInterval< FloatType > getSegmentBoxInImg( final IntervalView< FloatType > channelFrame, final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long glMiddleInImg ) {
+		final long[] lt = Util.getTopLeftInSourceImg( hyp, glMiddleInImg );
+		final long[] rb = Util.getRightBottomInSourceImg( hyp, glMiddleInImg );
+//		System.out.println( String.format( " >> %d, %d", rb[ 0 ] - lt[ 0 ], +rb[ 1 ] - lt[ 1 ] ) );
+		return Views.iterable( Views.interval( channelFrame, lt, rb ) );
+	}
+
+	/**
+	 * @param hyp
+	 * @return
+	 */
+	private static long[] getTopLeftInSourceImg( final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long middle ) {
+		final Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( hyp.getWrappedHypothesis() );
+		final long left = middle - MotherMachine.GL_WIDTH_IN_PIXELS / 2;
+		final long top = limits.getA();
+		return new long[] { left, top };
+	}
+
+	/**
+	 * @param hyp
+	 * @return
+	 */
+	private static long[] getRightBottomInSourceImg( final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long middle ) {
+		final Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( hyp.getWrappedHypothesis() );
+		final long right = middle + MotherMachine.GL_WIDTH_IN_PIXELS / 2 + MotherMachine.GL_WIDTH_IN_PIXELS % 2;
+		final long bottom = limits.getB();
+		return new long[] { right, bottom };
+	}
+
 }

@@ -11,6 +11,7 @@ import io.scif.img.ImgOpener;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import net.imglib2.IterableInterval;
@@ -110,6 +111,7 @@ public class FloatTypeImgLoader {
 			}
 		};
 		final File[] listOfFiles = folder.listFiles( filter );
+		Arrays.sort( listOfFiles ); // LINUX does not do that by default!
 		if ( listOfFiles == null ) { throw new Exception( "Given argument is not a valid folder!" ); }
 
 		final List< Img< FloatType >> images = loadMMTiffSequence( listOfFiles, normalize );

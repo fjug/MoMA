@@ -8,7 +8,6 @@ import gurobi.GRBEnv;
 import gurobi.GRBException;
 import ij.ImageJ;
 
-import java.awt.DisplayMode;
 import java.awt.FileDialog;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -22,7 +21,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,19 +35,12 @@ import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
-import net.imglib2.Cursor;
 import net.imglib2.Point;
-import net.imglib2.RandomAccessible;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.RealRandomAccessible;
 import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.algorithm.stats.Normalize;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
-import net.imglib2.realtransform.AffineTransform2D;
-import net.imglib2.realtransform.RealViews;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
@@ -63,16 +54,12 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.SystemUtils;
-import org.apache.commons.math3.stat.regression.SimpleRegression;
 
 import com.jug.gui.JFrameSnapper;
 import com.jug.gui.MotherMachineGui;
 import com.jug.gui.MotherMachineModel;
 import com.jug.loops.Loops;
-import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.ops.cursor.FindLocalMaxima;
-import com.jug.ops.cursor.FindLocationAboveThreshold;
-import com.jug.ops.numerictype.VarOfRai;
 import com.jug.segmentation.GrowthLineSegmentationMagic;
 import com.jug.util.DataMover;
 import com.jug.util.FloatTypeImgLoader;
@@ -93,7 +80,6 @@ public class MotherMachine {
 	 * data. Used while searching the growth line centers.
 	 */
 	public static float SIGMA_GL_DETECTION_X = 20f;
-
 	public static float SIGMA_GL_DETECTION_Y = 0f;
 
 	/**
@@ -101,8 +87,14 @@ public class MotherMachine {
 	 * data. Used while searching the gaps between bacteria.
 	 */
 	private static float SIGMA_PRE_SEGMENTATION_X = 0f;
-
 	private static float SIGMA_PRE_SEGMENTATION_Y = 0f;
+
+	/**
+	 * Parameter: how many pixels wide is the image containing the selected
+	 * GrowthLine?
+	 */
+	public static int GL_WIDTH_IN_PIXELS = 20;
+	public static int GL_PIXEL_PADDING_IN_VIEWS = 15;
 
 	/**
 	 * Parameter: later border in pixels - well centers detected too close to
@@ -250,17 +242,6 @@ public class MotherMachine {
 	 * papers!).
 	 */
 	public static String STATS_OUTPUT_PATH = DEFAULT_PATH;
-
-	/**
-	 * If true there will be speed and success stats be logged into fileForStats
-	 */
-	public static boolean logStats;
-
-	/**
-	 * If logStats==true there will be speed and success stats be logged into
-	 * this OutputStreamWriter.
-	 */
-	public static OutputStreamWriter fileWriterForStats;
 
 	/**
 	 * Control if ImageJ and loaded data will be shown...
@@ -430,6 +411,7 @@ public class MotherMachine {
 		BGREM_TEMPLATE_XMIN = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMIN", Integer.toString( BGREM_TEMPLATE_XMIN ) ) );
 		BGREM_TEMPLATE_XMAX = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMAX", Integer.toString( BGREM_TEMPLATE_XMAX ) ) );
 		BGREM_X_OFFSET = Integer.parseInt( props.getProperty( "BGREM_X_OFFSET", Integer.toString( BGREM_X_OFFSET ) ) );
+		GL_WIDTH_IN_PIXELS = Integer.parseInt( props.getProperty( "GL_WIDTH_IN_PIXELS", Integer.toString( GL_WIDTH_IN_PIXELS ) ) );
 		GL_OFFSET_BOTTOM = Integer.parseInt( props.getProperty( "GL_OFFSET_BOTTOM", Integer.toString( GL_OFFSET_BOTTOM ) ) );
 		GL_OFFSET_TOP = Integer.parseInt( props.getProperty( "GL_OFFSET_TOP", Integer.toString( GL_OFFSET_TOP ) ) );
 		GL_OFFSET_LATERAL = Integer.parseInt( props.getProperty( "GL_OFFSET_LATERAL", Integer.toString( GL_OFFSET_LATERAL ) ) );
@@ -459,7 +441,6 @@ public class MotherMachine {
 			final GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 			final GraphicsDevice[] gs = ge.getScreenDevices();
 			for ( int i = 0; i < gs.length; i++ ) {
-				final DisplayMode dm = gs[ i ].getDisplayMode();
 				if ( gs[ i ].getDefaultConfiguration().getBounds().contains( new java.awt.Point( GUI_POS_X, GUI_POS_Y ) ) ) {
 					pos_ok = true;
 				}
@@ -530,11 +511,6 @@ public class MotherMachine {
 			gui.exportAllStats();
 
 			instance.saveParams();
-			if ( fileWriterForStats != null ) {
-				try {
-					fileWriterForStats.close();
-				} catch ( final IOException e ) {}
-			}
 
 			System.exit( 0 );
 		}
@@ -549,13 +525,9 @@ public class MotherMachine {
 	 */
 	public ImageJ ij;
 
-	private double dCorrectedSlope;
-
-	private Img< FloatType > imgRaw;
 	private List< Img< FloatType >> rawChannelImgs;
-
+	private Img< FloatType > imgRaw;
 	private Img< FloatType > imgTemp;
-
 	private Img< ARGBType > imgAnnotated;
 
 	/**
@@ -570,11 +542,6 @@ public class MotherMachine {
 	 * Contains all GrowthLines found in the given data.
 	 */
 	private List< GrowthLine > growthLines;
-
-	/**
-	 * All ILP-related structures are within mmILP.
-	 */
-	private GrowthLineTrackingILP mmILP;
 
 	/**
 	 * Frame hosting the console output.
@@ -594,6 +561,13 @@ public class MotherMachine {
 	 */
 	public Img< FloatType > getImgRaw() {
 		return imgRaw;
+	}
+
+	/**
+	 * @return the rawChannelImgs
+	 */
+	public List< Img< FloatType >> getRawChannelImgs() {
+		return rawChannelImgs;
 	}
 
 	/**
@@ -754,11 +728,6 @@ public class MotherMachine {
 			@Override
 			public void windowClosing( final WindowEvent we ) {
 				saveParams();
-				if ( fileWriterForStats != null ) {
-					try {
-						fileWriterForStats.close();
-					} catch ( final IOException e ) {}
-				}
 				System.exit( 0 );
 			}
 		} );
@@ -945,6 +914,7 @@ public class MotherMachine {
 			props.setProperty( "BGREM_TEMPLATE_XMIN", Integer.toString( BGREM_TEMPLATE_XMIN ) );
 			props.setProperty( "BGREM_TEMPLATE_XMAX", Integer.toString( BGREM_TEMPLATE_XMAX ) );
 			props.setProperty( "BGREM_X_OFFSET", Integer.toString( BGREM_X_OFFSET ) );
+			props.setProperty( "GL_WIDTH_IN_PIXELS", Integer.toString( GL_WIDTH_IN_PIXELS ) );
 			props.setProperty( "GL_OFFSET_BOTTOM", Integer.toString( GL_OFFSET_BOTTOM ) );
 			props.setProperty( "GL_OFFSET_TOP", Integer.toString( GL_OFFSET_TOP ) );
 			props.setProperty( "GL_OFFSET_LATERAL", Integer.toString( GL_OFFSET_LATERAL ) );
@@ -1047,11 +1017,11 @@ public class MotherMachine {
 		System.out.println( " done!" );
 
 		if ( HEADLESS ) {
-			System.out.println( "Generating Integer Linear Programs..." );
+			System.out.println( "Generating Integer Linear Program(s)..." );
 			generateILPs();
 			System.out.println( " done!" );
 
-			System.out.println( "Running Integer Linear Programs..." );
+			System.out.println( "Running Integer Linear Program(s)..." );
 			runILPs();
 			System.out.println( " done!" );
 		}
@@ -1071,255 +1041,11 @@ public class MotherMachine {
 		imgAnnotated = DataMover.createEmptyArrayImgLike( img, new ARGBType() );
 	}
 
-	/**
-	 * Rotates the whole stack (each Z-slize) in order to vertically align the
-	 * wells seen in the micrographs come from the MotherMachine. Note: This is
-	 * NOT done in-place! The returned <code>Img</code> in newly created!
-	 * 
-	 * @param img
-	 *            - the 3d <code>Img</code> to be straightened.
-	 * @return the straightened <code>Img</code>. (Might be larger to avoid
-	 *         loosing data!)
-	 */
-	private void straightenRawImg() {
-		assert ( imgRaw.numDimensions() == 3 );
-
-		// new raw image
-		Img< FloatType > rawNew;
-
-		// find out how slanted the given stack is...
-		final List< Cursor< FloatType >> points = new Loops< FloatType, Cursor< FloatType >>().forEachHyperslice( Views.hyperSlice( imgRaw, 2, 0 ), 0, new FindLocationAboveThreshold< FloatType >( new FloatType( 0.33f ) ) );
-
-		final SimpleRegression regression = new SimpleRegression();
-		final long[] pos = new long[ 2 ];
-		int i = 0;
-		final double[] plotData = new double[ points.size() ];
-		for ( final Cursor< FloatType > c : points ) {
-			c.localize( pos );
-			regression.addData( i, -pos[ 0 ] );
-			plotData[ i ] = -pos[ 0 ];
-			// System.out.println("Regression.addData ( " + i + ", " + (-pos[0])
-			// + " )");
-			i++;
-		}
-		// Plot2d.simpleLinePlot("Global positioning regression data",
-		// plotData);
-
-		this.dCorrectedSlope = regression.getSlope();
-		final double radSlant = Math.atan( regression.getSlope() );
-		// System.out.println("slope = " + regression.getSlope());
-		// System.out.println("intercept = " + regression.getIntercept());
-		final double[] dCenter2d = new double[] { imgRaw.dimension( 0 ) * 0.5, -regression.getIntercept() + points.size() * regression.getSlope() };
-
-		// ...and inversely rotate the whole stack in XY
-		final AffineTransform2D affine = new AffineTransform2D();
-		affine.translate( -dCenter2d[ 0 ], -dCenter2d[ 1 ] );
-		affine.rotate( radSlant );
-		affine.translate( dCenter2d[ 0 ], dCenter2d[ 1 ] );
-
-		long minX = 0, maxX = imgRaw.dimension( 0 );
-		long minY = 0;
-		final long maxY = imgRaw.dimension( 1 );
-		final double[][] corners = { new double[] { minX, minY }, new double[] { maxX, minY }, new double[] { minX, maxY }, new double[] { maxX, maxY } };
-		final double[] tmp = new double[ 2 ];
-		for ( final double[] corner : corners ) {
-			affine.apply( corner, tmp );
-			minX = Math.min( minX, ( long ) tmp[ 0 ] );
-			maxX = Math.max( maxX, ( long ) tmp[ 0 ] );
-			minY = Math.min( minY, ( long ) tmp[ 1 ] );
-			// maxY = Math.max(maxY, (long)tmp[1]); // if this line is active
-			// also the bottom would be extenden while rotating (currently not
-			// wanted!)
-		}
-
-		rawNew = imgRaw.factory().create( new long[] { maxX - minX, maxY - minY, imgRaw.dimension( 2 ) }, imgRaw.firstElement() );
-
-		for ( i = 0; i < imgRaw.dimension( 2 ); i++ ) {
-			final RandomAccessibleInterval< FloatType > viewZSlize = Views.hyperSlice( imgRaw, 2, i );
-			final RandomAccessible< FloatType > raInfZSlize = Views.extendValue( viewZSlize, new FloatType( 0.0f ) );
-			final RealRandomAccessible< FloatType > rraInterpolatedZSlize = Views.interpolate( raInfZSlize, new NLinearInterpolatorFactory< FloatType >() );
-			final RandomAccessible< FloatType > raRotatedZSlize = RealViews.affine( rraInterpolatedZSlize, affine );
-
-			final RandomAccessibleInterval< FloatType > raiRotatedAndTruncatedZSlize = Views.zeroMin( Views.interval( raRotatedZSlize, new long[] { minX, minY }, new long[] { maxX, maxY } ) );
-
-			DataMover.copy( raiRotatedAndTruncatedZSlize, Views.iterable( Views.hyperSlice( rawNew, 2, i ) ) );
-		}
-
-		// set new, straightened image to be the new imgRaw
-		imgRaw = rawNew;
-	}
-
-	/**
-	 * Finds the region of interest in the given 3d image stack and crops it.
-	 * Note: each cropped z-slize will be renormalized to [0,1]. Precondition:
-	 * given <code>Img</code> should be rotated such that the seen wells are
-	 * axis parallel.
-	 * 
-	 * @param img
-	 *            - the streightened 3d <code>Img</code> that should be cropped
-	 *            down to contain only the ROI.
-	 */
-	private void cropRawImgToROI() {
-		assert ( imgRaw.numDimensions() == 3 );
-
-		// return image
-		Img< FloatType > rawNew = null;
-
-		// crop positions to be evaluated
-		long top = 0, bottom = imgRaw.dimension( 1 );
-		long left, right;
-
-		// check for possible crop in first and last image
-		final long[] lZPositions = new long[] { 0, imgRaw.dimension( 2 ) - 1 };
-		for ( final long lZPos : lZPositions ) {
-			// find out how slanted the given stack is...
-			final List< FloatType > points = new Loops< FloatType, FloatType >().forEachHyperslice( Views.hyperSlice( imgRaw, 2, lZPos ), 1, new VarOfRai< FloatType >() );
-
-			final double[] y = new double[ points.size() ];
-			int i = 0;
-			for ( final FloatType dtPoint : points ) {
-				y[ i ] = dtPoint.get();
-				i++;
-			}
-
-			// Plot2d.simpleLinePlot("Variance in image rows", y, "Variance");
-			final double threshold = 0.005;
-
-			// looking for longest interval above threshold
-			int curMaxLen = 0;
-			int curLen = 0;
-			long topCandidate = 0;
-			boolean below = true;
-			for ( int j = 0; j < y.length; j++ ) {
-				if ( below && y[ j ] > threshold ) {
-					topCandidate = j;
-					below = false;
-					curLen = 1;
-				}
-				if ( !below && y[ j ] > threshold ) {
-					curLen++;
-				}
-				if ( !below && ( y[ j ] <= threshold || j == y.length - 1 ) ) {
-					below = true;
-					if ( curLen > curMaxLen ) {
-						curMaxLen = curLen;
-						top = topCandidate;
-						bottom = j;
-					}
-					curLen = 0;
-				}
-			}
-			// System.out.println(">> Top/bottom: " + top + " / " + bottom);
-		}
-		left = Math.round( Math.floor( 0 - this.dCorrectedSlope * bottom ) );
-		right = Math.round( Math.ceil( imgRaw.dimension( 0 ) + this.dCorrectedSlope * ( imgRaw.dimension( 1 ) - top ) ) );
-
-		// create image that can host cropped data
-		rawNew = imgRaw.factory().create( new long[] { right - left, bottom - top, imgRaw.dimension( 2 ) }, imgRaw.firstElement() );
-
-		// and copy it there
-		for ( int i = 0; i < imgRaw.dimension( 2 ); i++ ) {
-			final RandomAccessibleInterval< FloatType > viewZSlize = Views.hyperSlice( imgRaw, 2, i );
-			final RandomAccessibleInterval< FloatType > viewCroppedZSlize = Views.zeroMin( Views.interval( viewZSlize, new long[] { left, top }, new long[] { bottom, right } ) );
-
-			DataMover.copy( viewCroppedZSlize, Views.iterable( Views.hyperSlice( rawNew, 2, i ) ) );
-			// Normalize.normalize(Views.iterable( Views.hyperSlice(ret, 2, i)
-			// ), new FloatType(0.0), new FloatType(1.0));
-		}
-
-		// set new, straightened image to be the new imgRaw
-		imgRaw = rawNew;
-	}
-
-	/**
-	 * Simple but effective method to subtract uneven illumination from the
-	 * growth-line data.
-	 * 
-	 * @param img
-	 *            FloatType image stack.
-	 */
-	private void subtractBackgroundInRaw() {
-
-		for ( int i = 0; i < getGrowthLines().size(); i++ ) {
-			for ( int f = 0; f < getGrowthLines().get( i ).size(); f++ ) {
-				final GrowthLineFrame glf = getGrowthLines().get( i ).get( f );
-
-				final int glfX = glf.getAvgXpos();
-				if ( glfX == -1 ) continue; // do not do anything with empty GLFs
-
-				final int glfY1 = 0; // gl.getFirstPoint().getIntPosition(1);
-				final int glfY2 = ( int ) imgRaw.dimension( 1 ) - 1; // gl.getLastPoint().getIntPosition(1);
-
-				final IntervalView< FloatType > frame = Views.hyperSlice( imgRaw, 2, f );
-
-				float rowAvgs[] = new float[ glfY2 - glfY1 + 1 ];
-				int colCount = 0;
-				// Look to the left if you are not the first GLF
-				if ( glfX > MotherMachine.BGREM_TEMPLATE_XMAX ) {
-					final IntervalView< FloatType > leftBackgroundWindow = Views.interval( frame, new long[] { glfX - MotherMachine.BGREM_TEMPLATE_XMAX, glfY1 }, new long[] { glfX - MotherMachine.BGREM_TEMPLATE_XMIN, glfY2 } );
-					rowAvgs = addRowSumsFromInterval( leftBackgroundWindow, rowAvgs );
-					colCount += ( MotherMachine.BGREM_TEMPLATE_XMAX - MotherMachine.BGREM_TEMPLATE_XMIN );
-				}
-				// Look to the right if you are not the last GLF
-				if ( glfX < imgRaw.dimension( 0 ) - MotherMachine.BGREM_TEMPLATE_XMAX ) {
-					final IntervalView< FloatType > rightBackgroundWindow = Views.interval( frame, new long[] { glfX + MotherMachine.BGREM_TEMPLATE_XMIN, glfY1 }, new long[] { glfX + MotherMachine.BGREM_TEMPLATE_XMAX, glfY2 } );
-					rowAvgs = addRowSumsFromInterval( rightBackgroundWindow, rowAvgs );
-					colCount += ( MotherMachine.BGREM_TEMPLATE_XMAX - MotherMachine.BGREM_TEMPLATE_XMIN );
-				}
-				// compute averages
-				for ( int j = 0; j < rowAvgs.length; j++ ) {
-					rowAvgs[ j ] /= colCount;
-				}
-
-				// Subtract averages you've seen to your left and/or to your
-				// right
-				final long x1 = Math.max( 0, glfX - MotherMachine.BGREM_X_OFFSET );
-				final long x2 = Math.min( frame.dimension( 0 ) - 1, glfX + MotherMachine.BGREM_X_OFFSET );
-				final IntervalView< FloatType > growthLineArea = Views.interval( frame, new long[] { x1, glfY1 }, new long[] { x2, glfY2 } );
-				removeValuesFromRows( growthLineArea, rowAvgs );
-				// Normalize the zone we removed the background from...
-				Normalize.normalize( Views.iterable( growthLineArea ), new FloatType( 0.0f ), new FloatType( 1.0f ) );
-			}
-		}
-	}
-
 	private void normalizePerFrame( final Img< FloatType > img, final int topOffset, final int bottomOffset ) {
 		for ( int f = 0; f < img.dimension( 2 ); f++ ) {
 			final IntervalView< FloatType > slice = Views.hyperSlice( img, 2, f );
 			final IntervalView< FloatType > roi = Views.interval( slice, new long[] { img.min( 0 ), img.min( 1 ) + topOffset }, new long[] { img.max( 0 ), img.max( 1 ) - bottomOffset } );
 			Normalize.normalize( Views.iterable( roi ), new FloatType( 0.0f ), new FloatType( 1.0f ) );
-		}
-	}
-
-	/**
-	 * Adds all intensity values of row i in view to rowSums[i].
-	 * 
-	 * @param view
-	 * @param rowSums
-	 */
-	private float[] addRowSumsFromInterval( final IntervalView< FloatType > view, final float[] rowSums ) {
-		for ( int i = 0; i < view.dimension( 1 ); i++ ) {
-			final IntervalView< FloatType > row = Views.hyperSlice( view, 1, i );
-			final Cursor< FloatType > cursor = Views.iterable( row ).cursor();
-			while ( cursor.hasNext() ) {
-				rowSums[ i ] += cursor.next().get();
-			}
-		}
-		return rowSums;
-	}
-
-	/**
-	 * Removes the value values[i] from all columns in row i of the given view.
-	 * 
-	 * @param view
-	 * @param values
-	 */
-	private void removeValuesFromRows( final IntervalView< FloatType > view, final float[] values ) {
-		for ( int i = 0; i < view.dimension( 1 ); i++ ) {
-			final Cursor< FloatType > cursor = Views.iterable( Views.hyperSlice( view, 1, i ) ).cursor();
-			while ( cursor.hasNext() ) {
-				cursor.next().set( new FloatType( Math.max( 0, cursor.get().get() - values[ i ] ) ) );
-			}
 		}
 	}
 
@@ -1590,7 +1316,6 @@ public class MotherMachine {
 		for ( final GrowthLine gl : getGrowthLines() ) {
 			gl.generateILP();
 		}
-//		getGrowthLines().get( 0 ).generateILP();
 	}
 
 	/**
@@ -1603,34 +1328,5 @@ public class MotherMachine {
 			gl.runILP();
 			i++;
 		}
-//		getGrowthLines().get( 0 ).runILP();
-	}
-
-	/**
-	 * @param string
-	 */
-	private static long lastStatsPrintingTime = 0;
-
-	public static void writeIntoStatsFile( final String string ) {
-		if ( fileWriterForStats != null ) {
-			final long currTime = System.currentTimeMillis();
-			try {
-				fileWriterForStats.write( "" + ( currTime - lastStatsPrintingTime ) + ", \t" );
-				lastStatsPrintingTime = currTime;
-				fileWriterForStats.write( "" + string + "\n" );
-				fileWriterForStats.flush();
-			} catch ( final IOException e ) {
-				System.out.println( "Statistics log could not be written to..." );
-			}
-		} else {
-			System.out.println( "Statistics log requested, but no fileWriter proveded!" );
-		}
-	}
-
-	/**
-	 * @return the rawChannelImgs
-	 */
-	public List< Img< FloatType >> getRawChannelImgs() {
-		return rawChannelImgs;
 	}
 }
