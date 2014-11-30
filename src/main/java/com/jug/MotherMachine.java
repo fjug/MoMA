@@ -384,7 +384,7 @@ public class MotherMachine {
 			if ( HEADLESS ) {
 				System.out.println( msgs );
 			} else {
-				JOptionPane.showMessageDialog( MotherMachine.guiFrame, msgs, "Gurobi Error?", JOptionPane.ERROR_MESSAGE );
+				JOptionPane.showMessageDialog( MotherMachine.getGuiFrame(), msgs, "Gurobi Error?", JOptionPane.ERROR_MESSAGE );
 			}
 			e.printStackTrace();
 			System.exit( 98 );
@@ -393,7 +393,7 @@ public class MotherMachine {
 			if ( HEADLESS ) {
 				System.out.println( msgs );
 			} else {
-				JOptionPane.showMessageDialog( MotherMachine.guiFrame, msgs, "Gurobi Error?", JOptionPane.ERROR_MESSAGE );
+				JOptionPane.showMessageDialog( MotherMachine.getGuiFrame(), msgs, "Gurobi Error?", JOptionPane.ERROR_MESSAGE );
 				ulr.printStackTrace();
 			}
 			System.out.println( "\n>>>>> Java library path: " + jlp + "\n" );
@@ -404,7 +404,7 @@ public class MotherMachine {
 		final MotherMachine main = new MotherMachine();
 		if ( !HEADLESS ) {
 			guiFrame = new JFrame( "Interactive MotherMachine" );
-			main.initMainWindow( guiFrame );
+			main.initMainWindow( getGuiFrame() );
 		}
 
 		props = main.loadParams();
@@ -455,10 +455,16 @@ public class MotherMachine {
 
 		String path = props.getProperty( "import_path", System.getProperty( "user.home" ) );
 		if ( inputFolder == null || inputFolder.equals( "" ) ) {
-			inputFolder = main.showStartupDialog( guiFrame, path );
+			inputFolder = main.showStartupDialog( getGuiFrame(), path );
 		}
 		path = inputFolder.getAbsolutePath();
 		props.setProperty( "import_path", path );
+
+		if ( !HEADLESS ) {
+			// Setting up console window...
+			main.initConsoleWindow();
+			main.showConsoleWindow( true );
+		}
 
 		// ------------------------------------------------------------------------------------------------------
 		// ------------------------------------------------------------------------------------------------------
@@ -484,24 +490,23 @@ public class MotherMachine {
 
 		if ( !HEADLESS ) {
 			System.out.print( "Build GUI..." );
-			// Setting up console window and window snapper...
-			main.initConsoleWindow();
-			main.showConsoleWindow();
+			main.showConsoleWindow( false );
+
 			final JFrameSnapper snapper = new JFrameSnapper();
 			snapper.addFrame( main.frameConsoleWindow );
-			snapper.addFrame( guiFrame );
+			snapper.addFrame( getGuiFrame() );
 
 			gui.setVisible( true );
-			guiFrame.add( gui );
-			guiFrame.setSize( GUI_WIDTH, GUI_HEIGHT );
-			guiFrame.setLocation( GUI_POS_X, GUI_POS_Y );
-			guiFrame.setVisible( true );
+			getGuiFrame().add( gui );
+			getGuiFrame().setSize( GUI_WIDTH, GUI_HEIGHT );
+			getGuiFrame().setLocation( GUI_POS_X, GUI_POS_Y );
+			getGuiFrame().setVisible( true );
 
 			SwingUtilities.invokeLater( new Runnable() {
 
 				@Override
 				public void run() {
-					snapper.snapFrames( main.frameConsoleWindow, guiFrame, JFrameSnapper.EAST );
+					snapper.snapFrames( main.frameConsoleWindow, getGuiFrame(), JFrameSnapper.EAST );
 				}
 			} );
 			System.out.println( " done!" );
@@ -704,15 +709,15 @@ public class MotherMachine {
 	/**
 	 * Shows the ConsoleWindow
 	 */
-	public void showConsoleWindow() {
-		frameConsoleWindow.setVisible( true );
+	public void showConsoleWindow( final boolean show ) {
+		frameConsoleWindow.setVisible( show );
 	}
 
 	/**
-	 * Hide the ConsoleWindow
+	 * @return
 	 */
-	public void hideConsoleWindow() {
-		frameConsoleWindow.setVisible( false );
+	public boolean isConsoleVisible() {
+		return this.frameConsoleWindow.isVisible();
 	}
 
 	/**
@@ -930,11 +935,11 @@ public class MotherMachine {
 			props.setProperty( "DEFAULT_PATH", DEFAULT_PATH );
 
 			if ( !MotherMachine.HEADLESS ) {
-				final java.awt.Point loc = guiFrame.getLocation();
+				final java.awt.Point loc = getGuiFrame().getLocation();
 				GUI_POS_X = loc.x;
 				GUI_POS_Y = loc.y;
-				GUI_WIDTH = guiFrame.getWidth();
-				GUI_HEIGHT = guiFrame.getHeight();
+				GUI_WIDTH = getGuiFrame().getWidth();
+				GUI_HEIGHT = getGuiFrame().getHeight();
 			}
 
 			props.setProperty( "GUI_POS_X", Integer.toString( GUI_POS_X ) );
@@ -1328,5 +1333,12 @@ public class MotherMachine {
 			gl.runILP();
 			i++;
 		}
+	}
+
+	/**
+	 * @return the guiFrame
+	 */
+	public static JFrame getGuiFrame() {
+		return guiFrame;
 	}
 }

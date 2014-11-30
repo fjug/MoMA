@@ -9,6 +9,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Menu;
+import java.awt.MenuBar;
+import java.awt.MenuItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -144,6 +147,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 	private JTextField txtNumCells;
 
+	// Menu-items
+	private MenuItem menuViewShowConsole;
+
 	// -------------------------------------------------------------------------------------
 	// construction & gui creation
 	// -------------------------------------------------------------------------------------
@@ -166,6 +172,14 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * Builds the GUI.
 	 */
 	private void buildGui() {
+
+		final MenuBar menuBar = new MenuBar();
+		final Menu menuView = new Menu( "View" );
+		menuViewShowConsole = new MenuItem( "Show/hide Console" );
+		menuViewShowConsole.addActionListener( this );
+		menuView.add( menuViewShowConsole );
+		menuBar.add( menuView );
+		MotherMachine.getGuiFrame().setMenuBar( menuBar );
 
 		final JPanel panelContent = new JPanel( new BorderLayout() );
 		JPanel panelVerticalHelper;
@@ -721,6 +735,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 */
 	@Override
 	public void actionPerformed( final ActionEvent e ) {
+
+		if ( e.getSource().equals( menuViewShowConsole ) ) {
+			MotherMachine.instance.showConsoleWindow( !MotherMachine.instance.isConsoleVisible() );
+			MotherMachine.getGuiFrame().setVisible( true );
+		}
 		if ( e.getSource().equals( btnSaveFG ) ) {
 			final MotherMachineGui self = this;
 			final Thread t = new Thread( new Runnable() {
