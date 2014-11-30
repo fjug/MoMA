@@ -29,6 +29,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
 import com.jug.MotherMachine;
+import com.jug.gui.progress.ProgressListener;
 import com.jug.lp.costs.CostFactory;
 import com.jug.util.ComponentTreeUtils;
 
@@ -73,6 +74,8 @@ public class GrowthLineTrackingILP {
 
 	private final GRBConstr[] segmentInFrameCountConstraint;
 
+	private final List< ProgressListener > progressListener;
+
 	// -------------------------------------------------------------------------------------
 	// construction
 	// -------------------------------------------------------------------------------------
@@ -99,7 +102,7 @@ public class GrowthLineTrackingILP {
 			e.printStackTrace();
 		}
 
-		buildILP();
+		this.progressListener = new ArrayList< ProgressListener >();
 	}
 
 	// -------------------------------------------------------------------------------------
@@ -121,7 +124,7 @@ public class GrowthLineTrackingILP {
 	// -------------------------------------------------------------------------------------
 	// methods
 	// -------------------------------------------------------------------------------------
-	private void buildILP() {
+	public void buildILP() {
 		try {
 			// add Hypothesis
 			createSegmentationHypotheses();
@@ -303,6 +306,8 @@ public class GrowthLineTrackingILP {
 			for ( final Component< FloatType, ? > ctRoot : glf.getComponentTree().roots() ) {
 				recursivelyAddCTNsAsHypotheses( t, ctRoot, glf.isParaMaxFlowComponentTree() );
 			}
+
+			this.reportProgress();
 		}
 	}
 
@@ -362,6 +367,8 @@ public class GrowthLineTrackingILP {
 	 * @throws GRBException
 	 */
 	private void enumerateAndAddAssignments() throws GRBException {
+		this.reportProgress();
+
 		for ( int t = 0; t < gl.size() - 1; t++ ) {
 			final List< Hypothesis< Component< FloatType, ? >>> curHyps = nodes.getHypothesesAt( t );
 			final List< Hypothesis< Component< FloatType, ? >>> nxtHyps = nodes.getHypothesesAt( t + 1 );
@@ -369,6 +376,8 @@ public class GrowthLineTrackingILP {
 			addExitAssignments( t, curHyps );
 			addMappingAssignments( t, curHyps, nxtHyps );
 			addDivisionAssignments( t, curHyps, nxtHyps );
+
+			this.reportProgress();
 		}
 	}
 
@@ -933,6 +942,8 @@ public class GrowthLineTrackingILP {
 
 		final List< Hypothesis< Component< FloatType, ? >>> hyps = nodes.getHypothesesAt( t );
 
+		if ( hyps == null ) return ret;
+
 		for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
 			Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > nh;
 			if ( t > 0 ) {
@@ -1439,5 +1450,17 @@ public class GrowthLineTrackingILP {
 		}
 
 		hyp2avoid.setSegmentSpecificConstraint( model.addConstr( expr, GRB.EQUAL, 0.0, "snisc_" + hyp2avoid.hashCode() ) );
+	}
+
+	public void addProgressListener( final ProgressListener pl ) {
+		if ( pl != null ) {
+			this.progressListener.add( pl );
+		}
+	}
+
+	private void reportProgress() {
+		for ( final ProgressListener pl : this.progressListener ) {
+			pl.hasProgressed();
+		}
 	}
 }

@@ -62,6 +62,7 @@ import org.math.plot.Plot2DPanel;
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
 import com.jug.MotherMachine;
+import com.jug.gui.progress.DialogProgress;
 import com.jug.lp.AbstractAssignment;
 import com.jug.lp.DivisionAssignment;
 import com.jug.lp.GrowthLineTrackingILP;
@@ -758,7 +759,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 						if ( model.getCurrentGL().getIlp() == null ) {
 							System.out.println( "Generating ILP..." );
-							model.getCurrentGL().generateILP();
+							model.getCurrentGL().generateILP( new DialogProgress( self, "Building tracking model...", ( model.getCurrentGL().size() - 1 ) * 2 ) );
 						} else {
 							System.out.println( "Using existing ILP (possibly containing user-defined ground-truth bits)..." );
 						}
@@ -807,6 +808,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			}
 		}
 		if ( e.getSource().equals( btnOptimize ) ) {
+			final MotherMachineGui self = this;
 			final Thread t = new Thread( new Runnable() {
 
 				@Override
@@ -819,7 +821,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					}
 
 					System.out.println( "Generating ILP..." );
-					model.getCurrentGL().generateILP();
+					model.getCurrentGL().generateILP( new DialogProgress( self, "Building tracking model...", ( model.getCurrentGL().size() - 1 ) * 2 ) );
 
 					System.out.println( "Finding optimal result..." );
 					model.getCurrentGL().runILP();

@@ -11,6 +11,7 @@ import java.util.Vector;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.FloatType;
 
+import com.jug.gui.progress.DialogProgress;
 import com.jug.lp.AbstractAssignment;
 import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.Hypothesis;
@@ -98,8 +99,19 @@ public class GrowthLine {
 	/**
 	 * Builds up the ILP used to find the MAP-mapping.
 	 */
-	public void generateILP() {
+	public void generateILP( final DialogProgress guiProgressReceiver ) {
+		if ( guiProgressReceiver != null ) {
+			guiProgressReceiver.setVisible( true );
+		}
+
 		ilp = new GrowthLineTrackingILP( this );
+		ilp.addProgressListener( guiProgressReceiver );
+		ilp.buildILP();
+
+		if ( guiProgressReceiver != null ) {
+			guiProgressReceiver.setVisible( false );
+			guiProgressReceiver.dispose();
+		}
 	}
 
 	/**

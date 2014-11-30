@@ -1319,7 +1319,7 @@ public class MotherMachine {
 	 */
 	private void generateILPs() {
 		for ( final GrowthLine gl : getGrowthLines() ) {
-			gl.generateILP();
+			gl.generateILP( null );
 		}
 	}
 
