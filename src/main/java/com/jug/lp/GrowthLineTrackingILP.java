@@ -958,8 +958,8 @@ public class GrowthLineTrackingILP {
 					ret.add( hyp );
 				}
 			} catch ( final GRBException e ) {
-				System.err.println( "It could not be determined of a certain assignment was choosen during the convex optimization!" );
-				e.printStackTrace();
+//				System.err.println( "It could not be determined of a certain assignment was choosen during the convex optimization!" );
+//				e.printStackTrace();
 			}
 		}
 

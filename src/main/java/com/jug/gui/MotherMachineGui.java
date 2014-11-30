@@ -180,7 +180,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		menuViewShowConsole.addActionListener( this );
 		menuView.add( menuViewShowConsole );
 		menuBar.add( menuView );
-		MotherMachine.getGuiFrame().setMenuBar( menuBar );
+		if ( !MotherMachine.HEADLESS ) {
+			MotherMachine.getGuiFrame().setMenuBar( menuBar );
+		}
 
 		final JPanel panelContent = new JPanel( new BorderLayout() );
 		JPanel panelVerticalHelper;
