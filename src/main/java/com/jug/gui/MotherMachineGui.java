@@ -1192,7 +1192,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				final int numPercentiles = 20;
 				final float ret[] = new float[ numPercentiles - 1 ];
 				for ( int i = 1; i < numPercentiles; i++ ) {
-					final int index = i * pixelVals.size() / numPercentiles;
+					final int index = ( i * pixelVals.size() / numPercentiles ) - 1;
 					ret[ i - 1 ] = pixelVals.get( index );
 				}
 				return ret;
