@@ -21,9 +21,11 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Vector;
 
 import javax.swing.AbstractAction;
@@ -844,6 +846,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	public void exportAllStats() {
 		final MotherMachineGui self = this;
 
+		if ( model.getCurrentGL().getIlp() == null ) {
+			JOptionPane.showMessageDialog( this, "The current GL can only be exported after being tracked (optimized)!" );
+			return;
+		}
+
 		boolean doExport = true;
 		int startFrame = 0;
 		int endFrame = sliderTime.getMaximum();
@@ -892,12 +899,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		// ----------------------------------------------------------------------------------------------------
 		if ( doExport ) {
 			exportTrackingImagesAndHtml( file, startFrame, endFrame );
-			exportTracks( new File( file.getPath().substring( 0, file.getPath().length() - 5 ) + ".csv" ) );
 			try {
 				exportCellStats( new File( file.getPath().substring( 0, file.getPath().length() - 5 ) + "_CellStats.csv" ) );
 			} catch ( final GRBException e ) {
 				e.printStackTrace();
 			}
+			exportTracks( new File( file.getPath().substring( 0, file.getPath().length() - 5 ) + ".csv" ) );
 		}
 		// ----------------------------------------------------------------------------------------------------
 
@@ -1084,6 +1091,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * @throws GRBException
 	 */
 	public void exportCellStats( final File file ) throws GRBException {
+		// use US-style number formats! (e.g. '.' as decimal point)
+		Locale.setDefault( new Locale( "en", "US" ) );
 
 		final class SegmentRecord {
 
@@ -1167,6 +1176,26 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			public long[] computeChannelHistogram( final IterableInterval< FloatType > view, final float min, final float max ) {
 				final Histogram1d< FloatType > histogram = new Histogram1d< FloatType >( view, new Real1dBinMapper< FloatType >( min, max, 20, false ) );
 				return histogram.toLongArray();
+			}
+
+			/**
+			 * @param channel
+			 * @return
+			 */
+			public float[] computeChannelPercentile( final IterableInterval< FloatType > channel ) {
+				final List< Float > pixelVals = new ArrayList< Float >();
+				for ( final FloatType ftPixel : channel ) {
+					pixelVals.add( ftPixel.get() );
+				}
+				Collections.sort( pixelVals );
+
+				final int numPercentiles = 20;
+				final float ret[] = new float[ numPercentiles - 1 ];
+				for ( int i = 1; i < numPercentiles; i++ ) {
+					final int index = i * pixelVals.size() / numPercentiles;
+					ret[ i - 1 ] = pixelVals.get( index );
+				}
+				return ret;
 			}
 		}
 
@@ -1257,14 +1286,23 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					final FloatType min = new FloatType();
 					final FloatType max = new FloatType();
 					Util.computeMinMax( segmentBoxInChannel, min, max );
-					final long[] hist = segmentRecord.computeChannelHistogram( segmentBoxInChannel, min.get(), max.get() );
 
-					String histStr = "\t\tch=" + c;
-					histStr += String.format( "; min=%8.3f; max=%8.3f", min.get(), max.get() );
-					for ( final long value : hist ) {
-						histStr += String.format( "; %5d", value );
+//					final long[] hist = segmentRecord.computeChannelHistogram( segmentBoxInChannel, min.get(), max.get() );
+//					String histStr = "\t\tch=" + c;
+//					histStr += String.format( "; min=%8.3f; max=%8.3f", min.get(), max.get() );
+//					for ( final long value : hist ) {
+//						histStr += String.format( "; %5d", value );
+//					}
+//					linesToExport.add( histStr );
+
+					final float[] percentile = segmentRecord.computeChannelPercentile( segmentBoxInChannel );
+					String percentileStr = "\t\tch=" + c;
+					percentileStr += String.format( "; min=%8.3f; max=%8.3f", min.get(), max.get() );
+					for ( final float value : percentile ) {
+						percentileStr += String.format( "; %8.3f", value );
 					}
-					linesToExport.add( histStr );
+					linesToExport.add( percentileStr );
+
 				}
 				segmentRecord = segmentRecord.nextSegmentInTime( ilp );
 			}
@@ -1310,6 +1348,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * @param file
 	 */
 	private void exportTracks( final File file ) {
+		// use US-style number formats! (e.g. '.' as decimal point)
+		Locale.setDefault( new Locale( "en", "US" ) );
+
 		final String loadedDataFolder = MotherMachine.props.getProperty( "import_path", "BUG -- could not get property 'import_path' while exporting tracks..." );
 		final int numCurrGL = sliderGL.getValue();
 		final int numGLFs = model.getCurrentGL().getFrames().size();

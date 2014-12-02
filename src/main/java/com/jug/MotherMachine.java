@@ -645,6 +645,7 @@ public class MotherMachine {
 		final int centerY = ( int ) Toolkit.getDefaultToolkit().getScreenSize().getHeight() / 2;
 		frameConsoleWindow.setBounds( centerX - GUI_CONSOLE_WIDTH / 2, centerY - GUI_HEIGHT / 2, GUI_CONSOLE_WIDTH, GUI_HEIGHT );
 		final JScrollPane scrollPane = new JScrollPane( consoleWindowTextArea );
+//		scrollPane.setHorizontalScrollBarPolicy( ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER );
 		scrollPane.setBorder( BorderFactory.createEmptyBorder( 0, 15, 0, 0 ) );
 		frameConsoleWindow.getContentPane().add( scrollPane );
 

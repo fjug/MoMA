@@ -34,6 +34,7 @@ import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
 import com.jug.lp.AbstractAssignment;
+import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.Hypothesis;
 import com.jug.segmentation.GrowthLineSegmentationMagic;
 import com.jug.util.ArgbDrawingUtils;
@@ -724,7 +725,8 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 	public int getSolutionStats_numCells() {
 		int cells = 0;
-		for ( final Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > set : getParent().getIlp().getOptimalRightAssignments( this.getTime() ).values() ) {
+		final GrowthLineTrackingILP ilp = getParent().getIlp();
+		for ( final Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > set : ilp.getOptimalRightAssignments( this.getTime() ).values() ) {
 
 			for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> ora : set ) {
 				cells++;
