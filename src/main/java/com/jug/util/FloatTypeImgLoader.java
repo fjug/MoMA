@@ -4,9 +4,7 @@
 package com.jug.util;
 
 import ij.IJ;
-import ij.Prefs;
 import io.scif.img.ImgIOException;
-import io.scif.img.ImgOpener;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -21,7 +19,6 @@ import net.imglib2.algorithm.stats.Normalize;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
-import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -124,57 +121,65 @@ public class FloatTypeImgLoader {
 	 * @throws ImgIOException
 	 */
 	public static List< Img< FloatType >> loadTiffs( final File[] listOfFiles ) throws ImgIOException {
-		final int numProcessors = Prefs.getThreads();
-		final int numThreads = Math.min( listOfFiles.length, numProcessors );
-
 		final List< Img< FloatType > > images = new ArrayList< Img< FloatType > >( listOfFiles.length );
 		for ( int i = 0; i < listOfFiles.length; i++ ) {
 			images.add( null );
 		}
 
-		final ImgIOException ioe = new ImgIOException( "One of the image loading threads had a problem reading from file." );
+//		final int numProcessors = Prefs.getThreads();
+//		final int numThreads = Math.min( listOfFiles.length, numProcessors );
+//
+//		final ImgIOException ioe = new ImgIOException( "One of the image loading threads had a problem reading from file." );
+//
+//		final Thread[] threads = new Thread[ numThreads ];
+//
+//		class ImageProcessingThread extends Thread {
+//
+//			final int numThread;
+//			final int numThreads;
+//
+//			public ImageProcessingThread( final int numThread, final int numThreads ) {
+//				this.numThread = numThread;
+//				this.numThreads = numThreads;
+//			}
+//
+//			@Override
+//			public void run() {
+//
+//				for ( int t = numThread; t < listOfFiles.length; t += numThreads ) {
+//					try {
+//						images.set( t, loadTiff( listOfFiles[ t ] ) );
+//					} catch ( final ImgIOException e ) {
+//						ioe.setStackTrace( e.getStackTrace() );
+//					}
+//				}
+//			}
+//		}
+//
+//		// start threads
+//		for ( int i = 0; i < numThreads; i++ ) {
+//			threads[ i ] = new ImageProcessingThread( i, numThreads );
+//			threads[ i ].start();
+//		}
+//
+//		// wait for all threads to terminate
+//		for ( final Thread thread : threads ) {
+//			try {
+//				thread.join();
+//			} catch ( final InterruptedException e ) {
+//				System.out.println( "Thread.join was interrupted in FloatTypeImgLoader.loadTiffs - be aware of leaking Threads!" );
+//				e.printStackTrace();
+//			}
+//		}
 
-		final Thread[] threads = new Thread[ numThreads ];
-
-		class ImageProcessingThread extends Thread {
-
-			final int numThread;
-			final int numThreads;
-
-			public ImageProcessingThread( final int numThread, final int numThreads ) {
-				this.numThread = numThread;
-				this.numThreads = numThreads;
-			}
-
-			@Override
-			public void run() {
-
-				for ( int t = numThread; t < listOfFiles.length; t += numThreads ) {
-					try {
-						images.set( t, loadTiff( listOfFiles[ t ] ) );
-					} catch ( final ImgIOException e ) {
-						ioe.setStackTrace( e.getStackTrace() );
-					}
-				}
-			}
-		}
-
-		// start threads
-		for ( int i = 0; i < numThreads; i++ ) {
-			threads[ i ] = new ImageProcessingThread( i, numThreads );
-			threads[ i ].start();
-		}
-
-		// wait for all threads to terminate
-		for ( final Thread thread : threads ) {
+		// SINGLE THREADED ALTERNATIVE
+		for ( int i = 0; i < listOfFiles.length; i++ ) {
 			try {
-				thread.join();
-			} catch ( final InterruptedException e ) {
-				System.out.println( "Thread.join was interrupted in FloatTypeImgLoader.loadTiffs - be aware of leaking Threads!" );
+				images.set( i, loadTiff( listOfFiles[ i ] ) );
+			} catch ( final ImgIOException e ) {
 				e.printStackTrace();
 			}
 		}
-
 		return images;
 	}
 
@@ -190,57 +195,74 @@ public class FloatTypeImgLoader {
 	 * @throws ImgIOException
 	 */
 	public static List< Img< FloatType >> loadMMTiffSequence( final File[] listOfFiles, final boolean normalize ) throws ImgIOException {
-		final int numProcessors = Prefs.getThreads();
-		final int numThreads = Math.min( listOfFiles.length, numProcessors );
-
 		final List< Img< FloatType > > images = new ArrayList< Img< FloatType > >( listOfFiles.length );
 
 		for ( int i = 0; i < listOfFiles.length; i++ ) {
 			images.add( null );
 		}
 
-		final ImgIOException ioe = new ImgIOException( "One of the image loading threads had a problem reading from file." );
+//		final int numProcessors = Prefs.getThreads();
+//		final int numThreads = Math.min( listOfFiles.length, numProcessors );
+//
+//		final ImgIOException ioe = new ImgIOException( "One of the image loading threads had a problem reading from file." );
+//
+//		final Thread[] threads = new Thread[ numThreads ];
+//
+//		class ImageProcessingThread extends Thread {
+//
+//			final int numThread;
+//			final int numThreads;
+//
+//			public ImageProcessingThread( final int numThread, final int numThreads ) {
+//				this.numThread = numThread;
+//				this.numThreads = numThreads;
+//			}
+//
+//			@Override
+//			public void run() {
+//
+//				for ( int t = numThread; t < listOfFiles.length; t += numThreads ) {
+//					try {
+//						images.set( t, loadTiff( listOfFiles[ t ] ) );
+//					} catch ( final ImgIOException e ) {
+//						ioe.setStackTrace( e.getStackTrace() );
+//					}
+//					// Selective Normalization!
+//					if ( normalize ) {
+//						Normalize.normalize( images.get( t ), new FloatType( 0.0f ), new FloatType( 1.0f ) );
+//					}
+//				}
+//			}
+//		}
+//
+//		// start threads
+//		for ( int i = 0; i < numThreads; i++ ) {
+//			threads[ i ] = new ImageProcessingThread( i, numThreads );
+//			threads[ i ].start();
+//		}
+//
+//		// wait for all threads to terminate
+//		for ( final Thread thread : threads ) {
+//			try {
+//				thread.join();
+//			} catch ( final InterruptedException e ) {
+//				System.out.println( "Thread.join was interrupted in FloatTypeImgLoader.loadTiffs - be aware of leaking Threads!" );
+//				e.printStackTrace();
+//			}
+//		}
 
-		final Thread[] threads = new Thread[ numThreads ];
-
-		class ImageProcessingThread extends Thread {
-
-			final int numThread;
-			final int numThreads;
-
-			public ImageProcessingThread( final int numThread, final int numThreads ) {
-				this.numThread = numThread;
-				this.numThreads = numThreads;
-			}
-
-			@Override
-			public void run() {
-
-				for ( int t = numThread; t < listOfFiles.length; t += numThreads ) {
-					try {
-						images.set( t, loadTiff( listOfFiles[ t ] ) );
-					} catch ( final ImgIOException e ) {
-						ioe.setStackTrace( e.getStackTrace() );
-					}
-					// Selective Normalization!
-					if ( normalize ) {
-						Normalize.normalize( images.get( t ), new FloatType( 0.0f ), new FloatType( 1.0f ) );
-					}
-				}
-			}
-		}
-
-		// start threads
-		for ( int i = 0; i < numThreads; i++ ) {
-			threads[ i ] = new ImageProcessingThread( i, numThreads );
-			threads[ i ].start();
-		}
-
-		// wait for all threads to terminate
-		for ( final Thread thread : threads ) {
+		// SINGLE THREADED ALTERNATIVE
+		// ---------------------------
+		for ( int i = 0; i < listOfFiles.length; i++ ) {
 			try {
-				thread.join();
-			} catch ( final InterruptedException e ) {}
+				images.set( i, loadTiff( listOfFiles[ i ] ) );
+			} catch ( final ImgIOException e ) {
+				e.printStackTrace();
+			}
+			// Selective Normalization!
+			if ( normalize ) {
+				Normalize.normalize( images.get( i ), new FloatType( 0f ), new FloatType( 1f ) );
+			}
 		}
 
 		// Add the last image twice. This is to trick the MM to not having tracking problems towards the last frame.
@@ -251,7 +273,7 @@ public class FloatTypeImgLoader {
 				Normalize.normalize( images.get( listOfFiles.length ), new FloatType( 0.0f ), new FloatType( 1.0f ) );
 			}
 		} catch ( final ImgIOException e ) {
-			ioe.setStackTrace( e.getStackTrace() );
+			e.printStackTrace();
 		}
 
 		return images;
@@ -267,14 +289,14 @@ public class FloatTypeImgLoader {
 	 * @throws ImgIOException
 	 */
 	public static Img< FloatType > loadTiff( final File file ) throws ImgIOException {
-		final ImgFactory< FloatType > imgFactory = new ArrayImgFactory< FloatType >();
-		final ImgOpener imageOpener = new ImgOpener();
+//	    ALERT: THOSE FOLLOWING TWO LINES CAUSE THREAD LEAK!!!!
+//		final ImgFactory< FloatType > imgFactory = new ArrayImgFactory< FloatType >();
+//		final ImgOpener imageOpener = new ImgOpener();
 
 		System.out.print( "\n >> Loading file '" + file.getName() + "' ..." );
 //		final List< SCIFIOImgPlus< FloatType >> imgs = imageOpener.openImgs( file.getAbsolutePath(), imgFactory, new FloatType() );
 //		final Img< FloatType > img = imgs.get( 0 ).getImg();
 		final Img< FloatType > img = ImagePlusAdapter.wrapReal( IJ.openImage( file.getAbsolutePath() ) );
-//		ImageJFunctions.show( img );
 		return img;
 	}
 
