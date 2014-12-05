@@ -169,7 +169,10 @@ public class FloatTypeImgLoader {
 		for ( final Thread thread : threads ) {
 			try {
 				thread.join();
-			} catch ( final InterruptedException e ) {}
+			} catch ( final InterruptedException e ) {
+				System.out.println( "Thread.join was interrupted in FloatTypeImgLoader.loadTiffs - be aware of leaking Threads!" );
+				e.printStackTrace();
+			}
 		}
 
 		return images;

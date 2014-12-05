@@ -163,6 +163,21 @@ public class Util {
 	/**
 	 * @param channelFrame
 	 * @param hyp
+	 * @param avgXpos
+	 * @return
+	 */
+	public static IntervalView< FloatType > getColumnBoxInImg( final IntervalView< FloatType > channelFrame, final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long glMiddleInImg ) {
+		final long[] lt = Util.getTopLeftInSourceImg( hyp, glMiddleInImg );
+		lt[ 0 ] = glMiddleInImg - MotherMachine.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS / 2;
+		final long[] rb = Util.getRightBottomInSourceImg( hyp, glMiddleInImg );
+		rb[ 0 ] = glMiddleInImg + MotherMachine.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS / 2 + MotherMachine.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS % 2 - 1;
+//		System.out.println( String.format( " >> %d, %d", rb[ 0 ] - lt[ 0 ], +rb[ 1 ] - lt[ 1 ] ) );
+		return Views.interval( channelFrame, lt, rb );
+	}
+
+	/**
+	 * @param channelFrame
+	 * @param hyp
 	 * @return
 	 */
 	public static IterableInterval< FloatType > getSegmentBoxInImg( final IntervalView< FloatType > channelFrame, final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long glMiddleInImg ) {
@@ -170,6 +185,17 @@ public class Util {
 		final long[] rb = Util.getRightBottomInSourceImg( hyp, glMiddleInImg );
 //		System.out.println( String.format( " >> %d, %d", rb[ 0 ] - lt[ 0 ], +rb[ 1 ] - lt[ 1 ] ) );
 		return Views.iterable( Views.interval( channelFrame, lt, rb ) );
+	}
+
+	/**
+	 * @param channelFrame
+	 * @param hyp
+	 * @return
+	 */
+	public static long getSegmentBoxPixelCount( final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long glMiddleInImg ) {
+		final long[] lt = Util.getTopLeftInSourceImg( hyp, glMiddleInImg );
+		final long[] rb = Util.getRightBottomInSourceImg( hyp, glMiddleInImg );
+		return ( rb[ 0 ] - lt[ 0 ] ) * ( rb[ 1 ] - lt[ 1 ] );
 	}
 
 	/**
@@ -189,7 +215,7 @@ public class Util {
 	 */
 	private static long[] getRightBottomInSourceImg( final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long middle ) {
 		final Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( hyp.getWrappedHypothesis() );
-		final long right = middle + MotherMachine.GL_WIDTH_IN_PIXELS / 2 + MotherMachine.GL_WIDTH_IN_PIXELS % 2;
+		final long right = middle + MotherMachine.GL_WIDTH_IN_PIXELS / 2 + MotherMachine.GL_WIDTH_IN_PIXELS % 2 - 1;
 		final long bottom = limits.getB();
 		return new long[] { right, bottom };
 	}

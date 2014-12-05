@@ -61,6 +61,7 @@ public class DialogProgress extends JDialog implements ActionListener, ProgressL
 		this.rootPane.setLayout( new BorderLayout() );
 
 		final JLabel lblMessage = new JLabel( this.message );
+		lblMessage.setBorder( BorderFactory.createEmptyBorder( 5, 15, 0, 15 ) );
 		progressBar = new JProgressBar( 0, this.maxProgress );
 		progressBar.setBorder( BorderFactory.createEmptyBorder( 5, 15, 5, 15 ) );
 

@@ -1097,10 +1097,16 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		final class SegmentRecord {
 
 			private static final int ENDOFTRACKING = 1234;
+
+			private static final int UNKNOWN = 0;
+			private static final int LOWER = 1;
+			private static final int UPPER = 2;
+
 			public boolean exists = true;
 			public int id = -1;
 			public int pid = -1;
 			public int tbirth = -1;
+			public int daughterType = SegmentRecord.UNKNOWN;
 			public int frame = 0;
 
 			public Hypothesis< Component< FloatType, ? >> hyp;
@@ -1111,6 +1117,16 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				this.id = id;
 				this.pid = pid;
 				this.tbirth = tbirth;
+				this.daughterType = SegmentRecord.UNKNOWN;
+				this.frame = 0;
+			}
+
+			public SegmentRecord( final Hypothesis< Component< FloatType, ? >> hyp, final int id, final int pid, final int tbirth, final int daughterType ) {
+				this.hyp = hyp;
+				this.id = id;
+				this.pid = pid;
+				this.tbirth = tbirth;
+				this.daughterType = daughterType;
 				this.frame = 0;
 			}
 
@@ -1119,12 +1135,13 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				this.id = point.id;
 				this.pid = point.pid;
 				this.tbirth = point.tbirth;
+				this.daughterType = point.daughterType;
 				this.frame = point.frame + 1;
 			}
 
 			@Override
 			public SegmentRecord clone() {
-				final SegmentRecord ret = new SegmentRecord( this.hyp, this.id, this.pid, this.tbirth );
+				final SegmentRecord ret = new SegmentRecord( this.hyp, this.id, this.pid, this.tbirth, this.daughterType );
 				ret.exists = this.exists;
 				ret.frame = this.frame;
 				ret.terminated_by = this.terminated_by;
@@ -1133,7 +1150,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 			@Override
 			public String toString() {
-				return String.format( "id=%d; pid=%d; birth-frame=%d", id, pid, tbirth );
+				String dt = "UNKNOWN";
+				if ( daughterType == SegmentRecord.UPPER ) dt = "UPPER";
+				if ( daughterType == SegmentRecord.LOWER ) dt = "LOWER";
+				return String.format( "id=%d; pid=%d; birth_frame=%d; daughter_type=%s", id, pid, tbirth, dt );
 			}
 
 			/**
@@ -1197,6 +1217,26 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				}
 				return ret;
 			}
+
+			/**
+			 * @param segmentBoxInChannel
+			 * @return
+			 */
+			public float[] computeChannelColumnIntensities( final IntervalView< FloatType > columnBoxInChannel ) {
+				if ( MotherMachine.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS != columnBoxInChannel.dimension( 0 ) ) {
+					System.out.println( "EXPORT WARNING: intensity columns to be exported are " + columnBoxInChannel.dimension( 0 ) + " instead of " + MotherMachine.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS );
+				}
+
+				final float ret[] = new float[ ( int ) columnBoxInChannel.dimension( 0 ) ];
+				for ( int i = ( int ) columnBoxInChannel.min( 0 ); i <= columnBoxInChannel.max( 0 ); i++ ) {
+					final IntervalView< FloatType > column = Views.hyperSlice( columnBoxInChannel, 0, i );
+					ret[ i ] = 0f;
+					for ( final FloatType ftPixel : Views.iterable( column ) ) {
+						ret[ i ] += ftPixel.get();
+					}
+				}
+				return ret;
+			}
 		}
 
 		final String loadedDataFolder = MotherMachine.props.getProperty( "import_path", "BUG -- could not get property 'import_path' while exporting cell statistics..." );
@@ -1244,12 +1284,14 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 				prepPoint.id = nextCellId;
 				prepPoint.hyp = da.getLowerDesinationHypothesis();
+				prepPoint.daughterType = SegmentRecord.LOWER;
 				startingPoints.add( prepPoint.clone() );
 				queue.add( new SegmentRecord( prepPoint ) );
 				nextCellId++;
 
 				prepPoint.id = nextCellId;
-				prepPoint.hyp = da.getLowerDesinationHypothesis();
+				prepPoint.hyp = da.getUpperDesinationHypothesis();
+				prepPoint.daughterType = SegmentRecord.UPPER;
 				startingPoints.add( prepPoint.clone() );
 				queue.add( new SegmentRecord( prepPoint ) );
 				nextCellId++;
@@ -1276,7 +1318,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			do {
 				final Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( segmentRecord.hyp.getWrappedHypothesis() );
 				final int height = limits.getB() - limits.getA();
-				linesToExport.add( String.format( "\tframe=%d; cell_height=%d\t", segmentRecord.frame, height ) );
+				linesToExport.add( String.format( "\tframe=%d; pixel_limits=[%d,%d]; cell_height=%d; num_pixels_in_box=%d", segmentRecord.frame, limits.getA(), limits.getB(), height, Util.getSegmentBoxPixelCount( segmentRecord.hyp, firstGLF.getAvgXpos() ) ) );
 
 				// export info per image channel
 				for ( int c = 0; c < MotherMachine.instance.getRawChannelImgs().size(); c++ ) {
@@ -1287,21 +1329,29 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					final FloatType max = new FloatType();
 					Util.computeMinMax( segmentBoxInChannel, min, max );
 
-//					final long[] hist = segmentRecord.computeChannelHistogram( segmentBoxInChannel, min.get(), max.get() );
-//					String histStr = "\t\tch=" + c;
-//					histStr += String.format( "; min=%8.3f; max=%8.3f", min.get(), max.get() );
-//					for ( final long value : hist ) {
-//						histStr += String.format( "; %5d", value );
-//					}
-//					linesToExport.add( histStr );
+					final long[] hist = segmentRecord.computeChannelHistogram( segmentBoxInChannel, min.get(), max.get() );
+					String histStr = String.format( "\t\tch=%d; output=HISTOGRAM", c );
+					histStr += String.format( "; min=%8.3f; max=%8.3f", min.get(), max.get() );
+					for ( final long value : hist ) {
+						histStr += String.format( "; %5d", value );
+					}
+					linesToExport.add( histStr );
 
 					final float[] percentile = segmentRecord.computeChannelPercentile( segmentBoxInChannel );
-					String percentileStr = "\t\tch=" + c;
+					String percentileStr = String.format( "\t\tch=%d; output=PERCENTILES", c );
 					percentileStr += String.format( "; min=%8.3f; max=%8.3f", min.get(), max.get() );
 					for ( final float value : percentile ) {
 						percentileStr += String.format( "; %8.3f", value );
 					}
 					linesToExport.add( percentileStr );
+
+					final IntervalView< FloatType > columnBoxInChannel = Util.getColumnBoxInImg( channelFrame, segmentRecord.hyp, firstGLF.getAvgXpos() );
+					final float[] column_intensities = segmentRecord.computeChannelColumnIntensities( columnBoxInChannel );
+					String colIntensityStr = String.format( "\t\tch=%d; output=COLUMN_INTENSITIES", c );
+					for ( final float value : column_intensities ) {
+						colIntensityStr += String.format( "; %.3f", value );
+					}
+					linesToExport.add( colIntensityStr );
 
 				}
 				segmentRecord = segmentRecord.nextSegmentInTime( ilp );
