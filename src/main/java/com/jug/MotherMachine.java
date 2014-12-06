@@ -642,6 +642,8 @@ public class MotherMachine {
 		frameConsoleWindow = new JFrame( "MotherMachine Console Window" );
 		// frameConsoleWindow.setResizable( false );
 		consoleWindowTextArea = new JTextArea();
+		consoleWindowTextArea.setLineWrap( true );
+		consoleWindowTextArea.setWrapStyleWord( true );
 
 		final int centerX = ( int ) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2;
 		final int centerY = ( int ) Toolkit.getDefaultToolkit().getScreenSize().getHeight() / 2;
