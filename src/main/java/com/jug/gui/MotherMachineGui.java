@@ -1317,7 +1317,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			linesToExport.add( segmentRecord.toString() );
 			do {
 				final Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( segmentRecord.hyp.getWrappedHypothesis() );
-				final int height = limits.getB() - limits.getA();
+				final int height = limits.getB() - limits.getA() + 1;
 				linesToExport.add( String.format( "\tframe=%d; pixel_limits=[%d,%d]; cell_height=%d; num_pixels_in_box=%d", segmentRecord.frame, limits.getA(), limits.getB(), height, Util.getSegmentBoxPixelCount( segmentRecord.hyp, firstGLF.getAvgXpos() ) ) );
 
 				// export info per image channel
