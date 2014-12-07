@@ -117,7 +117,7 @@ public class GurobiCallback extends GRBCallback {
 				if ( msg != null ) {
 					System.out.println( msg );
 				}
-				pushStatusToDialog( String.format( "Runtime: %.1f sec.; Current gap: %.2f%%", runtime, latestGap ) );
+				pushStatusToDialog( String.format( "Runtime: %.1f sec.; Current gap: %.2f%%", runtime, latestGap * 100.0 ) );
 			}
 		} catch ( final GRBException e ) {
 			System.out.println( "Error code: " + e.getErrorCode() );
