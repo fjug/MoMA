@@ -104,33 +104,6 @@ public class ArgbDrawingUtils {
 	 * @param offsetX
 	 * @param offsetY
 	 */
-	private static void taint1dComponentTreeNodeGreen( final Component< FloatType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
-
-		final Iterator< Localizable > componentIterator = ctn.iterator();
-		while ( componentIterator.hasNext() ) {
-			final int ypos = componentIterator.next().getIntPosition( 0 );
-			final Point p = new Point( offsetX, offsetY + ypos );
-			final int delta = 15;
-			for ( int i = -delta; i <= delta; i++ ) {
-				final long[] imgPos = Util.pointLocation( p );
-				imgPos[ 0 ] += i;
-				raArgbImg.setPosition( imgPos );
-				final int curCol = raArgbImg.get().get();
-				final int redToUse = Math.min( 10, ( 255 - ARGBType.red( curCol ) ) ) / 4;
-				final int greenToUse = Math.min( 100, ( 255 - ARGBType.green( curCol ) ) ) / 1;
-				final int blueToUse = Math.min( 10, ( 255 - ARGBType.blue( curCol ) ) ) / 4;
-				raArgbImg.get().set( new ARGBType( ARGBType.rgba( ARGBType.red( curCol ) + ( redToUse * ( ( float ) ( delta - Math.abs( i ) ) / delta ) ), ARGBType.green( curCol ) + ( greenToUse * ( ( float ) ( delta - Math.abs( i ) ) / delta ) ), ARGBType.blue( curCol ) + ( blueToUse * ( ( float ) ( delta - Math.abs( i ) ) / delta ) ), ARGBType.alpha( curCol ) ) ) );
-			}
-		}
-
-	}
-
-	/**
-	 * @param ctn
-	 * @param raArgbImg
-	 * @param offsetX
-	 * @param offsetY
-	 */
 	private static void taint1dComponentTreeNodeRed( final Component< FloatType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
 
 		final Iterator< Localizable > componentIterator = ctn.iterator();

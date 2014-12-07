@@ -29,6 +29,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
 import com.jug.MotherMachine;
+import com.jug.gui.progress.DialogGurobiProgress;
 import com.jug.gui.progress.ProgressListener;
 import com.jug.lp.costs.CostFactory;
 import com.jug.util.ComponentTreeUtils;
@@ -801,16 +802,31 @@ public class GrowthLineTrackingILP {
 	 */
 	public void run() {
 		try {
+			// Set maximum time Gurobi may use!
+//			model.getEnv().set( GRB.DoubleParam.TimeLimit, MotherMachine.GUROBI_TIME_LIMIT );
+			model.getEnv().set( GRB.IntParam.OutputFlag, 0 );
+
+			final DialogGurobiProgress dialog = new DialogGurobiProgress( MotherMachine.getGuiFrame() );
+			final GurobiCallback gcb = new GurobiCallback( dialog );
+			model.setCallback( gcb );
+
 			// RUN + return true if solution is feasible
 			// - - - - - - - - - - - - - - - - - - - - -
 			model.optimize();
+			dialog.notifyGurobiTermination();
+			MotherMachine.getGui().dataToDisplayChanged();
 
 			// Read solution and extract interpretation
 			// - - - - - - - - - - - - - - - - - - - - -
 			if ( model.get( GRB.IntAttr.Status ) == GRB.Status.OPTIMAL ) {
 				status = OPTIMAL;
+				dialog.pushStatus( "Optimum was found!" );
+				MotherMachine.getGui().focusOnSliderTime();
+				dialog.setVisible( false );
+				dialog.dispose();
 			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.INFEASIBLE ) {
 				status = INFEASIBLE;
+				dialog.pushStatus( "ILP now infeasible. Please reoptimize!" );
 			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.UNBOUNDED ) {
 				status = UNBOUNDED;
 			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.SUBOPTIMAL ) {
@@ -819,6 +835,7 @@ public class GrowthLineTrackingILP {
 				status = NUMERIC;
 			} else {
 				status = LIMIT_REACHED;
+				dialog.pushStatus( String.format( "Timelimit reached, rel. optimality gap: %.2f%%", gcb.getLatestGap() * 100.0 ) );
 			}
 		} catch ( final GRBException e ) {
 			System.out.println( "Could not run the generated ILP!" );

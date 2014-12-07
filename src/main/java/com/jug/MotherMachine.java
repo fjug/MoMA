@@ -245,9 +245,18 @@ public class MotherMachine {
 	public static String STATS_OUTPUT_PATH = DEFAULT_PATH;
 
 	/**
+	 * The maximum time in seconds GUROBI is allowed to search for a good
+	 * tracking solution. (After that period of time GUROBI will stop and best
+	 * solution found so far will be used.)
+	 */
+	public static double GUROBI_TIME_LIMIT = 30.0;
+	public static double GUROBI_MAX_OPTIMALITY_GAP = 1.00;
+
+	/**
 	 * Control if ImageJ and loaded data will be shown...
 	 */
 	private static boolean showIJ = false;
+	private static MotherMachineGui gui;
 
 	// ====================================================================================================================
 
@@ -428,6 +437,9 @@ public class MotherMachine {
 //		STATS_OUTPUT_PATH = props.getProperty( "STATS_OUTPUT_PATH", STATS_OUTPUT_PATH );
 		DEFAULT_PATH = props.getProperty( "DEFAULT_PATH", DEFAULT_PATH );
 
+		GUROBI_TIME_LIMIT = Double.parseDouble( props.getProperty( "GUROBI_TIME_LIMIT", Double.toString( GUROBI_TIME_LIMIT ) ) );
+		GUROBI_MAX_OPTIMALITY_GAP = Double.parseDouble( props.getProperty( "GUROBI_MAX_OPTIMALITY_GAP", Double.toString( GUROBI_MAX_OPTIMALITY_GAP ) ) );
+
 		GUI_POS_X = Integer.parseInt( props.getProperty( "GUI_POS_X", Integer.toString( DEFAULT_GUI_POS_X ) ) );
 		GUI_POS_Y = Integer.parseInt( props.getProperty( "GUI_POS_Y", Integer.toString( DEFAULT_GUI_POS_X ) ) );
 		GUI_WIDTH = Integer.parseInt( props.getProperty( "GUI_WIDTH", Integer.toString( GUI_WIDTH ) ) );
@@ -488,7 +500,7 @@ public class MotherMachine {
 			// ImageJFunctions.show( main.imgAnnotated, "Annotated ARGB data" );
 		}
 
-		final MotherMachineGui gui = new MotherMachineGui( mmm );
+		gui = new MotherMachineGui( mmm );
 
 		if ( !HEADLESS ) {
 			System.out.print( "Build GUI..." );
@@ -940,6 +952,9 @@ public class MotherMachine {
 //			props.setProperty( "STATS_OUTPUT_PATH", STATS_OUTPUT_PATH );
 			props.setProperty( "DEFAULT_PATH", DEFAULT_PATH );
 
+			props.setProperty( "GUROBI_TIME_LIMIT", Double.toString( GUROBI_TIME_LIMIT ) );
+			props.setProperty( "GUROBI_MAX_OPTIMALITY_GAP", Double.toString( GUROBI_MAX_OPTIMALITY_GAP ) );
+
 			if ( !MotherMachine.HEADLESS ) {
 				final java.awt.Point loc = getGuiFrame().getLocation();
 				GUI_POS_X = loc.x;
@@ -1346,5 +1361,12 @@ public class MotherMachine {
 	 */
 	public static JFrame getGuiFrame() {
 		return guiFrame;
+	}
+
+	/**
+	 * @return the MotherMachineGui instance.
+	 */
+	public static MotherMachineGui getGui() {
+		return gui;
 	}
 }

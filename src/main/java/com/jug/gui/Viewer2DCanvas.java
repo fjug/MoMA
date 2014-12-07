@@ -217,9 +217,16 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 				e1.printStackTrace();
 			}
 		}
-		ilp.run();
-		mmgui.dataToDisplayChanged();
-		mmgui.focusOnSliderTime();
+
+		class IlpThread extends Thread {
+
+			@Override
+			public void run() {
+				ilp.run();
+			}
+		}
+		final IlpThread thread = new IlpThread();
+		thread.start();
 	}
 
 	/**

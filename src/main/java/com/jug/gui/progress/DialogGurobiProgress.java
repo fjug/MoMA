@@ -13,43 +13,38 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JProgressBar;
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 
 /**
  * @author jug
  */
-public class DialogProgress extends JDialog implements ActionListener, ProgressListener {
+public class DialogGurobiProgress extends JDialog implements ActionListener {
 
-	private static final long serialVersionUID = 2961170560625243194L;
+	private static final long serialVersionUID = -2399693327913856740L;
 
 	private JButton bHide;
 
-	private final int maxProgress;
-	private JProgressBar progressBar;
+	private JLabel progressMessage = null;
 
-	private final String message;
-
-	public DialogProgress( final JComponent parent, final String message, final int totalProgressNotificationsToCome ) {
-		super( SwingUtilities.windowForComponent( parent ), "Progress..." );
+	public DialogGurobiProgress( final JFrame jFrame ) {
+		super( jFrame, "Optimization Progress..." );
 		this.dialogInit();
 		this.setModal( false );
-
-		this.message = message;
-		this.maxProgress = totalProgressNotificationsToCome;
 
 		buildGui();
 		this.pack();
 
 		setKeySetup();
+
+		setVisible( true );
 	}
 
 	@Override
 	public void setVisible( final boolean show ) {
-		final int width = 500;
+		final int width = 350;
 		final int x = super.getParent().getX() + super.getParent().getWidth() / 2 - width / 2;
 		final int y = super.getParent().getY() + super.getParent().getHeight() / 2 - this.getHeight() / 2;
 		this.setBounds( x, y, width, this.getHeight() );
@@ -60,10 +55,8 @@ public class DialogProgress extends JDialog implements ActionListener, ProgressL
 	private void buildGui() {
 		this.rootPane.setLayout( new BorderLayout() );
 
-		final JLabel lblMessage = new JLabel( this.message );
-		lblMessage.setBorder( BorderFactory.createEmptyBorder( 5, 15, 0, 15 ) );
-		progressBar = new JProgressBar( 0, this.maxProgress );
-		progressBar.setBorder( BorderFactory.createEmptyBorder( 5, 15, 5, 15 ) );
+		progressMessage = new JLabel( "Starting optimization..." );
+		progressMessage.setBorder( BorderFactory.createEmptyBorder( 5, 15, 5, 15 ) );
 
 		bHide = new JButton( "hide" );
 		bHide.addActionListener( this );
@@ -71,8 +64,7 @@ public class DialogProgress extends JDialog implements ActionListener, ProgressL
 		final JPanel buttonHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 15, 0 ) );
 		buttonHelper.add( bHide );
 
-		this.rootPane.add( lblMessage, BorderLayout.NORTH );
-		this.rootPane.add( progressBar, BorderLayout.CENTER );
+		this.rootPane.add( progressMessage, BorderLayout.CENTER );
 		this.rootPane.add( buttonHelper, BorderLayout.SOUTH );
 	}
 
@@ -104,11 +96,16 @@ public class DialogProgress extends JDialog implements ActionListener, ProgressL
 	}
 
 	/**
-	 * @see com.jug.gui.progress.ProgressListener#hasProgressed()
+	 * @param string
 	 */
-	@Override
-	public void hasProgressed() {
-		final int newVal = progressBar.getValue() + 1;
-		progressBar.setValue( newVal );
+	public void pushStatus( final String string ) {
+		progressMessage.setText( string );
+	}
+
+	/**
+	 * 
+	 */
+	public void notifyGurobiTermination() {
+		bHide.setText( "done" );
 	}
 }
