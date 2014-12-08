@@ -32,6 +32,7 @@ import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.Hypothesis;
 import com.jug.lp.MappingAssignment;
 import com.jug.util.ComponentTreeUtils;
+import com.jug.util.filteredcomponents.FilteredComponent;
 
 /**
  * @author jug
@@ -321,8 +322,14 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		final Hypothesis< Component< FloatType, ? >> leftHyp = ma.getSourceHypothesis();
 		final Hypothesis< Component< FloatType, ? >> rightHyp = ma.getDestinationHypothesis();
 
-		final Pair< Integer, Integer > limitsLeft = ComponentTreeUtils.getTreeNodeInterval( leftHyp.getWrappedHypothesis() );
-		final Pair< Integer, Integer > limitsRight = ComponentTreeUtils.getTreeNodeInterval( rightHyp.getWrappedHypothesis() );
+		Pair< Integer, Integer > limitsLeft = ComponentTreeUtils.getTreeNodeInterval( leftHyp.getWrappedHypothesis() );
+		if ( leftHyp.getWrappedHypothesis() instanceof FilteredComponent ) {
+			limitsLeft = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) leftHyp.getWrappedHypothesis() );
+		}
+		Pair< Integer, Integer > limitsRight = ComponentTreeUtils.getTreeNodeInterval( rightHyp.getWrappedHypothesis() );
+		if ( rightHyp.getWrappedHypothesis() instanceof FilteredComponent ) {
+			limitsRight = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) rightHyp.getWrappedHypothesis() );
+		}
 
 		final int x1 = 0;
 		final int y1 = offsetY + limitsLeft.getA().intValue();
@@ -420,9 +427,18 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		final Hypothesis< Component< FloatType, ? >> rightHypUpper = da.getUpperDesinationHypothesis();
 		final Hypothesis< Component< FloatType, ? >> rightHypLower = da.getLowerDesinationHypothesis();
 
-		final Pair< Integer, Integer > limitsLeft = ComponentTreeUtils.getTreeNodeInterval( leftHyp.getWrappedHypothesis() );
-		final Pair< Integer, Integer > limitsRightUpper = ComponentTreeUtils.getTreeNodeInterval( rightHypUpper.getWrappedHypothesis() );
-		final Pair< Integer, Integer > limitsRightLower = ComponentTreeUtils.getTreeNodeInterval( rightHypLower.getWrappedHypothesis() );
+		Pair< Integer, Integer > limitsLeft = ComponentTreeUtils.getTreeNodeInterval( leftHyp.getWrappedHypothesis() );
+		if ( leftHyp.getWrappedHypothesis() instanceof FilteredComponent ) {
+			limitsLeft = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) leftHyp.getWrappedHypothesis() );
+		}
+		Pair< Integer, Integer > limitsRightUpper = ComponentTreeUtils.getTreeNodeInterval( rightHypUpper.getWrappedHypothesis() );
+		if ( rightHypUpper.getWrappedHypothesis() instanceof FilteredComponent ) {
+			limitsRightUpper = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) rightHypUpper.getWrappedHypothesis() );
+		}
+		Pair< Integer, Integer > limitsRightLower = ComponentTreeUtils.getTreeNodeInterval( rightHypLower.getWrappedHypothesis() );
+		if ( rightHypLower.getWrappedHypothesis() instanceof FilteredComponent ) {
+			limitsRightLower = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) rightHypLower.getWrappedHypothesis() );
+		}
 
 		final int x1 = 0;
 		final int y1 = offsetY + limitsLeft.getA().intValue();

@@ -15,6 +15,8 @@ import net.imglib2.algorithm.componenttree.ComponentTree;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.ValuePair;
 
+import com.jug.util.filteredcomponents.FilteredComponent;
+
 /**
  * @author jug
  * 
@@ -88,6 +90,32 @@ public class ComponentTreeUtils {
 		int min = Integer.MAX_VALUE;
 		int max = Integer.MIN_VALUE;
 		final Iterator< Localizable > componentIterator = node.iterator();
+		while ( componentIterator.hasNext() ) {
+			final int pos = componentIterator.next().getIntPosition( 0 );
+			min = Math.min( min, pos );
+			max = Math.max( max, pos );
+		}
+		return new ValuePair< Integer, Integer >( new Integer( min ), new Integer( max ) );
+	}
+
+	/**
+	 * Returns the smallest and largest value on the x-axis that is spanned by
+	 * this component-tree-node.
+	 * Note that this function really only makes sense if the comp.-tree was
+	 * built on a one-dimensional image (as it is the case for my current
+	 * MotherMachine stuff...)
+	 * 
+	 * @param node
+	 *            the node in question.
+	 * @return a <code>Pair</code> or two <code>Integers</code> giving the
+	 *         leftmost and rightmost point on the x-axis that is covered by
+	 *         this component-tree-node respectively.
+	 */
+	@SuppressWarnings( "unchecked" )
+	public static Pair< Integer, Integer > getExtendedTreeNodeInterval( final FilteredComponent< ? > node ) {
+		int min = Integer.MAX_VALUE;
+		int max = Integer.MIN_VALUE;
+		final Iterator< Localizable > componentIterator = node.iteratorExtended();
 		while ( componentIterator.hasNext() ) {
 			final int pos = componentIterator.next().getIntPosition( 0 );
 			min = Math.min( min, pos );

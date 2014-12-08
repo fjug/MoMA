@@ -73,6 +73,7 @@ import com.jug.lp.MappingAssignment;
 import com.jug.util.ComponentTreeUtils;
 import com.jug.util.SimpleFunctionAnalysis;
 import com.jug.util.Util;
+import com.jug.util.filteredcomponents.FilteredComponent;
 
 /**
  * @author jug
@@ -596,10 +597,14 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * @param ydata
 	 * @param level
 	 */
+	@SuppressWarnings( "unchecked" )
 	private void addBoxAtIndex( final int index, final Component< ?, ? > ctn, final float[][] boxDataArray, final float[] ydata, final int level ) {
 		int min = Integer.MAX_VALUE;
 		int max = Integer.MIN_VALUE;
-		final Iterator< Localizable > componentIterator = ctn.iterator();
+		Iterator< Localizable > componentIterator = ctn.iterator();
+		if ( ctn instanceof FilteredComponent ) {
+			componentIterator = ( ( FilteredComponent< FloatType > ) ctn ).iteratorExtended();
+		}
 		while ( componentIterator.hasNext() ) {
 			final int pos = componentIterator.next().getIntPosition( 0 );
 			min = Math.min( min, pos );
@@ -1316,7 +1321,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 			linesToExport.add( segmentRecord.toString() );
 			do {
-				final Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( segmentRecord.hyp.getWrappedHypothesis() );
+				Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( segmentRecord.hyp.getWrappedHypothesis() );
+				if ( segmentRecord.hyp.getWrappedHypothesis() instanceof FilteredComponent ) {
+					limits = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) segmentRecord.hyp.getWrappedHypothesis() );
+				}
 				final int height = limits.getB() - limits.getA() + 1;
 				linesToExport.add( String.format( "\tframe=%d; pixel_limits=[%d,%d]; cell_height=%d; num_pixels_in_box=%d", segmentRecord.frame, limits.getA(), limits.getB(), height, Util.getSegmentBoxPixelCount( segmentRecord.hyp, firstGLF.getAvgXpos() ) ) );
 
