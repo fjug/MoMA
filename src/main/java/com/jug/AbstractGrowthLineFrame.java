@@ -419,12 +419,15 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	 */
 	private float[] avoidMotherCellSegmentationFlickering( final float[] fkt ) {
 		final int[] maximaLocations = SimpleFunctionAnalysis.getMaxima( fkt, 1, 1 );
-		final int lastMaximaLoc = maximaLocations[ maximaLocations.length - 1 ];
+		if ( maximaLocations.length > 0 ) {
+			final int lastMaximaLoc = maximaLocations[ maximaLocations.length - 1 ];
 
-		for ( int i = lastMaximaLoc; i < fkt.length; i++ ) {
-			fkt[ i ] = Math.max( fkt[ i - 1 ] + 0.0005f, fkt[ i ] );
+			if ( fkt.length - lastMaximaLoc < MotherMachine.MOTHER_CELL_BOTTOM_TRICK_MAX_PIXELS ) {
+				for ( int i = lastMaximaLoc; i < fkt.length; i++ ) {
+					fkt[ i ] = Math.max( fkt[ i - 1 ] + 0.0005f, fkt[ i ] );
+				}
+			}
 		}
-
 		return fkt;
 	}
 

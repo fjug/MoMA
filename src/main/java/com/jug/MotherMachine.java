@@ -35,6 +35,7 @@ import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
+import net.imglib2.Cursor;
 import net.imglib2.Point;
 import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.algorithm.stats.Normalize;
@@ -96,6 +97,7 @@ public class MotherMachine {
 	public static int GL_WIDTH_IN_PIXELS = 20;
 	public static int GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS = 100;
 	public static int GL_PIXEL_PADDING_IN_VIEWS = 15;
+	public static int MOTHER_CELL_BOTTOM_TRICK_MAX_PIXELS = 10;
 
 	/**
 	 * Parameter: later border in pixels - well centers detected too close to
@@ -422,6 +424,7 @@ public class MotherMachine {
 		BGREM_TEMPLATE_XMAX = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMAX", Integer.toString( BGREM_TEMPLATE_XMAX ) ) );
 		BGREM_X_OFFSET = Integer.parseInt( props.getProperty( "BGREM_X_OFFSET", Integer.toString( BGREM_X_OFFSET ) ) );
 		GL_WIDTH_IN_PIXELS = Integer.parseInt( props.getProperty( "GL_WIDTH_IN_PIXELS", Integer.toString( GL_WIDTH_IN_PIXELS ) ) );
+		MOTHER_CELL_BOTTOM_TRICK_MAX_PIXELS = Integer.parseInt( props.getProperty( "MOTHER_CELL_BOTTOM_TRICK_MAX_PIXELS", Integer.toString( MOTHER_CELL_BOTTOM_TRICK_MAX_PIXELS ) ) );
 		GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS = Integer.parseInt( props.getProperty( "GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS", Integer.toString( GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS ) ) );
 		GL_OFFSET_BOTTOM = Integer.parseInt( props.getProperty( "GL_OFFSET_BOTTOM", Integer.toString( GL_OFFSET_BOTTOM ) ) );
 		GL_OFFSET_TOP = Integer.parseInt( props.getProperty( "GL_OFFSET_TOP", Integer.toString( GL_OFFSET_TOP ) ) );
@@ -937,6 +940,7 @@ public class MotherMachine {
 			props.setProperty( "BGREM_TEMPLATE_XMAX", Integer.toString( BGREM_TEMPLATE_XMAX ) );
 			props.setProperty( "BGREM_X_OFFSET", Integer.toString( BGREM_X_OFFSET ) );
 			props.setProperty( "GL_WIDTH_IN_PIXELS", Integer.toString( GL_WIDTH_IN_PIXELS ) );
+			props.setProperty( "MOTHER_CELL_BOTTOM_TRICK_MAX_PIXELS", Integer.toString( MOTHER_CELL_BOTTOM_TRICK_MAX_PIXELS ) );
 			props.setProperty( "GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS", Integer.toString( GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS ) );
 			props.setProperty( "GL_OFFSET_BOTTOM", Integer.toString( GL_OFFSET_BOTTOM ) );
 			props.setProperty( "GL_OFFSET_TOP", Integer.toString( GL_OFFSET_TOP ) );
@@ -1034,6 +1038,13 @@ public class MotherMachine {
 		annotateDetectedWellCenters();
 		System.out.println( " done!" );
 
+		// subtracting BG in RAW image...
+		System.out.print( "Subtracting background..." );
+		subtractBackgroundInRaw();
+		// ...and make temp image be the same
+		resetImgTempToRaw();
+		System.out.println( " done!" );
+
 		System.out.print( "Normalize loaded images..." );
 		normalizePerFrame( imgTemp, MotherMachine.GL_OFFSET_TOP, MotherMachine.GL_OFFSET_BOTTOM );
 		System.out.println( " done!" );
@@ -1072,6 +1083,92 @@ public class MotherMachine {
 			final IntervalView< FloatType > slice = Views.hyperSlice( img, 2, f );
 			final IntervalView< FloatType > roi = Views.interval( slice, new long[] { img.min( 0 ), img.min( 1 ) + topOffset }, new long[] { img.max( 0 ), img.max( 1 ) - bottomOffset } );
 			Normalize.normalize( Views.iterable( roi ), new FloatType( 0.0f ), new FloatType( 1.0f ) );
+		}
+	}
+
+	/**
+	 * Simple but effective method to subtract uneven illumination from the
+	 * growth-line data.
+	 * 
+	 * @param img
+	 *            DoubleType image stack.
+	 */
+	private void subtractBackgroundInRaw() {
+
+		for ( int i = 0; i < getGrowthLines().size(); i++ ) {
+			for ( int f = 0; f < getGrowthLines().get( i ).size(); f++ ) {
+				final GrowthLineFrame glf = getGrowthLines().get( i ).get( f );
+
+				final int glfX = glf.getAvgXpos();
+				if ( glfX == -1 ) continue; // do not do anything with empty GLFs
+
+				int glfY1 = glf.getFirstPoint().getIntPosition( 1 ) - 1;
+				if ( glfY1 < 0 ) glfY1 = 0;
+
+				final int glfY2 = glf.getLastPoint().getIntPosition( 1 );
+
+				final IntervalView< FloatType > frame = Views.hyperSlice( imgRaw, 2, f );
+
+				float rowAvgs[] = new float[ glfY2 - glfY1 + 1 ];
+				int colCount = 0;
+				// Look to the left if you are not the first GLF
+				if ( glfX > MotherMachine.BGREM_TEMPLATE_XMAX ) {
+					final IntervalView< FloatType > leftBackgroundWindow = Views.interval( frame, new long[] { glfX - MotherMachine.BGREM_TEMPLATE_XMAX, glfY1 }, new long[] { glfX - MotherMachine.BGREM_TEMPLATE_XMIN, glfY2 } );
+					rowAvgs = addRowSumsFromInterval( leftBackgroundWindow, rowAvgs );
+					colCount += ( MotherMachine.BGREM_TEMPLATE_XMAX - MotherMachine.BGREM_TEMPLATE_XMIN );
+				}
+				// Look to the right if you are not the last GLF
+				if ( glfX < imgRaw.dimension( 0 ) - MotherMachine.BGREM_TEMPLATE_XMAX ) {
+					final IntervalView< FloatType > rightBackgroundWindow = Views.interval( frame, new long[] { glfX + MotherMachine.BGREM_TEMPLATE_XMIN, glfY1 }, new long[] { glfX + MotherMachine.BGREM_TEMPLATE_XMAX, glfY2 } );
+					rowAvgs = addRowSumsFromInterval( rightBackgroundWindow, rowAvgs );
+					colCount += ( MotherMachine.BGREM_TEMPLATE_XMAX - MotherMachine.BGREM_TEMPLATE_XMIN );
+				}
+				// compute averages
+				for ( int j = 0; j < rowAvgs.length; j++ ) {
+					rowAvgs[ j ] /= colCount;
+				}
+
+				// Subtract averages you've seen to your left and/or to your
+				// right
+				final long x1 = Math.max( 0, glfX - MotherMachine.BGREM_X_OFFSET );
+				final long x2 = Math.min( frame.dimension( 0 ) - 1, glfX + MotherMachine.BGREM_X_OFFSET );
+				final IntervalView< FloatType > growthLineArea = Views.interval( frame, new long[] { x1, glfY1 }, new long[] { x2, glfY2 } );
+				removeValuesFromRows( growthLineArea, rowAvgs );
+				// Normalize the zone we removed the background from...
+				Normalize.normalize( Views.iterable( growthLineArea ), new FloatType( 0f ), new FloatType( 1f ) );
+			}
+		}
+	}
+
+	/**
+	 * Adds all intensity values of row i in view to rowSums[i].
+	 * 
+	 * @param view
+	 * @param rowSums
+	 */
+	private float[] addRowSumsFromInterval( final IntervalView< FloatType > view, final float[] rowSums ) {
+		for ( int i = ( int ) view.min( 1 ); i <= view.max( 1 ); i++ ) {
+			final IntervalView< FloatType > row = Views.hyperSlice( view, 1, i );
+			final Cursor< FloatType > cursor = Views.iterable( row ).cursor();
+			while ( cursor.hasNext() ) {
+				rowSums[ i - ( int ) view.min( 1 ) ] += cursor.next().get();
+			}
+		}
+		return rowSums;
+	}
+
+	/**
+	 * Removes the value values[i] from all columns in row i of the given view.
+	 * 
+	 * @param view
+	 * @param values
+	 */
+	private void removeValuesFromRows( final IntervalView< FloatType > view, final float[] values ) {
+		for ( int i = ( int ) view.min( 1 ); i <= view.max( 1 ); i++ ) {
+			final Cursor< FloatType > cursor = Views.iterable( Views.hyperSlice( view, 1, i ) ).cursor();
+			while ( cursor.hasNext() ) {
+				cursor.next().set( new FloatType( Math.max( 0, cursor.get().get() - values[ i - ( int ) view.min( 1 ) ] ) ) );
+			}
 		}
 	}
 
