@@ -178,6 +178,21 @@ public class Util {
 	/**
 	 * @param channelFrame
 	 * @param hyp
+	 * @param avgXpos
+	 * @return
+	 */
+	public static IntervalView< FloatType > getIntensityBoxInImg( final IntervalView< FloatType > channelFrame, final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long glMiddleInImg ) {
+		final long[] lt = Util.getTopLeftInSourceImg( hyp, glMiddleInImg );
+		lt[ 0 ] = glMiddleInImg - MotherMachine.GL_WIDTH_IN_PIXELS / 2;
+		final long[] rb = Util.getRightBottomInSourceImg( hyp, glMiddleInImg );
+		rb[ 0 ] = glMiddleInImg + MotherMachine.GL_WIDTH_IN_PIXELS / 2 + MotherMachine.GL_WIDTH_IN_PIXELS % 2 - 1;
+//		System.out.println( String.format( " >> %d, %d", rb[ 0 ] - lt[ 0 ], +rb[ 1 ] - lt[ 1 ] ) );
+		return Views.interval( channelFrame, lt, rb );
+	}
+
+	/**
+	 * @param channelFrame
+	 * @param hyp
 	 * @return
 	 */
 	public static IterableInterval< FloatType > getSegmentBoxInImg( final IntervalView< FloatType > channelFrame, final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long glMiddleInImg ) {

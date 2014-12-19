@@ -389,9 +389,17 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 						e1.printStackTrace();
 					}
 				}
-				ilp.run();
-				dataToDisplayChanged();
-				sliderTime.requestFocus();
+
+				final Thread t = new Thread( new Runnable() {
+
+					@Override
+					public void run() {
+						model.getCurrentGL().runILP();
+						dataToDisplayChanged();
+						sliderTime.requestFocus();
+					}
+				} );
+				t.start();
 			}
 		} );
 
@@ -1242,6 +1250,25 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				}
 				return ret;
 			}
+
+			/**
+			 * @param columnBoxInChannel
+			 * @return
+			 */
+			public float[][] getIntensities( final IntervalView< FloatType > columnBoxInChannel ) {
+				final float ret[][] = new float[ ( int ) columnBoxInChannel.dimension( 0 ) ][ ( int ) columnBoxInChannel.dimension( 1 ) ];
+				int y = 0;
+				for ( int j = ( int ) columnBoxInChannel.min( 1 ); j <= columnBoxInChannel.max( 1 ); j++ ) {
+					final IntervalView< FloatType > row = Views.hyperSlice( columnBoxInChannel, 1, j );
+					int x = 0;
+					for ( final FloatType ftPixel : Views.iterable( row ) ) {
+						ret[ x ][ y ] = ftPixel.get();
+						x++;
+					}
+					y++;
+				}
+				return ret;
+			}
 		}
 
 		final String loadedDataFolder = MotherMachine.props.getProperty( "import_path", "BUG -- could not get property 'import_path' while exporting cell statistics..." );
@@ -1360,6 +1387,17 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 						colIntensityStr += String.format( "; %.3f", value );
 					}
 					linesToExport.add( colIntensityStr );
+
+					final IntervalView< FloatType > intensityBoxInChannel = Util.getIntensityBoxInImg( channelFrame, segmentRecord.hyp, firstGLF.getAvgXpos() );
+					final float[][] intensities = segmentRecord.getIntensities( columnBoxInChannel );
+					String intensityStr = String.format( "\t\tch=%d; output=PIXEL_INTENSITIES", c );
+					for ( int y = 0; y < intensities[ 0 ].length; y++ ) {
+						for ( int x = 0; x < intensities.length; x++ ) {
+							intensityStr += String.format( ";%.3f", intensities[ x ][ y ] );
+						}
+						intensityStr += " ";
+					}
+					linesToExport.add( intensityStr );
 
 				}
 				segmentRecord = segmentRecord.nextSegmentInTime( ilp );
