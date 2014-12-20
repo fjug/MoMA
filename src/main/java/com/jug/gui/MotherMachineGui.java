@@ -841,14 +841,21 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			exportHtmlOverview();
 		}
 		if ( e.getSource().equals( btnExportData ) ) {
-			if ( model.getCurrentGL().getIlp() == null ) {
-				JOptionPane.showMessageDialog( this, "The current GL can only be exported after being tracked (optimized)!" );
-				return;
-			}
-
-			final CellStatsExporter exporter = new CellStatsExporter( this );
-			exporter.export();
+			exportDataFiles();
 		}
+	}
+
+	/**
+	 * 
+	 */
+	public void exportDataFiles() {
+		if ( model.getCurrentGL().getIlp() == null ) {
+			JOptionPane.showMessageDialog( this, "The current GL can only be exported after being tracked (optimized)!" );
+			return;
+		}
+
+		final CellStatsExporter exporter = new CellStatsExporter( this );
+		exporter.export();
 	}
 
 	/**

@@ -531,6 +531,7 @@ public class MotherMachine {
 //			final String name = inputFolder.getName();
 
 			gui.exportHtmlOverview();
+			gui.exportDataFiles();
 
 			instance.saveParams();
 

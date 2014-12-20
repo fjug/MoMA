@@ -218,9 +218,9 @@ public class CellStatsExporter {
 	private final MotherMachineGui gui;
 	private boolean doTrackExport = false;
 	private boolean includeHistograms = true;
-	private boolean includeQuantiles = false;
+	private boolean includeQuantiles = true;
 	private boolean includeColIntensitySums = true;
-	private boolean includePixelIntensities = false;
+	private boolean includePixelIntensities = true;
 
 	public CellStatsExporter( final MotherMachineGui gui ) {
 		this.gui = gui;
@@ -242,13 +242,22 @@ public class CellStatsExporter {
 	}
 
 	public void export() {
-		if ( showConfigDialog() ) {
-			final File folderToUse = OsDependentFolderChooser.showFolderChooser( gui, MotherMachine.STATS_OUTPUT_PATH, "Choose export folder..." );
-			if ( doTrackExport ) {
-				exportTracks( new File( folderToUse, "ExportedTracks.csv" ) );
+		if ( !MotherMachine.HEADLESS ) {
+			if ( showConfigDialog() ) {
+				final File folderToUse = OsDependentFolderChooser.showFolderChooser( gui, MotherMachine.STATS_OUTPUT_PATH, "Choose export folder..." );
+				if ( doTrackExport ) {
+					exportTracks( new File( folderToUse, "ExportedTracks.csv" ) );
+				}
+				try {
+					exportCellStats( new File( folderToUse, "ExportedCellStats.csv" ) );
+				} catch ( final GRBException e ) {
+					e.printStackTrace();
+				}
 			}
+		} else {
+			exportTracks( new File( MotherMachine.STATS_OUTPUT_PATH, "ExportedTracks.csv" ) );
 			try {
-				exportCellStats( new File( folderToUse, "ExportedCellStats.csv" ) );
+				exportCellStats( new File( MotherMachine.STATS_OUTPUT_PATH, "ExportedCellStats.csv" ) );
 			} catch ( final GRBException e ) {
 				e.printStackTrace();
 			}

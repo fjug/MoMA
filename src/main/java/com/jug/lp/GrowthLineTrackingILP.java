@@ -814,14 +814,18 @@ public class GrowthLineTrackingILP {
 			// - - - - - - - - - - - - - - - - - - - - -
 			model.optimize();
 			dialog.notifyGurobiTermination();
-			MotherMachine.getGui().dataToDisplayChanged();
+			if ( MotherMachine.getGui() != null ) {
+				MotherMachine.getGui().dataToDisplayChanged();
+			}
 
 			// Read solution and extract interpretation
 			// - - - - - - - - - - - - - - - - - - - - -
 			if ( model.get( GRB.IntAttr.Status ) == GRB.Status.OPTIMAL ) {
 				status = OPTIMAL;
 				dialog.pushStatus( "Optimum was found!" );
-				MotherMachine.getGui().focusOnSliderTime();
+				if ( MotherMachine.getGui() != null ) {
+					MotherMachine.getGui().focusOnSliderTime();
+				}
 				dialog.setVisible( false );
 				dialog.dispose();
 			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.INFEASIBLE ) {
