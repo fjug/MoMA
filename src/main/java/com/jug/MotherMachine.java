@@ -530,7 +530,7 @@ public class MotherMachine {
 		} else {
 //			final String name = inputFolder.getName();
 
-			gui.exportAllStats();
+			gui.exportHtmlOverview();
 
 			instance.saveParams();
 
