@@ -40,7 +40,7 @@ import com.jug.segmentation.GrowthLineSegmentationMagic;
 import com.jug.util.ArgbDrawingUtils;
 import com.jug.util.SimpleFunctionAnalysis;
 import com.jug.util.Util;
-import com.jug.util.converter.RealDoubleNormalizeConverter;
+import com.jug.util.converter.RealFloatNormalizeConverter;
 import com.jug.util.filteredcomponents.FilteredComponent;
 
 /**
@@ -443,8 +443,8 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 		// I will pray for forgiveness... in March... I promise... :(
 		IntervalView< FloatType > paramaxflowSumImageFloatTyped = getParamaxflowSumImageFloatTyped( null );
 		if ( paramaxflowSumImageFloatTyped == null ) {
-			final long left = getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2;
-			final long right = getOffsetX() + MotherMachine.GL_WIDTH_IN_PIXELS / 2;
+			final long left = getOffsetX() - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS - MotherMachine.GL_WIDTH_IN_PIXELS / 2;
+			final long right = getOffsetX() + MotherMachine.GL_PIXEL_PADDING_IN_VIEWS + MotherMachine.GL_WIDTH_IN_PIXELS / 2 + MotherMachine.GL_WIDTH_IN_PIXELS % 2;
 			final long top = img.min( 1 );
 			final long bottom = img.max( 1 );
 			final IntervalView< FloatType > viewCropped = Views.interval( Views.hyperSlice( img, 2, getOffsetF() ), new long[] { left, top }, new long[] { right, bottom } );
@@ -716,7 +716,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			getParamaxflowSumImage( viewGLF );
 		}
 
-		return Views.interval( Converters.convert( paramaxflowSumImage, new RealDoubleNormalizeConverter( this.paramaxflowSolutions ), new FloatType() ), paramaxflowSumImage );
+		return Views.interval( Converters.convert( paramaxflowSumImage, new RealFloatNormalizeConverter( this.paramaxflowSolutions ), new FloatType() ), paramaxflowSumImage );
 	}
 
 	/**

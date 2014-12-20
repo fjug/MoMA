@@ -130,7 +130,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 			// GrowthLine is empty, the projector
 			// throws a ArrayIndexOutOfBoundsException that I catch
 			// hereby... ;)
-			System.err.println( "ArrayIndexOutOfBoundsException in paintComponent of MMGUI!" );
+			System.err.println( "ArrayIndexOutOfBoundsException in paintComponent of Viewer2DCanvas!" );
 			// e.printStackTrace();
 		} catch ( final NullPointerException e ) {
 			// System.err.println( "View or glf not yet set in MotherMachineGui!" );

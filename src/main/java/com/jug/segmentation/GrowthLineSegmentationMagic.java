@@ -15,15 +15,19 @@ import net.imglib2.view.Views;
  */
 public class GrowthLineSegmentationMagic {
 
-	static SilentWekaSegmenter< FloatType > gapClassifier;
+	static SilentWekaSegmenter< FloatType > classifier;
 	private static long numSolutions;
 
 	public static void setClassifier( final String folder, final String file ) {
-		gapClassifier = new SilentWekaSegmenter< FloatType >( folder, file );
+		classifier = new SilentWekaSegmenter< FloatType >( folder, file );
+	}
+
+	public static SilentWekaSegmenter< FloatType > getClassifier() {
+		return classifier;
 	}
 
 	public static RandomAccessibleInterval< FloatType > returnClassification( final RandomAccessibleInterval< FloatType > rai ) {
-		final RandomAccessibleInterval< FloatType > classified = gapClassifier.classifyPixels( rai, true );
+		final RandomAccessibleInterval< FloatType > classified = classifier.classifyPixels( rai, true );
 
 //		ImageJFunctions.show( classified );
 

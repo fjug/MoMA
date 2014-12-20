@@ -160,9 +160,15 @@ public class MotherMachine {
 
 	/**
 	 * String pointing at the weka-segmenter model file that should be used for
-	 * classification.
+	 * classification during segmentation.
 	 */
-	public static String CLASSIFIER_MODEL_FILE = "BinaryGapClassifier.model";
+	public static String SEGMENTATION_CLASSIFIER_MODEL_FILE = "CellGapClassifier.model";
+
+	/**
+	 * String pointing at the weka-segmenter model file that should be used for
+	 * classification during cell-stats export for cell-size estimation.
+	 */
+	public static String CELLSIZE_CLASSIFIER_MODEL_FILE = "CellSizeClassifier.model";
 
 	/**
 	 * Global switch that turns the use of the weka classifier for paramaxflow
@@ -436,8 +442,8 @@ public class MotherMachine {
 		SIGMA_GL_DETECTION_X = Float.parseFloat( props.getProperty( "SIGMA_GL_DETECTION_X", Float.toString( SIGMA_GL_DETECTION_X ) ) );
 		SIGMA_GL_DETECTION_Y = Float.parseFloat( props.getProperty( "SIGMA_GL_DETECTION_Y", Float.toString( SIGMA_GL_DETECTION_Y ) ) );
 		SEGMENTATION_MIX_CT_INTO_PMFRF = Float.parseFloat( props.getProperty( "SEGMENTATION_MIX_CT_INTO_PMFRF", Float.toString( SEGMENTATION_MIX_CT_INTO_PMFRF ) ) );
-		CLASSIFIER_MODEL_FILE = props.getProperty( "CLASSIFIER_MODEL_FILE", CLASSIFIER_MODEL_FILE );
-//		STATS_OUTPUT_PATH = props.getProperty( "STATS_OUTPUT_PATH", STATS_OUTPUT_PATH );
+		SEGMENTATION_CLASSIFIER_MODEL_FILE = props.getProperty( "SEGMENTATION_CLASSIFIER_MODEL_FILE", SEGMENTATION_CLASSIFIER_MODEL_FILE );
+		CELLSIZE_CLASSIFIER_MODEL_FILE = props.getProperty( "CELLSIZE_CLASSIFIER_MODEL_FILE", CELLSIZE_CLASSIFIER_MODEL_FILE );
 		DEFAULT_PATH = props.getProperty( "DEFAULT_PATH", DEFAULT_PATH );
 
 		GUROBI_TIME_LIMIT = Double.parseDouble( props.getProperty( "GUROBI_TIME_LIMIT", Double.toString( GUROBI_TIME_LIMIT ) ) );
@@ -476,6 +482,8 @@ public class MotherMachine {
 		}
 		path = inputFolder.getAbsolutePath();
 		props.setProperty( "import_path", path );
+
+		GrowthLineSegmentationMagic.setClassifier( SEGMENTATION_CLASSIFIER_MODEL_FILE, "" );
 
 		if ( !HEADLESS ) {
 			// Setting up console window...
@@ -800,14 +808,14 @@ public class MotherMachine {
 
 		// CLASSIFIER TO BE LOADED --- CLASSIFIER TO BE LOADED --- CLASSIFIER TO BE LOADED 
 
-		final String message = "Should this classifier be used:\n" + CLASSIFIER_MODEL_FILE + "\n\nIn case you want to choose a different one, please select 'No'...";
+		final String message = "Should this classifier be used:\n" + SEGMENTATION_CLASSIFIER_MODEL_FILE + "\n\nIn case you want to choose a different one, please select 'No'...";
 		final String title = "MotherMachine Classifier Selection";
 		decision = JOptionPane.showConfirmDialog( guiFrame, message, title, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE );
 		if ( decision == JOptionPane.YES_OPTION ) {
-			GrowthLineSegmentationMagic.setClassifier( CLASSIFIER_MODEL_FILE, "" );
+			GrowthLineSegmentationMagic.setClassifier( SEGMENTATION_CLASSIFIER_MODEL_FILE, "" );
 		} else {
 			final FileDialog fd = new FileDialog( guiFrame, "Select classifier model file...", FileDialog.LOAD );
-			fd.setDirectory( CLASSIFIER_MODEL_FILE );
+			fd.setDirectory( SEGMENTATION_CLASSIFIER_MODEL_FILE );
 			fd.setFilenameFilter( new FilenameFilter() {
 
 				@Override
@@ -824,10 +832,9 @@ public class MotherMachine {
 			fd.setVisible( true );
 			final String filename = fd.getDirectory() + "/" + fd.getFile();
 			if ( filename != null ) {
-				CLASSIFIER_MODEL_FILE = filename;
+				SEGMENTATION_CLASSIFIER_MODEL_FILE = filename;
 			}
 		}
-		GrowthLineSegmentationMagic.setClassifier( CLASSIFIER_MODEL_FILE, "" );
 
 		return file;
 	}
@@ -953,8 +960,8 @@ public class MotherMachine {
 			props.setProperty( "SIGMA_GL_DETECTION_X", Double.toString( SIGMA_GL_DETECTION_X ) );
 			props.setProperty( "SIGMA_GL_DETECTION_Y", Double.toString( SIGMA_GL_DETECTION_Y ) );
 			props.setProperty( "SEGMENTATION_MIX_CT_INTO_PMFRF", Double.toString( SEGMENTATION_MIX_CT_INTO_PMFRF ) );
-			props.setProperty( "CLASSIFIER_MODEL_FILE", CLASSIFIER_MODEL_FILE );
-//			props.setProperty( "STATS_OUTPUT_PATH", STATS_OUTPUT_PATH );
+			props.setProperty( "SEGMENTATION_CLASSIFIER_MODEL_FILE", SEGMENTATION_CLASSIFIER_MODEL_FILE );
+			props.setProperty( "CELLSIZE_CLASSIFIER_MODEL_FILE", CELLSIZE_CLASSIFIER_MODEL_FILE );
 			props.setProperty( "DEFAULT_PATH", DEFAULT_PATH );
 
 			props.setProperty( "GUROBI_TIME_LIMIT", Double.toString( GUROBI_TIME_LIMIT ) );
