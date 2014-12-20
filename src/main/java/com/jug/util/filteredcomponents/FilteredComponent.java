@@ -197,19 +197,21 @@ public final class FilteredComponent< T extends Type< T > > implements Component
 	private void evaluatePixelListExtended() {
 		this.pixelListExtended = new ArrayList< Localizable >();
 
-		if ( parent == null ) {
-			for ( final Localizable pixel : this.pixelList ) {
-				this.pixelListExtended.add( new Point( pixel ) );
-			}
-
-		} else {
-
-			final ArrayList< FilteredComponent< T >> siblings = new ArrayList< FilteredComponent< T > >();
+		final ArrayList< FilteredComponent< T >> siblings = new ArrayList< FilteredComponent< T > >();
+		if ( parent != null ) {
 			for ( final FilteredComponent< T > comp : parent.children ) {
 				if ( !comp.equals( this ) ) {
 					siblings.add( comp );
 				}
 			}
+		}
+
+		if ( parent == null || siblings.size() == 0 ) { // do not extend single children!
+			for ( final Localizable pixel : this.pixelList ) {
+				this.pixelListExtended.add( new Point( pixel ) );
+			}
+
+		} else {
 
 			final PixelList potentialPixelsToAdd = parent.pixelList;
 
