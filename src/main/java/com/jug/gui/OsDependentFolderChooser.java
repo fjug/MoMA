@@ -21,10 +21,17 @@ public class OsDependentFolderChooser {
 
 	public static File showFolderChooser( final Component parent, final String path, final String title ) {
 
-		if ( !OSValidator.isMac() || !( SwingUtilities.getRoot( parent ) instanceof JFrame ) ) {
+		JFrame frame = null;
+		try {
+			frame = ( JFrame ) SwingUtilities.getWindowAncestor( parent );
+		} catch ( final ClassCastException e ) {
+			frame = null;
+		}
+
+		if ( OSValidator.isMac() && frame != null ) {
 
 			System.setProperty( "apple.awt.fileDialogForDirectories", "true" );
-			final FileDialog fd = new FileDialog( ( JFrame ) SwingUtilities.getRoot( parent ), title, FileDialog.LOAD );
+			final FileDialog fd = new FileDialog( frame, title, FileDialog.LOAD );
 			fd.setDirectory( path );
 			fd.setVisible( true );
 			final File selectedFile = new File( fd.getDirectory() + "/" + fd.getFile() );
