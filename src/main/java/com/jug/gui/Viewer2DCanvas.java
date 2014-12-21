@@ -16,17 +16,20 @@ import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.event.MouseInputListener;
 
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.converter.RealARGBConverter;
 import net.imglib2.display.projector.IterableIntervalProjector2D;
 import net.imglib2.display.screenimage.awt.ARGBScreenImage;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.ARGBType;
+import net.imglib2.type.numeric.integer.ShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
 import com.jug.GrowthLineFrame;
+import com.jug.MotherMachine;
 import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.Hypothesis;
 
@@ -101,12 +104,26 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 	public void exportScreenImage( final String path ) {
 		final ImagePlus imagePlus = ImageJFunctions.wrapFloat( Views.interval( view, screenImage ), "export" );
 		IJ.save( imagePlus, path );
+	}
 
-		// User the lines below to see the pixel I count as cell...
-//		final RandomAccessibleInterval< ShortType > segmImg = MotherMachine.instance.getCellSegmentedChannelImgs();
-//		final ImagePlus segImage = ImageJFunctions.wrapFloat( Views.hyperSlice( segmImg, 2, MotherMachine.getGui().sliderTime.getValue() ), "export2" );
-//		IJ.save( segImage, path );
-
+	/**
+	 * Exports the part of the original image that is seen in this canvas.
+	 * 
+	 * @param path
+	 *            note that the extension you give determines the file format!
+	 */
+	public void exportSegmentationImage( final String path ) {
+		final RandomAccessibleInterval< ShortType > segmImg = MotherMachine.instance.getCellSegmentedChannelImgs();
+		final long[] min = new long[ 2 ];
+		final long[] max = new long[ 2 ];
+		screenImage.min( min );
+		screenImage.max( max );
+		final long shift = ( segmImg.dimension( 0 ) - screenImage.dimension( 0 ) ) / 2;
+		min[ 0 ] += shift;
+		max[ 0 ] += shift;
+		final IntervalView< ShortType > imgToExport = Views.interval( Views.hyperSlice( segmImg, 2, MotherMachine.getGui().sliderTime.getValue() ), min, max );
+		final ImagePlus segImage = ImageJFunctions.wrapFloat( imgToExport, "export" );
+		IJ.save( segImage, path );
 	}
 
 	/**
