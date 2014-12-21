@@ -101,6 +101,12 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 	public void exportScreenImage( final String path ) {
 		final ImagePlus imagePlus = ImageJFunctions.wrapFloat( Views.interval( view, screenImage ), "export" );
 		IJ.save( imagePlus, path );
+
+		// User the lines below to see the pixel I count as cell...
+//		final RandomAccessibleInterval< ShortType > segmImg = MotherMachine.instance.getCellSegmentedChannelImgs();
+//		final ImagePlus segImage = ImageJFunctions.wrapFloat( Views.hyperSlice( segmImg, 2, MotherMachine.getGui().sliderTime.getValue() ), "export2" );
+//		IJ.save( segImage, path );
+
 	}
 
 	/**
