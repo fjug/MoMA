@@ -17,6 +17,7 @@ import net.imglib2.IterableInterval;
 import net.imglib2.Pair;
 import net.imglib2.Point;
 import net.imglib2.type.Type;
+import net.imglib2.type.numeric.integer.ShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
@@ -171,7 +172,6 @@ public class Util {
 		lt[ 0 ] = glMiddleInImg - MotherMachine.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS / 2;
 		final long[] rb = Util.getRightBottomInSourceImg( hyp, glMiddleInImg );
 		rb[ 0 ] = glMiddleInImg + MotherMachine.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS / 2 + MotherMachine.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS % 2 - 1;
-//		System.out.println( String.format( " >> %d, %d", rb[ 0 ] - lt[ 0 ], +rb[ 1 ] - lt[ 1 ] ) );
 		return Views.interval( channelFrame, lt, rb );
 	}
 
@@ -186,8 +186,21 @@ public class Util {
 		lt[ 0 ] = glMiddleInImg - MotherMachine.GL_WIDTH_IN_PIXELS / 2;
 		final long[] rb = Util.getRightBottomInSourceImg( hyp, glMiddleInImg );
 		rb[ 0 ] = glMiddleInImg + MotherMachine.GL_WIDTH_IN_PIXELS / 2 + MotherMachine.GL_WIDTH_IN_PIXELS % 2 - 1;
-//		System.out.println( String.format( " >> %d, %d", rb[ 0 ] - lt[ 0 ], +rb[ 1 ] - lt[ 1 ] ) );
 		return Views.interval( channelFrame, lt, rb );
+	}
+
+	/**
+	 * @param segmentedFrame
+	 * @param hyp
+	 * @param avgXpos
+	 * @return
+	 */
+	public static IntervalView< ShortType > getClassificationBoxInImg( final IntervalView< ShortType > segmentedFrame, final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long glMiddleInImg ) {
+		final long[] lt = Util.getTopLeftInSourceImg( hyp, glMiddleInImg );
+		lt[ 0 ] = glMiddleInImg - MotherMachine.GL_WIDTH_IN_PIXELS; // to lazy for an additional param... twice GL_WIDTH should be ok...
+		final long[] rb = Util.getRightBottomInSourceImg( hyp, glMiddleInImg );
+		rb[ 0 ] = glMiddleInImg + MotherMachine.GL_WIDTH_IN_PIXELS; // to lazy for an additional param... twice GL_WIDTH should be ok...
+		return Views.interval( segmentedFrame, lt, rb );
 	}
 
 	/**
@@ -233,6 +246,19 @@ public class Util {
 		final long right = middle + MotherMachine.GL_WIDTH_IN_PIXELS / 2 + MotherMachine.GL_WIDTH_IN_PIXELS % 2 - 1;
 		final long bottom = limits.getB();
 		return new long[] { right, bottom };
+	}
+
+	/**
+	 * @param sizeEstimationBoxInChannel0
+	 * @param d
+	 * @return
+	 */
+	public static int countPixelsAboveThreshold( final IntervalView< ShortType > segmentedFrame, final float threshold ) {
+		int ret = 0;
+		for ( final ShortType pixel : Views.iterable( segmentedFrame ) ) {
+			if ( pixel.get() > threshold ) ret++;
+		}
+		return ret;
 	}
 
 }

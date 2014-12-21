@@ -22,6 +22,10 @@ public class GrowthLineSegmentationMagic {
 		classifier = new SilentWekaSegmenter< FloatType >( folder, file );
 	}
 
+	public static void setClassifier( final SilentWekaSegmenter< FloatType > newClassifier ) {
+		classifier = newClassifier;
+	}
+
 	public static SilentWekaSegmenter< FloatType > getClassifier() {
 		return classifier;
 	}

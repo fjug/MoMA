@@ -7,6 +7,7 @@ package com.jug;
 import gurobi.GRBEnv;
 import gurobi.GRBException;
 import ij.ImageJ;
+import ij.Prefs;
 
 import java.awt.FileDialog;
 import java.awt.GraphicsDevice;
@@ -37,12 +38,15 @@ import javax.swing.filechooser.FileFilter;
 
 import net.imglib2.Cursor;
 import net.imglib2.Point;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.algorithm.stats.Normalize;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.ARGBType;
+import net.imglib2.type.numeric.integer.ShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
@@ -62,8 +66,10 @@ import com.jug.gui.MotherMachineModel;
 import com.jug.loops.Loops;
 import com.jug.ops.cursor.FindLocalMaxima;
 import com.jug.segmentation.GrowthLineSegmentationMagic;
+import com.jug.segmentation.SilentWekaSegmenter;
 import com.jug.util.DataMover;
 import com.jug.util.FloatTypeImgLoader;
+import com.jug.util.converter.RealFloatProbMapToSegmentation;
 
 /**
  * @author jug
@@ -506,9 +512,14 @@ public class MotherMachine {
 
 		// show loaded and annotated data
 		if ( showIJ ) {
+			new ImageJ();
 			ImageJFunctions.show( main.imgRaw, "Rotated & cropped raw data" );
 			// ImageJFunctions.show( main.imgTemp, "Temporary" );
 			// ImageJFunctions.show( main.imgAnnotated, "Annotated ARGB data" );
+
+			// main.getCellSegmentedChannelImgs()
+			// ImageJFunctions.show( main.imgClassified, "Classification" );
+			// ImageJFunctions.show( main.getCellSegmentedChannelImgs(), "Segmentation" );
 		}
 
 		gui = new MotherMachineGui( mmm );
@@ -560,6 +571,8 @@ public class MotherMachine {
 	private Img< FloatType > imgRaw;
 	private Img< FloatType > imgTemp;
 	private Img< ARGBType > imgAnnotated;
+	private Img< FloatType > imgClassified;
+	private Img< ShortType > imgSegmented;
 
 	/**
 	 * Contains all detected growth line center points. The structure goes in
@@ -637,6 +650,67 @@ public class MotherMachine {
 	 */
 	public void setImgRendered( final Img< ARGBType > imgRendered ) {
 		this.imgAnnotated = imgRendered;
+	}
+
+	/**
+	 * @return imgSegmented
+	 */
+	public RandomAccessibleInterval< ShortType > getCellSegmentedChannelImgs() {
+		if ( this.imgSegmented == null ) {
+			final SilentWekaSegmenter< FloatType > oldClassifier = GrowthLineSegmentationMagic.getClassifier();
+			GrowthLineSegmentationMagic.setClassifier( MotherMachine.CELLSIZE_CLASSIFIER_MODEL_FILE, "" );
+
+			imgClassified = new ArrayImgFactory< FloatType >().create( imgTemp, new FloatType() );
+			imgSegmented = new ArrayImgFactory< ShortType >().create( imgTemp, new ShortType() );
+			final RealFloatProbMapToSegmentation< FloatType > converter = new RealFloatProbMapToSegmentation< FloatType >( 0.5f );
+
+			final int numProcessors = Prefs.getThreads();
+			final int numThreads = Math.min( ( int ) getImgTemp().dimension( 2 ), numProcessors );
+			final Thread[] threads = new Thread[ numThreads ];
+
+			class ImageProcessingThread extends Thread {
+
+				final int numThread;
+				final int numThreads;
+
+				public ImageProcessingThread( final int numThread, final int numThreads ) {
+					this.numThread = numThread;
+					this.numThreads = numThreads;
+				}
+
+				@Override
+				public void run() {
+					RandomAccessibleInterval< FloatType > classified;
+					for ( int frameIdx = numThread; frameIdx < getImgTemp().dimension( 2 ); frameIdx += numThreads ) {
+						final IntervalView< FloatType > channel0Frame = Views.hyperSlice( getImgTemp(), 2, frameIdx );
+						classified = Views.hyperSlice( GrowthLineSegmentationMagic.returnClassification( channel0Frame ), 2, 0 );
+//						Normalize.normalize( Views.iterable( classified ), new FloatType( 0.0f ), new FloatType( 1.0f ) );
+
+						final RandomAccessibleInterval< FloatType > newClassificationSlize = Views.hyperSlice( imgClassified, 2, frameIdx );
+						final RandomAccessibleInterval< ShortType > newSegmentationSlize = Views.hyperSlice( imgSegmented, 2, frameIdx );
+
+						DataMover.copy( classified, Views.iterable( newClassificationSlize ) );
+						DataMover.copy( classified, Views.iterable( newSegmentationSlize ), converter );
+					}
+				}
+			}
+
+			// start threads
+			for ( int i = 0; i < numThreads; i++ ) {
+				threads[ i ] = new ImageProcessingThread( i, numThreads );
+				threads[ i ].start();
+			}
+
+			// wait for all threads to terminate
+			for ( final Thread thread : threads ) {
+				try {
+					thread.join();
+				} catch ( final InterruptedException e ) {}
+			}
+
+			GrowthLineSegmentationMagic.setClassifier( oldClassifier );
+		}
+		return imgSegmented;
 	}
 
 	/**

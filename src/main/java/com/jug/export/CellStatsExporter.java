@@ -25,6 +25,7 @@ import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.histogram.Histogram1d;
 import net.imglib2.histogram.Real1dBinMapper;
+import net.imglib2.type.numeric.integer.ShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.ValuePair;
 import net.imglib2.view.IntervalView;
@@ -377,8 +378,14 @@ public class CellStatsExporter {
 				if ( segmentRecord.hyp.getWrappedHypothesis() instanceof FilteredComponent ) {
 					limits = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) segmentRecord.hyp.getWrappedHypothesis() );
 				}
+
 				final int height = limits.getB() - limits.getA() + 1;
-				linesToExport.add( String.format( "\tframe=%d; pixel_limits=[%d,%d]; cell_height=%d; num_pixels_in_box=%d", segmentRecord.frame, limits.getA(), limits.getB(), height, Util.getSegmentBoxPixelCount( segmentRecord.hyp, firstGLF.getAvgXpos() ) ) );
+
+				final IntervalView< ShortType > segmentedFrame = Views.hyperSlice( MotherMachine.instance.getCellSegmentedChannelImgs(), 2, segmentRecord.frame );
+				final IntervalView< ShortType > ivSegmentationSnippet = Util.getClassificationBoxInImg( segmentedFrame, segmentRecord.hyp, firstGLF.getAvgXpos() );
+				final int estimatedSize = Util.countPixelsAboveThreshold( ivSegmentationSnippet, 0 );
+
+				linesToExport.add( String.format( "\tframe=%d; pixel_limits=[%d,%d]; cell_height=%d; num_pixels_in_box=%d; estimated_area_in_pixels=%d", segmentRecord.frame, limits.getA(), limits.getB(), height, Util.getSegmentBoxPixelCount( segmentRecord.hyp, firstGLF.getAvgXpos() ), estimatedSize ) );
 
 				// export info per image channel
 				for ( int c = 0; c < MotherMachine.instance.getRawChannelImgs().size(); c++ ) {

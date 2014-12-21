@@ -4,6 +4,7 @@
 package com.jug.gui;
 
 import gurobi.GRBException;
+import ij.Prefs;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -959,7 +960,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			activateSimpleHypothesesForGL( gl );
 		}
 
-		final int numProcessors = 16; //Prefs.getThreads();
+		final int numProcessors = Prefs.getThreads();
 		final int numThreads = Math.min( model.getCurrentGL().getFrames().size(), numProcessors );
 		final Thread[] threads = new Thread[ numThreads ];
 

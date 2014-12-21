@@ -8,6 +8,7 @@ import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.converter.Converter;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.NativeType;
@@ -54,6 +55,24 @@ public class DataMover {
 			// set the value of this pixel of the output image, every Type
 			// supports T.set( T type )
 			targetCursor.get().set( sourceRandomAccess.get() );
+		}
+	}
+
+	public static < T1 extends Type< T1 >, T2 extends Type< T2 >> void copy( final RandomAccessible< T1 > source, final IterableInterval< T2 > target, final Converter< T1, T2 > converter ) {
+		// create a cursor that automatically localizes itself on every move
+		final Cursor< T2 > targetCursor = target.localizingCursor();
+		final RandomAccess< T1 > sourceRandomAccess = source.randomAccess();
+
+		// iterate over the input cursor
+		while ( targetCursor.hasNext() ) {
+			// move input cursor forward
+			targetCursor.fwd();
+
+			// set the output cursor to the position of the input cursor
+			sourceRandomAccess.setPosition( targetCursor );
+
+			// set converted value
+			converter.convert( sourceRandomAccess.get(), targetCursor.get() );
 		}
 	}
 
