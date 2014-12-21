@@ -17,6 +17,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -273,6 +274,13 @@ public class MotherMachine {
 	private static boolean showIJ = false;
 	private static MotherMachineGui gui;
 
+	/**
+	 * A properties file that will be used to 'overwrite' default properties in
+	 * mm.properties.
+	 * This file can be set using the CLI.
+	 */
+	private static File fileUserProps;
+
 	// ====================================================================================================================
 
 	/**
@@ -312,6 +320,9 @@ public class MotherMachine {
 		final Option outfolder = new Option( "o", "outfolder", true, "folder to write preprocessed data to (equals infolder if not given)" );
 		outfolder.setRequired( false );
 
+		final Option userProps = new Option( "p", "props", true, "properties file to be loaded (mm.properties)" );
+		infolder.setRequired( false );
+
 		options.addOption( help );
 		options.addOption( headless );
 		options.addOption( numChannelsOption );
@@ -320,13 +331,14 @@ public class MotherMachine {
 		options.addOption( timeLast );
 		options.addOption( infolder );
 		options.addOption( outfolder );
+		options.addOption( userProps );
 		// get the commands parsed
 		CommandLine cmd = null;
 		try {
 			cmd = parser.parse( options, args );
 		} catch ( final ParseException e1 ) {
 			final HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp( "... -i [in-folder] -o [out-folder] -c <num-channels> -cmin [start-channel-ids] -tmin [idx] -tmax [idx] [-headless]", "", options, "Error: " + e1.getMessage() );
+			formatter.printHelp( "... -p [props-file] -i [in-folder] -o [out-folder] -c <num-channels> -cmin [start-channel-ids] -tmin [idx] -tmax [idx] [-headless]", "", options, "Error: " + e1.getMessage() );
 			System.exit( 0 );
 		}
 
@@ -377,6 +389,11 @@ public class MotherMachine {
 			}
 
 			STATS_OUTPUT_PATH = outputFolder.getAbsolutePath();
+		}
+
+		fileUserProps = null;
+		if ( cmd.hasOption( "p" ) ) {
+			fileUserProps = new File( cmd.getOptionValue( "p" ) );
 		}
 
 		int minChannelIdx = 0;
@@ -996,26 +1013,46 @@ public class MotherMachine {
 	@SuppressWarnings( "resource" )
 	private Properties loadParams() {
 		InputStream is = null;
-		final Properties props = new Properties();
+		final Properties defaultProps = new Properties();
 
 		// First try loading from the current directory
 		try {
 			final File f = new File( "mm.properties" );
+			System.out.println( "Loading default properties from: " + f.getAbsolutePath() );
 			is = new FileInputStream( f );
 		} catch ( final Exception e ) {
+			System.out.println( "Could not load props... try from classpath next..." );
 			is = null;
 		}
 
 		try {
 			if ( is == null ) {
 				// Try loading from classpath
+				System.out.println( "Loading default properties from: " + getClass().getResource( "mm.properties" ) );
 				is = getClass().getResourceAsStream( "mm.properties" );
 			}
 
 			// Try loading properties from the file (if found)
-			props.load( is );
+			defaultProps.load( is );
+
+			System.out.println( " >> default properties loaded!" );
 		} catch ( final Exception e ) {
-			System.out.println( "No properties file 'mm.properties' found in current path or classpath... I will create one!" );
+			System.out.println( "No default properties file 'mm.properties' found in current path or classpath... I will create one at termination time!" );
+		}
+
+		// ADD USER PROPS IF GIVEN VIA CLI
+		final Properties props = new Properties( defaultProps );
+		if ( fileUserProps != null ) {
+			System.out.println( "Loading user properties from: " + fileUserProps.getAbsolutePath() );
+			try {
+				is = new FileInputStream( fileUserProps );
+				props.load( is );
+				System.out.println( " >> user properties loaded!" );
+			} catch ( final FileNotFoundException e ) {
+				System.out.println( "ERROR: Could not find user props!" );
+			} catch ( final IOException e ) {
+				System.out.println( "ERROR: Could not read user props!" );
+			}
 		}
 
 		return props;
@@ -1104,7 +1141,7 @@ public class MotherMachine {
 
 			// load tiffs from folder
 			final String filter = String.format( "_c%02d", cIdx );
-			System.out.print( String.format( "Loading tiff sequence for channel, identified by '%s', from '%s'...", filter, path ) );
+			System.out.println( String.format( "Loading tiff sequence for channel, identified by '%s', from '%s'...", filter, path ) );
 			try {
 				if ( cIdx == minChannelIdx ) {
 					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, true, filter ) );
@@ -1115,7 +1152,7 @@ public class MotherMachine {
 				e.printStackTrace();
 				System.exit( 10 );
 			}
-			System.out.println( " done!" );
+			System.out.println( "Done loading tiffs!" );
 		}
 		imgRaw = rawChannelImgs.get( 0 );
 
