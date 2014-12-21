@@ -7,7 +7,6 @@ import gurobi.GRB;
 import gurobi.GRBConstr;
 import gurobi.GRBException;
 import gurobi.GRBLinExpr;
-import gurobi.GRBModel;
 import gurobi.GRBVar;
 
 import java.util.List;
@@ -24,7 +23,7 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 
 	private int type;
 
-	protected GRBModel model;
+	protected GrowthLineTrackingILP ilp;
 
 	private int exportVarIdx = -1;
 	private GRBVar ilpVar;
@@ -39,10 +38,10 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 * @param type
 	 * @param cost
 	 */
-	public AbstractAssignment( final int type, final GRBVar ilpVariable, final GRBModel model ) {
+	public AbstractAssignment( final int type, final GRBVar ilpVariable, final GrowthLineTrackingILP ilp ) {
 		this.setType( type );
 		setGRBVar( ilpVariable );
-		setGRBModel( model );
+		setGrowthLineTrackingILP( ilp );
 	}
 
 	/**
@@ -105,8 +104,8 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 * @param model
 	 *            GRBModel instance (the ILP)
 	 */
-	public void setGRBModel( final GRBModel model ) {
-		this.model = model;
+	public void setGrowthLineTrackingILP( final GrowthLineTrackingILP ilp ) {
+		this.ilp = ilp;
 	}
 
 	/**
@@ -188,10 +187,16 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 */
 	private void reoptimize() {
 		try {
-			model.update();
-			System.out.print( "Running ILP with new ground-(un)truth knowledge..." );
-			model.optimize();
-			System.out.println( " ...done!" );
+			ilp.model.update();
+			System.out.print( "Running ILP with new ground-(un)truth knowledge in new thread!" );
+			final Thread t = new Thread( new Runnable() {
+
+				@Override
+				public void run() {
+					ilp.run();
+				}
+			} );
+			t.start();
 		} catch ( final GRBException e ) {
 			e.printStackTrace();
 		}
@@ -207,9 +212,9 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 
 				final GRBLinExpr exprGroundTruth = new GRBLinExpr();
 				exprGroundTruth.addTerm( 1.0, getGRBVar() );
-				constrGroundTruth = model.addConstr( exprGroundTruth, GRB.EQUAL, value, "GroundTruthConstraint_" + getGRBVar().toString() );
+				constrGroundTruth = ilp.model.addConstr( exprGroundTruth, GRB.EQUAL, value, "GroundTruthConstraint_" + getGRBVar().toString() );
 			} else {
-				model.remove( constrGroundTruth );
+				ilp.model.remove( constrGroundTruth );
 			}
 		} catch ( final GRBException e ) {
 			e.printStackTrace();

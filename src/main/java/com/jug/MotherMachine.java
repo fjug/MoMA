@@ -63,6 +63,7 @@ import org.apache.commons.lang3.SystemUtils;
 import com.jug.gui.JFrameSnapper;
 import com.jug.gui.MotherMachineGui;
 import com.jug.gui.MotherMachineModel;
+import com.jug.gui.progress.DialogProgress;
 import com.jug.loops.Loops;
 import com.jug.ops.cursor.FindLocalMaxima;
 import com.jug.segmentation.GrowthLineSegmentationMagic;
@@ -657,6 +658,11 @@ public class MotherMachine {
 	 */
 	public RandomAccessibleInterval< ShortType > getCellSegmentedChannelImgs() {
 		if ( this.imgSegmented == null ) {
+			final DialogProgress dialogProgress = new DialogProgress( this.getGui(), "Estimating cell-area using RF classifier...", this.getGui().model.getCurrentGL().size() );
+			if ( !HEADLESS ) {
+				dialogProgress.setVisible( true );
+			}
+
 			final SilentWekaSegmenter< FloatType > oldClassifier = GrowthLineSegmentationMagic.getClassifier();
 			GrowthLineSegmentationMagic.setClassifier( MotherMachine.CELLSIZE_CLASSIFIER_MODEL_FILE, "" );
 
@@ -691,6 +697,10 @@ public class MotherMachine {
 
 						DataMover.copy( classified, Views.iterable( newClassificationSlize ) );
 						DataMover.copy( classified, Views.iterable( newSegmentationSlize ), converter );
+
+						if ( !HEADLESS ) {
+							dialogProgress.hasProgressed();
+						}
 					}
 				}
 			}
@@ -708,8 +718,14 @@ public class MotherMachine {
 				} catch ( final InterruptedException e ) {}
 			}
 
+			// clean up
 			GrowthLineSegmentationMagic.setClassifier( oldClassifier );
+			if ( !HEADLESS ) {
+				dialogProgress.setVisible( false );
+				dialogProgress.dispose();
+			}
 		}
+
 		return imgSegmented;
 	}
 

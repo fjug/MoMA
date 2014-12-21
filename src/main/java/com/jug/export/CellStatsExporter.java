@@ -36,6 +36,7 @@ import com.jug.MotherMachine;
 import com.jug.gui.DialogCellStatsExportSetup;
 import com.jug.gui.MotherMachineGui;
 import com.jug.gui.OsDependentFolderChooser;
+import com.jug.gui.progress.DialogProgress;
 import com.jug.lp.AbstractAssignment;
 import com.jug.lp.DivisionAssignment;
 import com.jug.lp.GrowthLineTrackingILP;
@@ -217,11 +218,11 @@ public class CellStatsExporter {
 	// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private final MotherMachineGui gui;
-	private boolean doTrackExport = false;
+	private boolean doTrackExport = true;
 	private boolean includeHistograms = true;
 	private boolean includeQuantiles = true;
 	private boolean includeColIntensitySums = true;
-	private boolean includePixelIntensities = true;
+	private boolean includePixelIntensities = false;
 
 	public CellStatsExporter( final MotherMachineGui gui ) {
 		this.gui = gui;
@@ -256,7 +257,10 @@ public class CellStatsExporter {
 				}
 			}
 		} else {
-			exportTracks( new File( MotherMachine.STATS_OUTPUT_PATH, "ExportedTracks.csv" ) );
+			if ( doTrackExport ) {
+				exportTracks( new File( MotherMachine.STATS_OUTPUT_PATH, "ExportedTracks.csv" ) );
+			}
+
 			try {
 				exportCellStats( new File( MotherMachine.STATS_OUTPUT_PATH, "ExportedCellStats.csv" ) );
 			} catch ( final GRBException e ) {
@@ -354,6 +358,12 @@ public class CellStatsExporter {
 				queue.add( new SegmentRecord( prepPoint ) );
 				nextCellId++;
 			}
+		}
+
+		// INITIALIZE PROGRESS-BAR if not run headless
+		final DialogProgress dialogProgress = new DialogProgress( gui, "Exporting selected cell-statistics...", startingPoints.size() );
+		if ( !MotherMachine.HEADLESS ) {
+			dialogProgress.setVisible( true );
 		}
 
 		// Line 1: import folder
@@ -457,6 +467,17 @@ public class CellStatsExporter {
 			} else {
 				linesToExport.add( "\tGUROBI_EXCEPTION\n" );
 			}
+
+			// REPORT PROGRESS if needbe
+			if ( !MotherMachine.HEADLESS ) {
+				dialogProgress.hasProgressed();
+			}
+		}
+
+		// Dispose ProgressBar in needbe
+		if ( !MotherMachine.HEADLESS ) {
+			dialogProgress.setVisible( false );
+			dialogProgress.dispose();
 		}
 
 		return linesToExport;
@@ -479,10 +500,14 @@ public class CellStatsExporter {
 			}
 			out.close();
 		} catch ( final FileNotFoundException e1 ) {
-			JOptionPane.showMessageDialog( gui, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
+			if ( !MotherMachine.HEADLESS )
+				JOptionPane.showMessageDialog( gui, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
+			System.err.println( "Export Error: File not found!" );
 			e1.printStackTrace();
 		} catch ( final IOException e1 ) {
-			JOptionPane.showMessageDialog( gui, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
+			if ( !MotherMachine.HEADLESS )
+				JOptionPane.showMessageDialog( gui, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
+			System.err.println( "Export Error: Selected file could not be written!" );
 			e1.printStackTrace();
 		}
 		System.out.println( "...done!" );

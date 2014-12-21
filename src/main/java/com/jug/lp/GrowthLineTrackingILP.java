@@ -142,7 +142,8 @@ public class GrowthLineTrackingILP {
 			// - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 			int numHyp = 0;
 			for ( final List< Hypothesis< Component< FloatType, ? >>> innerList : nodes.getAllHypotheses() ) {
-				for ( final Hypothesis< Component< FloatType, ? >> hypothesis : innerList ) {
+				for ( @SuppressWarnings( "unused" )
+				final Hypothesis< Component< FloatType, ? >> hypothesis : innerList ) {
 					numHyp++;
 				}
 			}
@@ -406,7 +407,7 @@ public class GrowthLineTrackingILP {
 			cost = Math.min( 0.0f, hyp.getCosts() / 2.0f ); // NOTE: 0 or negative but only hyp/2 to prefer map or div if exists...
 			final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, String.format( "a_%d^EXIT--%d", t, i ) );
 			final List< Hypothesis< Component< FloatType, ? >>> Hup = LpUtils.getHup( hyp, hyps );
-			final ExitAssignment ea = new ExitAssignment( t, newLPVar, model, nodes, edgeSets, Hup, hyp );
+			final ExitAssignment ea = new ExitAssignment( t, newLPVar, this, nodes, edgeSets, Hup, hyp );
 			nodes.addAssignment( t, ea );
 			edgeSets.addToRightNeighborhood( hyp, ea );
 			i++;
@@ -449,7 +450,7 @@ public class GrowthLineTrackingILP {
 					if ( cost <= CUTOFF_COST ) {
 						final String name = String.format( "a_%d^MAPPING--(%d,%d)", t, i, j );
 						final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, name );
-						final MappingAssignment ma = new MappingAssignment( t, newLPVar, model, nodes, edgeSets, from, to );
+						final MappingAssignment ma = new MappingAssignment( t, newLPVar, this, nodes, edgeSets, from, to );
 						nodes.addAssignment( t, ma );
 						if ( edgeSets.addToRightNeighborhood( from, ma ) == false ) {
 							System.err.println( "ERROR: Mapping-assignment could not be added to right neighborhood!" );
@@ -557,7 +558,7 @@ public class GrowthLineTrackingILP {
 
 							if ( cost <= CUTOFF_COST ) {
 								final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, String.format( "a_%d^DIVISION--(%d,%d)", t, i, j ) );
-								final DivisionAssignment da = new DivisionAssignment( t, newLPVar, model, nodes, edgeSets, from, to, lowerNeighbor );
+								final DivisionAssignment da = new DivisionAssignment( t, newLPVar, this, nodes, edgeSets, from, to, lowerNeighbor );
 								nodes.addAssignment( t, da );
 								edgeSets.addToRightNeighborhood( from, da );
 								edgeSets.addToLeftNeighborhood( to, da );
@@ -803,12 +804,15 @@ public class GrowthLineTrackingILP {
 	public void run() {
 		try {
 			// Set maximum time Gurobi may use!
-//			model.getEnv().set( GRB.DoubleParam.TimeLimit, MotherMachine.GUROBI_TIME_LIMIT );
+//			model.getEnv().set( GRB.DoubleParam.TimeLimit, MotherMachine.GUROBI_TIME_LIMIT ); // handled by callback!
 			model.getEnv().set( GRB.IntParam.OutputFlag, 0 );
 
 			final DialogGurobiProgress dialog = new DialogGurobiProgress( MotherMachine.getGuiFrame() );
 			final GurobiCallback gcb = new GurobiCallback( dialog );
 			model.setCallback( gcb );
+			if ( !MotherMachine.HEADLESS ) {
+				dialog.setVisible( true );
+			}
 
 			// RUN + return true if solution is feasible
 			// - - - - - - - - - - - - - - - - - - - - -
@@ -822,15 +826,19 @@ public class GrowthLineTrackingILP {
 			// - - - - - - - - - - - - - - - - - - - - -
 			if ( model.get( GRB.IntAttr.Status ) == GRB.Status.OPTIMAL ) {
 				status = OPTIMAL;
-				dialog.pushStatus( "Optimum was found!" );
-				if ( MotherMachine.getGui() != null ) {
-					MotherMachine.getGui().focusOnSliderTime();
+				if ( !MotherMachine.HEADLESS ) {
+					dialog.pushStatus( "Optimum was found!" );
+					if ( MotherMachine.getGui() != null ) {
+						MotherMachine.getGui().focusOnSliderTime();
+					}
+					dialog.setVisible( false );
+					dialog.dispose();
 				}
-				dialog.setVisible( false );
-				dialog.dispose();
 			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.INFEASIBLE ) {
 				status = INFEASIBLE;
-				dialog.pushStatus( "ILP now infeasible. Please reoptimize!" );
+				if ( !MotherMachine.HEADLESS ) {
+					dialog.pushStatus( "ILP now infeasible. Please reoptimize!" );
+				}
 			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.UNBOUNDED ) {
 				status = UNBOUNDED;
 			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.SUBOPTIMAL ) {
@@ -839,7 +847,9 @@ public class GrowthLineTrackingILP {
 				status = NUMERIC;
 			} else {
 				status = LIMIT_REACHED;
-				dialog.pushStatus( String.format( "Timelimit reached, rel. optimality gap: %.2f%%", gcb.getLatestGap() * 100.0 ) );
+				if ( !MotherMachine.HEADLESS ) {
+					dialog.pushStatus( String.format( "Timelimit reached, rel. optimality gap: %.2f%%", gcb.getLatestGap() * 100.0 ) );
+				}
 			}
 		} catch ( final GRBException e ) {
 			System.out.println( "Could not run the generated ILP!" );

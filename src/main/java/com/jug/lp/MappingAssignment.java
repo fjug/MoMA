@@ -4,7 +4,6 @@
 package com.jug.lp;
 
 import gurobi.GRBException;
-import gurobi.GRBModel;
 import gurobi.GRBVar;
 
 import java.util.List;
@@ -33,8 +32,8 @@ public class MappingAssignment extends AbstractAssignment< Hypothesis< Component
 	 * @param to
 	 * @throws GRBException
 	 */
-	public MappingAssignment( final int t, final GRBVar ilpVariable, final GRBModel model, final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< FloatType, ? > > >, Hypothesis< Component< FloatType, ? > > > nodes, final HypothesisNeighborhoods< Hypothesis< Component< FloatType, ? > >, AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > edges, final Hypothesis< Component< FloatType, ? >> from, final Hypothesis< Component< FloatType, ? >> to ) throws GRBException {
-		super( GrowthLineTrackingILP.ASSIGNMENT_MAPPING, ilpVariable, model );
+	public MappingAssignment( final int t, final GRBVar ilpVariable, final GrowthLineTrackingILP ilp, final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< FloatType, ? > > >, Hypothesis< Component< FloatType, ? > > > nodes, final HypothesisNeighborhoods< Hypothesis< Component< FloatType, ? > >, AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > edges, final Hypothesis< Component< FloatType, ? >> from, final Hypothesis< Component< FloatType, ? >> to ) throws GRBException {
+		super( GrowthLineTrackingILP.ASSIGNMENT_MAPPING, ilpVariable, ilp );
 		this.from = from;
 		this.to = to;
 		this.edges = edges;

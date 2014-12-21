@@ -65,8 +65,6 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	// fields
 	// -------------------------------------------------------------------------------------
 	private final int width;
-	private final int height;
-
 	private final int offsetY;
 
 	private boolean doFilterDataByType = false;
@@ -116,7 +114,6 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	public AssignmentView( final int height, final float filterMinCost, final float filterMaxCost ) {
 		this.offsetY = MotherMachine.GL_OFFSET_TOP;
 		this.width = 90;
-		this.height = height;
 		this.setPreferredSize( new Dimension( width, height - HEIGHT_OFFSET ) );
 
 		this.addMouseListener( this );

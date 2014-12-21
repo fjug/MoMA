@@ -316,7 +316,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					btnOptimize.doClick();
 				}
 				if ( e.getActionCommand().equals( "e" ) ) {
-					btnExportHtml.doClick();
 					btnExportData.doClick();
 				}
 				if ( e.getActionCommand().equals( "r" ) ) {
@@ -839,10 +838,24 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			t.start();
 		}
 		if ( e.getSource().equals( btnExportHtml ) ) {
-			exportHtmlOverview();
+			final Thread t = new Thread( new Runnable() {
+
+				@Override
+				public void run() {
+					exportHtmlOverview();
+				}
+			} );
+			t.start();
 		}
 		if ( e.getSource().equals( btnExportData ) ) {
-			exportDataFiles();
+			final Thread t = new Thread( new Runnable() {
+
+				@Override
+				public void run() {
+					exportDataFiles();
+				}
+			} );
+			t.start();
 		}
 	}
 

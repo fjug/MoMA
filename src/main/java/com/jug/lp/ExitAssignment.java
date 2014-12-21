@@ -6,7 +6,6 @@ package com.jug.lp;
 import gurobi.GRB;
 import gurobi.GRBException;
 import gurobi.GRBLinExpr;
-import gurobi.GRBModel;
 import gurobi.GRBVar;
 
 import java.util.ArrayList;
@@ -38,8 +37,8 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< F
 	 * @param who
 	 * @throws GRBException
 	 */
-	public ExitAssignment( final int t, final GRBVar ilpVariable, final GRBModel model, final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< FloatType, ? > > >, Hypothesis< Component< FloatType, ? > > > nodes, final HypothesisNeighborhoods< Hypothesis< Component< FloatType, ? > >, AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > edges, final List< Hypothesis< Component< FloatType, ? >>> Hup, final Hypothesis< Component< FloatType, ? >> who ) throws GRBException {
-		super( GrowthLineTrackingILP.ASSIGNMENT_EXIT, ilpVariable, model );
+	public ExitAssignment( final int t, final GRBVar ilpVariable, final GrowthLineTrackingILP ilp, final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< FloatType, ? > > >, Hypothesis< Component< FloatType, ? > > > nodes, final HypothesisNeighborhoods< Hypothesis< Component< FloatType, ? > >, AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > edges, final List< Hypothesis< Component< FloatType, ? >>> Hup, final Hypothesis< Component< FloatType, ? >> who ) throws GRBException {
+		super( GrowthLineTrackingILP.ASSIGNMENT_EXIT, ilpVariable, ilp );
 		this.Hup = Hup;
 		this.edges = edges;
 		this.nodes = nodes;
@@ -71,7 +70,7 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< F
 		}
 
 		if ( !MotherMachine.DISABLE_EXIT_CONSTRAINTS ) {
-			model.addConstr( expr, GRB.LESS_EQUAL, Hup.size(), "dc_" + dcId );
+			ilp.model.addConstr( expr, GRB.LESS_EQUAL, Hup.size(), "dc_" + dcId );
 		}
 		dcId++;
 	}

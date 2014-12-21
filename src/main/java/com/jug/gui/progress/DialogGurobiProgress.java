@@ -38,8 +38,6 @@ public class DialogGurobiProgress extends JDialog implements ActionListener {
 		this.pack();
 
 		setKeySetup();
-
-		setVisible( true );
 	}
 
 	@Override

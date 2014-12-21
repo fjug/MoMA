@@ -4,7 +4,6 @@
 package com.jug.lp;
 
 import gurobi.GRBException;
-import gurobi.GRBModel;
 import gurobi.GRBVar;
 
 import java.util.List;
@@ -35,8 +34,8 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	 * @param to2
 	 * @throws GRBException
 	 */
-	public DivisionAssignment( final int t, final GRBVar ilpVariable, final GRBModel model, final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< FloatType, ? > > >, Hypothesis< Component< FloatType, ? > > > nodes, final HypothesisNeighborhoods< Hypothesis< Component< FloatType, ? > >, AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > edges, final Hypothesis< Component< FloatType, ? >> from, final Hypothesis< Component< FloatType, ? >> toUpper, final Hypothesis< Component< FloatType, ? >> toLower ) throws GRBException {
-		super( GrowthLineTrackingILP.ASSIGNMENT_DIVISION, ilpVariable, model );
+	public DivisionAssignment( final int t, final GRBVar ilpVariable, final GrowthLineTrackingILP ilp, final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< FloatType, ? > > >, Hypothesis< Component< FloatType, ? > > > nodes, final HypothesisNeighborhoods< Hypothesis< Component< FloatType, ? > >, AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > edges, final Hypothesis< Component< FloatType, ? >> from, final Hypothesis< Component< FloatType, ? >> toUpper, final Hypothesis< Component< FloatType, ? >> toLower ) throws GRBException {
+		super( GrowthLineTrackingILP.ASSIGNMENT_DIVISION, ilpVariable, ilp );
 		this.from = from;
 		this.toUpper = toUpper;
 		this.toLower = toLower;
