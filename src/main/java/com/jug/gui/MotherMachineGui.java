@@ -4,6 +4,7 @@
 package com.jug.gui;
 
 import gurobi.GRBException;
+import ij.ImageJ;
 import ij.Prefs;
 
 import java.awt.BorderLayout;
@@ -24,7 +25,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -41,6 +42,8 @@ import loci.formats.gui.ExtensionFileFilter;
 import net.imglib2.Localizable;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.algorithm.componenttree.ComponentForest;
+import net.imglib2.converter.Converters;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
@@ -58,6 +61,7 @@ import com.jug.lp.Hypothesis;
 import com.jug.util.ComponentTreeUtils;
 import com.jug.util.SimpleFunctionAnalysis;
 import com.jug.util.Util;
+import com.jug.util.converter.RealFloatNormalizeConverter;
 import com.jug.util.filteredcomponents.FilteredComponent;
 
 /**
@@ -131,7 +135,13 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private JButton btnExportData;
 	private JButton btnSaveFG;
 
-	private JCheckBox cbShowParaMaxFlowData;
+	String itemChannel0 = "Channel 0";
+	String itemChannel1 = "Channel 1";
+	String itemChannel2 = "Channel 2";
+	String itemPMFRF = "PMFRF Sum Image";
+	String itemClassified = "RF BG Probability";
+	String itemSegmented = "RF Cell Segmentation";
+	private JComboBox cbWhichImgToShow;
 
 	private JLabel lActiveHyps;
 
@@ -139,6 +149,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 	// Menu-items
 	private MenuItem menuViewShowConsole;
+	private MenuItem menuShowImgTemp;
 
 	// -------------------------------------------------------------------------------------
 	// construction & gui creation
@@ -167,7 +178,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		final Menu menuView = new Menu( "View" );
 		menuViewShowConsole = new MenuItem( "Show/hide Console" );
 		menuViewShowConsole.addActionListener( this );
+		menuShowImgTemp = new MenuItem( "Show BG-subtrackted imges..." );
+		menuShowImgTemp.addActionListener( this );
 		menuView.add( menuViewShowConsole );
+		menuView.add( menuShowImgTemp );
 		menuBar.add( menuView );
 		if ( !MotherMachine.HEADLESS ) {
 			MotherMachine.getGuiFrame().setMenuBar( menuBar );
@@ -322,7 +336,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					btnRedoAllHypotheses.doClick();
 				}
 				if ( e.getActionCommand().equals( " " ) ) {
-					cbShowParaMaxFlowData.doClick();
+					int selIdx = cbWhichImgToShow.getSelectedIndex();
+					selIdx++;
+					if ( selIdx == cbWhichImgToShow.getItemCount() ) {
+						selIdx = 0;
+					}
+					cbWhichImgToShow.setSelectedIndex( selIdx );
 				}
 				if ( e.getActionCommand().equals( "?" ) || e.getActionCommand().equals( "0" ) || e.getActionCommand().equals( "1" ) || e.getActionCommand().equals( "2" ) || e.getActionCommand().equals( "3" ) || e.getActionCommand().equals( "4" ) || e.getActionCommand().equals( "5" ) || e.getActionCommand().equals( "6" ) || e.getActionCommand().equals( "7" ) || e.getActionCommand().equals( "8" ) || e.getActionCommand().equals( "9" ) ) {
 					txtNumCells.requestFocus();
@@ -344,8 +363,18 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelOptions.setLayout( new BoxLayout( panelOptions, BoxLayout.LINE_AXIS ) );
 
 		// =============== panelOptions-part ===================
-		cbShowParaMaxFlowData = new JCheckBox( "show PMFRF if avlbl", false );
-		cbShowParaMaxFlowData.addActionListener( new ActionListener() {
+		cbWhichImgToShow = new JComboBox();
+		cbWhichImgToShow.addItem( itemChannel0 );
+		if ( model.mm.getRawChannelImgs().size() > 1 ) {
+			cbWhichImgToShow.addItem( itemChannel1 );
+		}
+		if ( model.mm.getRawChannelImgs().size() > 2 ) {
+			cbWhichImgToShow.addItem( itemChannel2 );
+		}
+		cbWhichImgToShow.addItem( itemPMFRF );
+		cbWhichImgToShow.addItem( itemClassified );
+		cbWhichImgToShow.addItem( itemSegmented );
+		cbWhichImgToShow.addActionListener( new ActionListener() {
 
 			@Override
 			public void actionPerformed( final ActionEvent e ) {
@@ -412,7 +441,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		lActiveHyps.setPreferredSize( new Dimension( 65, lActiveHyps.getPreferredSize().height ) );
 
 		panelOptions.add( Box.createHorizontalGlue() );
-		panelOptions.add( cbShowParaMaxFlowData );
+		panelOptions.add( cbWhichImgToShow );
 		panelOptions.add( Box.createHorizontalGlue() );
 		panelOptions.add( labelNumCells1 );
 		panelOptions.add( txtNumCells );
@@ -524,7 +553,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		final float[] yMidline = model.getCurrentGLF().getMirroredCenterLineValues( model.mm.getImgTemp() );
 		float[] ySegmentationData;
-		if ( cbShowParaMaxFlowData.isSelected() ) {
+		if ( cbWhichImgToShow.getSelectedItem().equals( itemPMFRF ) ) {
 			ySegmentationData = model.getCurrentGLF().getAwesomeGapSeparationValues( model.mm.getImgTemp() );
 		} else {
 			ySegmentationData = model.getCurrentGLF().getSimpleGapSeparationValues( model.mm.getImgTemp() );
@@ -562,7 +591,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			while ( ctnLevel.size() > 0 ) {
 				for ( final Component< ?, ? > ctn : ctnLevel ) {
 					addBoxAtIndex( i, ctn, xydxdyCTNBorders, ySegmentationData, level );
-					if ( cbShowParaMaxFlowData.isSelected() ) {
+					if ( cbWhichImgToShow.getSelectedItem().equals( itemPMFRF ) ) {
 						System.out.print( String.format( "%.4f;\t", ilp.localParamaxflowBasedCost( t, ctn ) ) );
 					} else {
 						System.out.print( String.format( "%.4f;\t", ilp.localIntensityBasedCost( t, ctn ) ) );
@@ -624,6 +653,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * View.offset according to the current offset settings. Note: this method
 	 * does not and should not invoke a repaint!
 	 */
+	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	public void dataToDisplayChanged() {
 
 		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
@@ -666,12 +696,44 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			// - -  t  - - - - - -
 
 			final GrowthLineFrame glf = model.getCurrentGLF();
-			viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
-
 			final IntervalView< FloatType > paramaxflowSumImageFloatTyped = model.getCurrentGLF().getParamaxflowSumImageFloatTyped( null );
-			if ( paramaxflowSumImageFloatTyped != null && cbShowParaMaxFlowData.isSelected() ) {
+			final FloatType min = new FloatType();
+			final FloatType max = new FloatType();
+
+			if ( paramaxflowSumImageFloatTyped != null && cbWhichImgToShow.getSelectedItem().equals( itemPMFRF ) ) {
 				imgCanvasActiveCenter.setScreenImage( glf, paramaxflowSumImageFloatTyped );
-			} else {
+			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemChannel1 ) ) {
+				final IntervalView< FloatType > viewToShow = Views.hyperSlice( model.mm.getRawChannelImgs().get( 1 ), 2, glf.getOffsetF() );
+				Util.computeMinMax( Views.iterable( viewToShow ), min, max );
+				viewImgCenterActive = Views.offset( Converters.convert( viewToShow, new RealFloatNormalizeConverter( max.get() ), new FloatType() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
+			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemChannel2 ) ) {
+				final IntervalView< FloatType > viewToShow = Views.hyperSlice( model.mm.getRawChannelImgs().get( 2 ), 2, glf.getOffsetF() );
+				Util.computeMinMax( Views.iterable( viewToShow ), min, max );
+				viewImgCenterActive = Views.offset( Converters.convert( viewToShow, new RealFloatNormalizeConverter( max.get() ), new FloatType() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
+			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemClassified ) ) {
+				final Thread t = new Thread() {
+
+					@Override
+					public void run() {
+						final IntervalView< FloatType > sizeEstimationImageFloatTyped = Views.offset( Views.hyperSlice( model.mm.getCellClassificationImgs(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+						imgCanvasActiveCenter.setScreenImage( glf, sizeEstimationImageFloatTyped );
+					}
+				};
+				t.start();
+			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemSegmented ) ) {
+				final Thread t = new Thread() {
+
+					@Override
+					public void run() {
+						final IntervalView< FloatType > sizeEstimationImageFloatTyped = Views.offset( Converters.convert( Views.hyperSlice( model.mm.getCellSegmentedChannelImgs(), 2, glf.getOffsetF() ), new RealFloatNormalizeConverter( 1.0f ), new FloatType() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+						imgCanvasActiveCenter.setScreenImage( glf, sizeEstimationImageFloatTyped );
+					}
+				};
+				t.start();
+			} else { // Channel0 selected or PMFRF not available
+				viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
 			}
 
@@ -746,6 +808,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		if ( e.getSource().equals( menuViewShowConsole ) ) {
 			MotherMachine.instance.showConsoleWindow( !MotherMachine.instance.isConsoleVisible() );
 			MotherMachine.getGuiFrame().setVisible( true );
+		}
+		if ( e.getSource().equals( menuShowImgTemp ) ) {
+			new ImageJ();
+			ImageJFunctions.show( MotherMachine.instance.getImgTemp(), "BG-subtracted data" );
 		}
 		if ( e.getSource().equals( btnSaveFG ) ) {
 			final MotherMachineGui self = this;

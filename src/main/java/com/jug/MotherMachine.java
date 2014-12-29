@@ -673,6 +673,16 @@ public class MotherMachine {
 	/**
 	 * @return imgSegmented
 	 */
+	public RandomAccessibleInterval< FloatType > getCellClassificationImgs() {
+		if ( this.imgSegmented == null ) {
+			getCellSegmentedChannelImgs();
+		}
+		return this.imgClassified;
+	}
+
+	/**
+	 * @return imgSegmented
+	 */
 	public RandomAccessibleInterval< ShortType > getCellSegmentedChannelImgs() {
 		if ( this.imgSegmented == null ) {
 			final DialogProgress dialogProgress = new DialogProgress( this.getGui(), "Estimating cell-area using RF classifier...", this.getGui().model.getCurrentGL().size() );

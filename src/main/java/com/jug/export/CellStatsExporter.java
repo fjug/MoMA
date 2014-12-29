@@ -185,12 +185,14 @@ public class CellStatsExporter {
 			}
 
 			final float ret[] = new float[ ( int ) columnBoxInChannel.dimension( 0 ) ];
+			int idx = 0;
 			for ( int i = ( int ) columnBoxInChannel.min( 0 ); i <= columnBoxInChannel.max( 0 ); i++ ) {
 				final IntervalView< FloatType > column = Views.hyperSlice( columnBoxInChannel, 0, i );
-				ret[ i ] = 0f;
+				ret[ idx ] = 0f;
 				for ( final FloatType ftPixel : Views.iterable( column ) ) {
-					ret[ i ] += ftPixel.get();
+					ret[ idx ] += ftPixel.get();
 				}
+				idx++;
 			}
 			return ret;
 		}
@@ -392,6 +394,9 @@ public class CellStatsExporter {
 				final int height = limits.getB() - limits.getA() + 1;
 
 				final IntervalView< ShortType > segmentedFrame = Views.hyperSlice( MotherMachine.instance.getCellSegmentedChannelImgs(), 2, segmentRecord.frame );
+//				if ( cid == 6 && segmentRecord.frame >= 35 ) {
+//					System.out.println( "BREAKPOINT" );
+//				}
 				final IntervalView< ShortType > ivSegmentationSnippet = Util.getClassificationBoxInImg( segmentedFrame, segmentRecord.hyp, firstGLF.getAvgXpos() );
 				final int estimatedSize = Util.countPixelsAboveThreshold( ivSegmentationSnippet, 0 );
 

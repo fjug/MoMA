@@ -203,7 +203,6 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	 */
 	private float[] getInvertedIntensitiesAtImgLocations( final RandomAccessibleInterval< FloatType > img, final boolean imgIsPreCropped ) {
 		final float[] ret = new float[ imgLocations.size() ];
-		final RandomAccess< FloatType > ra = img.randomAccess();
 
 		//here now a trick to make <3d images also comply to the code below
 		IntervalView< FloatType > ivImg = Views.interval( img, img );
