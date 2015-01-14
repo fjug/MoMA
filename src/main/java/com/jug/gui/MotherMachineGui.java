@@ -135,9 +135,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private JButton btnExportData;
 	private JButton btnSaveFG;
 
-	String itemChannel0 = "Channel 0";
-	String itemChannel1 = "Channel 1";
-	String itemChannel2 = "Channel 2";
+	String itemChannel0BGSubtr = "BG-subtr. Ch.0";
+	String itemChannel0 = "Raw Channel 0";
+	String itemChannel1 = "Raw Channel 1";
+	String itemChannel2 = "Raw Channel 2";
 	String itemPMFRF = "PMFRF Sum Image";
 	String itemClassified = "RF BG Probability";
 	String itemSegmented = "RF Cell Segmentation";
@@ -149,6 +150,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 	// Menu-items
 	private MenuItem menuViewShowConsole;
+	private MenuItem menuShowImgRaw;
 	private MenuItem menuShowImgTemp;
 
 	// -------------------------------------------------------------------------------------
@@ -178,9 +180,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		final Menu menuView = new Menu( "View" );
 		menuViewShowConsole = new MenuItem( "Show/hide Console" );
 		menuViewShowConsole.addActionListener( this );
+		menuShowImgRaw = new MenuItem( "Show raw imges..." );
+		menuShowImgRaw.addActionListener( this );
 		menuShowImgTemp = new MenuItem( "Show BG-subtrackted imges..." );
 		menuShowImgTemp.addActionListener( this );
 		menuView.add( menuViewShowConsole );
+		menuView.add( menuShowImgRaw );
 		menuView.add( menuShowImgTemp );
 		menuBar.add( menuView );
 		if ( !MotherMachine.HEADLESS ) {
@@ -364,6 +369,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		// =============== panelOptions-part ===================
 		cbWhichImgToShow = new JComboBox();
+		cbWhichImgToShow.addItem( itemChannel0BGSubtr );
 		cbWhichImgToShow.addItem( itemChannel0 );
 		if ( model.mm.getRawChannelImgs().size() > 1 ) {
 			cbWhichImgToShow.addItem( itemChannel1 );
@@ -702,6 +708,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 			if ( paramaxflowSumImageFloatTyped != null && cbWhichImgToShow.getSelectedItem().equals( itemPMFRF ) ) {
 				imgCanvasActiveCenter.setScreenImage( glf, paramaxflowSumImageFloatTyped );
+			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemChannel0 ) ) {
+				viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
 			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemChannel1 ) ) {
 				final IntervalView< FloatType > viewToShow = Views.hyperSlice( model.mm.getRawChannelImgs().get( 1 ), 2, glf.getOffsetF() );
 				Util.computeMinMax( Views.iterable( viewToShow ), min, max );
@@ -732,8 +741,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					}
 				};
 				t.start();
-			} else { // Channel0 selected or PMFRF not available
-				viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+			} else { // BG-subtracted Channel 0 selected or PMFRF not available
+				viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgTemp(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
 			}
 
@@ -812,6 +821,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		if ( e.getSource().equals( menuShowImgTemp ) ) {
 			new ImageJ();
 			ImageJFunctions.show( MotherMachine.instance.getImgTemp(), "BG-subtracted data" );
+		}
+		if ( e.getSource().equals( menuShowImgRaw ) ) {
+			new ImageJ();
+			ImageJFunctions.show( MotherMachine.instance.getRawChannelImgs().get( 0 ), "raw data (ch.0)" );
 		}
 		if ( e.getSource().equals( btnSaveFG ) ) {
 			final MotherMachineGui self = this;

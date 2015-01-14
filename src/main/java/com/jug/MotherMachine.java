@@ -715,9 +715,9 @@ public class MotherMachine {
 				public void run() {
 					RandomAccessibleInterval< FloatType > classified;
 					for ( int frameIdx = numThread; frameIdx < getImgTemp().dimension( 2 ); frameIdx += numThreads ) {
-						final IntervalView< FloatType > channel0Frame = Views.hyperSlice( getImgTemp(), 2, frameIdx );
+//						final IntervalView< FloatType > channel0Frame = Views.hyperSlice( getImgTemp(), 2, frameIdx );  // normalized and modified
+						final IntervalView< FloatType > channel0Frame = Views.hyperSlice( getImgRaw(), 2, frameIdx );  // RAWest data at hand   ;)
 						classified = Views.hyperSlice( GrowthLineSegmentationMagic.returnClassification( channel0Frame ), 2, 0 );
-//						Normalize.normalize( Views.iterable( classified ), new FloatType( 0.0f ), new FloatType( 1.0f ) );
 
 						final RandomAccessibleInterval< FloatType > newClassificationSlize = Views.hyperSlice( imgClassified, 2, frameIdx );
 						final RandomAccessibleInterval< ShortType > newSegmentationSlize = Views.hyperSlice( imgSegmented, 2, frameIdx );
@@ -1153,7 +1153,7 @@ public class MotherMachine {
 			final String filter = String.format( "_c%02d", cIdx );
 			System.out.println( String.format( "Loading tiff sequence for channel, identified by '%s', from '%s'...", filter, path ) );
 			try {
-				if ( cIdx == minChannelIdx ) {
+				if ( cIdx == minChannelIdx ) { // TODO load unnormalized!!! Normalize later...
 					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, true, filter ) );
 				} else {
 					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, false, filter ) );
@@ -1185,9 +1185,9 @@ public class MotherMachine {
 
 		// subtracting BG in RAW image...
 		System.out.print( "Subtracting background..." );
-		subtractBackgroundInRaw();
 		// ...and make temp image be the same
 		resetImgTempToRaw();
+		subtractBackgroundInTemp();
 		System.out.println( " done!" );
 
 		System.out.print( "Normalize loaded images..." );
@@ -1238,7 +1238,7 @@ public class MotherMachine {
 	 * @param img
 	 *            DoubleType image stack.
 	 */
-	private void subtractBackgroundInRaw() {
+	private void subtractBackgroundInTemp() {
 
 		for ( int i = 0; i < getGrowthLines().size(); i++ ) {
 			for ( int f = 0; f < getGrowthLines().get( i ).size(); f++ ) {
@@ -1252,7 +1252,7 @@ public class MotherMachine {
 
 				final int glfY2 = glf.getLastPoint().getIntPosition( 1 );
 
-				final IntervalView< FloatType > frame = Views.hyperSlice( imgRaw, 2, f );
+				final IntervalView< FloatType > frame = Views.hyperSlice( imgTemp, 2, f );
 
 				float rowAvgs[] = new float[ glfY2 - glfY1 + 1 ];
 				int colCount = 0;
@@ -1263,7 +1263,7 @@ public class MotherMachine {
 					colCount += ( MotherMachine.BGREM_TEMPLATE_XMAX - MotherMachine.BGREM_TEMPLATE_XMIN );
 				}
 				// Look to the right if you are not the last GLF
-				if ( glfX < imgRaw.dimension( 0 ) - MotherMachine.BGREM_TEMPLATE_XMAX ) {
+				if ( glfX < imgTemp.dimension( 0 ) - MotherMachine.BGREM_TEMPLATE_XMAX ) {
 					final IntervalView< FloatType > rightBackgroundWindow = Views.interval( frame, new long[] { glfX + MotherMachine.BGREM_TEMPLATE_XMIN, glfY1 }, new long[] { glfX + MotherMachine.BGREM_TEMPLATE_XMAX, glfY2 } );
 					rowAvgs = addRowSumsFromInterval( rightBackgroundWindow, rowAvgs );
 					colCount += ( MotherMachine.BGREM_TEMPLATE_XMAX - MotherMachine.BGREM_TEMPLATE_XMIN );
