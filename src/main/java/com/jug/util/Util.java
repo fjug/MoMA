@@ -10,6 +10,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -269,6 +270,45 @@ public class Util {
 			if ( pixel.get() > threshold ) ret++;
 		}
 		return ret;
+	}
+
+	/**
+	 * Returns the summed length of straight line sements connectiong the points
+	 * in the given list (in the listed order).
+	 * 
+	 * @param centerLine
+	 * @param startIndex
+	 * @param endIndex
+	 */
+	public static double evaluatePolygonLength( final List< Point > centerLine, Integer startIndex, Integer endIndex ) {
+		if ( startIndex <= 0 ) startIndex = 0;
+		if ( endIndex >= centerLine.size() ) endIndex = centerLine.size() - 1;
+		if ( centerLine.size() < 2 ) return 0.;
+
+		double length = 0.;
+		for ( int i = startIndex; i < endIndex; i++ ) {
+			final Point p1 = centerLine.get( i );
+			final Point p2 = centerLine.get( i + 1 );
+			length += getEuclidianDistance( p1, p2 );
+		}
+		return length;
+	}
+
+	/**
+	 * @param p1
+	 * @param p2
+	 * @return
+	 */
+	private static double getEuclidianDistance( final Point p1, final Point p2 ) {
+		if ( p1.numDimensions() != p2.numDimensions() )
+			throw new RuntimeException( "Euclidian distance cannot be computed between points of unequal dimensionality!" );
+
+		double sumOfSquares = 0.;
+		for ( int d = 0; d < p1.numDimensions(); d++ ) {
+			final double dimdist = Math.abs( p1.getDoublePosition( d ) - p2.getDoublePosition( d ) );
+			sumOfSquares += dimdist * dimdist;
+		}
+		return Math.sqrt( sumOfSquares );
 	}
 
 }
