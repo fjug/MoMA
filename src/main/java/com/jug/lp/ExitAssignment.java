@@ -8,7 +8,6 @@ import gurobi.GRBException;
 import gurobi.GRBLinExpr;
 import gurobi.GRBVar;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import net.imglib2.algorithm.componenttree.Component;
@@ -73,39 +72,6 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< F
 			ilp.model.addConstr( expr, GRB.LESS_EQUAL, Hup.size(), "dc_" + dcId );
 		}
 		dcId++;
-	}
-
-	/**
-	 * Adds a list of constraints and factors as strings.
-	 * 
-	 * @see com.jug.lp.AbstractAssignment#getConstraint()
-	 */
-	@Override
-	public void addFunctionsAndFactors( final FactorGraphFileBuilder fgFile, final List< Integer > regionIds ) {
-		final List< Integer > varIds = new ArrayList< Integer >();
-		final List< Integer > coeffs = new ArrayList< Integer >();
-
-		// expr.addTerm( Hup.size(), this.getGRBVar() );
-		coeffs.add( new Integer( Hup.size() ) );
-		varIds.add( new Integer( this.getVarIdx() ) );
-
-		for ( final Hypothesis< Component< FloatType, ? >> upperHyp : Hup ) {
-			if ( edges.getRightNeighborhood( upperHyp ) != null ) {
-				for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> a_j : edges.getRightNeighborhood( upperHyp ) ) {
-					if ( a_j.getType() == GrowthLineTrackingILP.ASSIGNMENT_EXIT ) {
-						continue;
-					}
-					// add term if assignment is NOT another exit-assignment
-					// expr.addTerm( 1.0, a_j.getGRBVar() );
-					coeffs.add( new Integer( 1 ) );
-					varIds.add( new Integer( a_j.getVarIdx() ) );
-				}
-			}
-		}
-
-		// model.addConstr( expr, GRB.LESS_EQUAL, Hup.size(), "dc_" + dcId );
-		final int fkt_id = fgFile.addConstraintFkt( coeffs, "<=", Hup.size() );
-		fgFile.addFactor( fkt_id, varIds, regionIds );
 	}
 
 	/**

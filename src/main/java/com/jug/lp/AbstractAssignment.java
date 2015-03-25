@@ -9,8 +9,6 @@ import gurobi.GRBException;
 import gurobi.GRBLinExpr;
 import gurobi.GRBVar;
 
-import java.util.List;
-
 /**
  * Partially implemented class for everything that wants to be an assignment.
  * The main purpose of such a class is to store the value of the corresponding
@@ -140,13 +138,6 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 * @throws GRBException
 	 */
 	public abstract void addConstraintsToLP() throws GRBException;
-
-	/**
-	 * Adds a list of functions and factors to the FactorGraphFileBuilder.
-	 * This fkt and fac is used to save a FactorGraph describing the
-	 * optimization problem at hand.
-	 */
-	public abstract void addFunctionsAndFactors( FactorGraphFileBuilder fgFile, final List< Integer > regionIds );
 
 	/**
 	 * @return

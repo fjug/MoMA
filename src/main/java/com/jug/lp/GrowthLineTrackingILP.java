@@ -11,8 +11,6 @@ import gurobi.GRBLinExpr;
 import gurobi.GRBModel;
 import gurobi.GRBVar;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -173,126 +171,6 @@ public class GrowthLineTrackingILP {
 			e.printStackTrace();
 		}
 
-	}
-
-	/**
-	 * Writes the FactorGraph corresponding to the optimization problem of the
-	 * given growth-line into a file.
-	 * 
-	 * @throws IOException
-	 */
-	public void exportFG( final File file ) {
-		// Here I collect all the lines I will eventually write into the FG-file...
-		final FactorGraphFileBuilder fgFile = new FactorGraphFileBuilder();
-
-		// FIRST RUN: we export all variables and set varId's for second run...
-		for ( int t = 0; t < nodes.getNumberOfTimeSteps(); t++ ) {
-			// TODO puke!
-			final int regionId = ( t + 1 ) / 2;
-
-			fgFile.addVarComment( "=== VAR-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
-			fgFile.addVarComment( "--- VAR-SECTION :: Assignment-variables ---------------" );
-
-			fgFile.addFktComment( "=== FKT-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
-			fgFile.addFktComment( "--- FKT-SECTION :: Unary (Segmentation) Costs ---------" );
-
-			fgFile.addFactorComment( "=== FAC-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
-			fgFile.addFactorComment( "--- FAC-SECTION :: Unary (Segmentation) Factors -------" );
-
-			final List< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > assmts_t = nodes.getAssignmentsAt( t );
-			for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assmt : assmts_t ) {
-				final int var_id = fgFile.addVar( 2 );
-				assmt.setVarId( var_id );
-
-				float cost = 0.0f;
-				if ( assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ) {
-					fgFile.addVarComment( "- - MAPPING (var: " + var_id + ") - - - - - " );
-					fgFile.addFktComment( "- - MAPPING (var: " + var_id + ") - - - - - " );
-					final MappingAssignment ma = ( MappingAssignment ) assmt;
-					cost = ma.getSourceHypothesis().getCosts() + ma.getDestinationHypothesis().getCosts();
-				} else if ( assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION ) {
-					fgFile.addVarComment( "- - DIVISION (var: " + var_id + ") - - - - - " );
-					fgFile.addFktComment( "- - DIVISION (var: " + var_id + ") - - - - - " );
-					final DivisionAssignment da = ( DivisionAssignment ) assmt;
-					cost = da.getSourceHypothesis().getCosts() + da.getUpperDesinationHypothesis().getCosts() + da.getLowerDesinationHypothesis().getCosts();
-				} else if ( assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_EXIT ) {
-					fgFile.addVarComment( "- - EXIT (var: " + var_id + ") - - - - - " );
-					fgFile.addFktComment( "- - EXIT (var: " + var_id + ") - - - - - " );
-					final ExitAssignment ea = ( ExitAssignment ) assmt;
-					cost = ea.getAssociatedHypothesis().getCosts();
-				}
-
-				final int fkt_id = fgFile.addFkt( String.format( "table 1 2 0 %f", cost ) );
-				fgFile.addFactor( fkt_id, var_id, regionId );
-			}
-		}
-		// SECOND RUN: export all the rest (now that we have the right varId's).
-		for ( int t = 0; t < nodes.getNumberOfTimeSteps(); t++ ) {
-			// TODO puke!
-			final int regionId = ( t + 1 ) / 2;
-
-			fgFile.addFktComment( "=== FKT-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
-			fgFile.addFktComment( "--- FKT-SECTION :: Assignment Constraints (HUP-stuff for EXITs) -------------" );
-
-			fgFile.addFactorComment( "=== FAC-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
-			fgFile.addFactorComment( "--- FAC-SECTION :: Assignment Factors ----------------" );
-
-			final List< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > assmts_t = nodes.getAssignmentsAt( t );
-			for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assmt : assmts_t ) {
-				final List< Integer > regionIds = new ArrayList< Integer >();
-				regionIds.add( new Integer( regionId ) );
-				assmt.addFunctionsAndFactors( fgFile, regionIds );
-			}
-
-			// NOTE: last time-point does not get Path-Blocking or Explanation-Continuity-Constraints!
-			if ( t == nodes.getNumberOfTimeSteps() - 1 ) continue;
-
-			fgFile.addFktComment( "--- FKT-SECTION :: Path-Blocking Constraints ------------" );
-			fgFile.addFactorComment( "--- FAC-SECTION :: Path-Blocking Constraints ------------" );
-
-			final ComponentForest< ? > ct = gl.get( t ).getComponentTree();
-			recursivelyAddPathBlockingConstraints( ct, t, fgFile );
-
-			if ( t > 0 && t < nodes.getNumberOfTimeSteps() ) {
-				fgFile.addFktComment( "--- FKT-SECTION :: Explanation-Continuity Constraints ------" );
-				fgFile.addFactorComment( "--- FAC-SECTION :: Explanation-Continuity Constraints ------" );
-
-				for ( final Hypothesis< Component< FloatType, ? >> hyp : nodes.getHypothesesAt( t ) ) {
-					final List< Integer > varIds = new ArrayList< Integer >();
-					final List< Integer > coeffs = new ArrayList< Integer >();
-
-					if ( edgeSets.getLeftNeighborhood( hyp ) != null ) {
-						for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> a_j : edgeSets.getLeftNeighborhood( hyp ) ) {
-							//expr.addTerm( 1.0, a_j.getGRBVar() );
-							coeffs.add( new Integer( 1 ) );
-							varIds.add( new Integer( a_j.getVarIdx() ) );
-						}
-					}
-					if ( edgeSets.getRightNeighborhood( hyp ) != null ) {
-						for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> a_j : edgeSets.getRightNeighborhood( hyp ) ) {
-							//expr.addTerm( -1.0, a_j.getGRBVar() );
-							coeffs.add( new Integer( -1 ) );
-							varIds.add( new Integer( a_j.getVarIdx() ) );
-						}
-					}
-
-					// add the constraint for this hypothesis
-					//model.addConstr( expr, GRB.EQUAL, 0.0, "ecc_" + eccId );
-					final int fkt_id = fgFile.addConstraintFkt( coeffs, "==", 0 );
-					fgFile.addFactor( fkt_id, varIds, regionId );
-				}
-			}
-		}
-
-		// WRITE FILE
-		fgFile.write( file );
-	}
-
-	private < C extends Component< ?, C > > void recursivelyAddPathBlockingConstraints( final ComponentForest< C > ct, final int t, final FactorGraphFileBuilder fgFile ) {
-		for ( final C ctRoot : ct.roots() ) {
-			// And call the function adding all the path-blocking-constraints...
-			recursivelyAddPathBlockingConstraints( ctRoot, t, fgFile );
-		}
 	}
 
 	/**
@@ -708,52 +586,6 @@ public class GrowthLineTrackingILP {
 			// if ctNode is a inner node -> recursion
 			for ( final C ctChild : ctNode.getChildren() ) {
 				recursivelyAddPathBlockingConstraints( ctChild, t );
-			}
-		}
-	}
-
-	/**
-	 * 
-	 * @param ctNode
-	 * @param t
-	 * @param functions
-	 * @param factors
-	 */
-	private < C extends Component< ?, C > > void recursivelyAddPathBlockingConstraints( final C ctNode, final int t, final FactorGraphFileBuilder fgFile ) {
-
-		// if ctNode is a leave node -> add constraint (by going up the list of
-		// parents and building up the constraint)
-		if ( ctNode.getChildren().size() == 0 ) {
-			final List< Integer > varIds = new ArrayList< Integer >();
-			final List< Integer > coeffs = new ArrayList< Integer >();
-
-			C runnerNode = ctNode;
-
-			// final GRBLinExpr exprR = new GRBLinExpr();
-			while ( runnerNode != null ) {
-				@SuppressWarnings( "unchecked" )
-				final Hypothesis< Component< FloatType, ? > > hypothesis = ( Hypothesis< Component< FloatType, ? >> ) nodes.findHypothesisContaining( runnerNode );
-				if ( hypothesis == null ) {
-					System.err.println( "WARNING: Hypothesis for a CTN was not found in GrowthLineTrackingILP -- this is an indication for some design problem of the system!" );
-				}
-
-				if ( edgeSets.getRightNeighborhood( hypothesis ) != null ) {
-					for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> a : edgeSets.getRightNeighborhood( hypothesis ) ) {
-						// exprR.addTerm( 1.0, a.getGRBVar() );
-						coeffs.add( new Integer( 1 ) );
-						varIds.add( new Integer( a.getVarIdx() ) );
-					}
-				}
-				runnerNode = runnerNode.getParent();
-			}
-			// model.addConstr( exprR, GRB.LESS_EQUAL, 1.0, name );
-			final int fkt_id = fgFile.addConstraintFkt( coeffs, "<=", 1 );
-			// TODO puke!
-			fgFile.addFactor( fkt_id, varIds, ( t + 1 ) / 2 );
-		} else {
-			// if ctNode is a inner node -> recursion
-			for ( final C ctChild : ctNode.getChildren() ) {
-				recursivelyAddPathBlockingConstraints( ctChild, t, fgFile );
 			}
 		}
 	}

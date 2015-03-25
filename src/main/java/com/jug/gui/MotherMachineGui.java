@@ -133,7 +133,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private JButton btnOptimize;
 	private JButton btnExportHtml;
 	private JButton btnExportData;
-	private JButton btnSaveFG;
 
 	String itemChannel0BGSubtr = "BG-subtr. Ch.0";
 	String itemChannel0 = "Raw Channel 0";
@@ -260,14 +259,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		btnExportHtml.addActionListener( this );
 		btnExportData = new JButton( "Export Data" );
 		btnExportData.addActionListener( this );
-		btnSaveFG = new JButton( "Save FG" );
-		btnSaveFG.addActionListener( this );
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.RIGHT, 5, 0 ) );
 		panelHorizontalHelper.add( btnRedoAllHypotheses );
 		panelHorizontalHelper.add( btnOptimize );
 		panelHorizontalHelper.add( btnExportHtml );
 		panelHorizontalHelper.add( btnExportData );
-//		panelHorizontalHelper.add( btnSaveFG );
 		add( panelHorizontalHelper, BorderLayout.SOUTH );
 
 		// --- Final adding and layout steps -------------
@@ -825,37 +821,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		if ( e.getSource().equals( menuShowImgRaw ) ) {
 			new ImageJ();
 			ImageJFunctions.show( MotherMachine.instance.getRawChannelImgs().get( 0 ), "raw data (ch.0)" );
-		}
-		if ( e.getSource().equals( btnSaveFG ) ) {
-			final MotherMachineGui self = this;
-			final Thread t = new Thread( new Runnable() {
-
-				@Override
-				public void run() {
-					final JFileChooser fc = new JFileChooser( MotherMachine.DEFAULT_PATH );
-					fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "txt", "TXT" }, "TXT-file" ) );
-
-					if ( fc.showSaveDialog( self ) == JFileChooser.APPROVE_OPTION ) {
-						File file = fc.getSelectedFile();
-						if ( !file.getAbsolutePath().endsWith( ".txt" ) && !file.getAbsolutePath().endsWith( ".TXT" ) ) {
-							file = new File( file.getAbsolutePath() + ".txt" );
-						}
-						MotherMachine.DEFAULT_PATH = file.getParent();
-
-						if ( model.getCurrentGL().getIlp() == null ) {
-							System.out.println( "Generating ILP..." );
-							model.getCurrentGL().generateILP( new DialogProgress( self, "Building tracking model...", ( model.getCurrentGL().size() - 1 ) * 2 ) );
-						} else {
-							System.out.println( "Using existing ILP (possibly containing user-defined ground-truth bits)..." );
-						}
-						System.out.println( "Saving ILP as FactorGraph..." );
-						model.getCurrentGL().getIlp().exportFG( file );
-						System.out.println( "...done!" );
-					}
-
-				}
-			} );
-			t.start();
 		}
 		if ( e.getSource().equals( btnRedoAllHypotheses ) ) {
 

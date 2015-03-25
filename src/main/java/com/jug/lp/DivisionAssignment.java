@@ -5,9 +5,6 @@ package com.jug.lp;
 
 import gurobi.GRBException;
 import gurobi.GRBVar;
-
-import java.util.List;
-
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.FloatType;
 
@@ -54,14 +51,6 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	 */
 	@Override
 	public void addConstraintsToLP() throws GRBException {}
-
-	/**
-	 * Division assignments do not come with constraints.
-	 * 
-	 * @see com.jug.lp.AbstractAssignment#getConstraint()
-	 */
-	@Override
-	public void addFunctionsAndFactors( final FactorGraphFileBuilder fgFile, final List< Integer > regionIds ) {}
 
 	/**
 	 * Returns the segmentation hypothesis this division-assignment comes from
