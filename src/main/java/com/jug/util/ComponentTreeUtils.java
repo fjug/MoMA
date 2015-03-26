@@ -8,18 +8,18 @@ import java.util.Iterator;
 import java.util.List;
 
 import net.imglib2.Localizable;
-import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.algorithm.componenttree.ComponentForest;
 import net.imglib2.algorithm.componenttree.ComponentTree;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 
 import com.jug.util.filteredcomponents.FilteredComponent;
 
 /**
  * @author jug
- * 
+ *
  */
 public class ComponentTreeUtils {
 
@@ -79,7 +79,7 @@ public class ComponentTreeUtils {
 	 * Note that this function really only makes sense if the comp.-tree was
 	 * built on a one-dimensional image (as it is the case for my current
 	 * MotherMachine stuff...)
-	 * 
+	 *
 	 * @param node
 	 *            the node in question.
 	 * @return a <code>Pair</code> or two <code>Integers</code> giving the
@@ -104,7 +104,7 @@ public class ComponentTreeUtils {
 	 * Note that this function really only makes sense if the comp.-tree was
 	 * built on a one-dimensional image (as it is the case for my current
 	 * MotherMachine stuff...)
-	 * 
+	 *
 	 * @param node
 	 *            the node in question.
 	 * @return a <code>Pair</code> or two <code>Integers</code> giving the

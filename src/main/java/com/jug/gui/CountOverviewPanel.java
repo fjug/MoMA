@@ -5,7 +5,6 @@ package com.jug.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Font;
-import java.util.Set;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
@@ -18,18 +17,11 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 
-import net.imglib2.algorithm.componenttree.Component;
-import net.imglib2.type.numeric.real.FloatType;
-
 import com.jug.GrowthLine;
-import com.jug.GrowthLineFrame;
-import com.jug.lp.AbstractAssignment;
-import com.jug.lp.GrowthLineTrackingILP;
-import com.jug.lp.Hypothesis;
 
 /**
  * @author jug
- * 
+ *
  */
 public class CountOverviewPanel extends JPanel {
 
@@ -102,48 +94,48 @@ public class CountOverviewPanel extends JPanel {
 	public void showData( final GrowthLine currentGL ) {
 		data = new Vector< Vector< String > >();
 
-		int sumOfCells = 0;
-		if ( currentGL != null && currentGL.getIlp() != null ) {
-			// collect data
-			for ( final GrowthLineFrame glf : currentGL.getFrames() ) {
-				final Vector< String > row = new Vector< String >();
-
-				int cells = 0;
-				int exits = 0;
-				int divisions = 0;
-
-				for ( final Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > set : currentGL.getIlp().getOptimalRightAssignments( glf.getTime() ).values() ) {
-					for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> ora : set ) {
-						cells++;
-						if ( ora.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION )
-							divisions++;
-						if ( ora.getType() == GrowthLineTrackingILP.ASSIGNMENT_EXIT )
-							exits++;
-					}
-				}
-				if ( sumOfCells == 0 ) {
-					sumOfCells = cells;
-				} else {
-					sumOfCells += divisions;
-				}
-
-				// fill new rows and update rowSum
-				row.add( "" + cells );
-				if ( divisions > 0 ) {
-					row.add( "" + divisions );
-				} else {
-					row.add( "" );
-				}
-				if ( exits > 0 ) {
-					row.add( "" + exits );
-				} else {
-					row.add( "" );
-				}
-				row.add( "" + sumOfCells );
-
-				data.add( row );
-			}
-		}
+		final int sumOfCells = 0;
+//		if ( currentGL != null && currentGL.getIlp() != null ) {
+//			// collect data
+//			for ( final GrowthLineFrame glf : currentGL.getFrames() ) {
+//				final Vector< String > row = new Vector< String >();
+//
+//				int cells = 0;
+//				int exits = 0;
+//				int divisions = 0;
+//
+//				for ( final Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > set : currentGL.getIlp().getOptimalRightAssignments( glf.getTime() ).values() ) {
+//					for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> ora : set ) {
+//						cells++;
+//						if ( ora.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION )
+//							divisions++;
+//						if ( ora.getType() == GrowthLineTrackingILP.ASSIGNMENT_EXIT )
+//							exits++;
+//					}
+//				}
+//				if ( sumOfCells == 0 ) {
+//					sumOfCells = cells;
+//				} else {
+//					sumOfCells += divisions;
+//				}
+//
+//				// fill new rows and update rowSum
+//				row.add( "" + cells );
+//				if ( divisions > 0 ) {
+//					row.add( "" + divisions );
+//				} else {
+//					row.add( "" );
+//				}
+//				if ( exits > 0 ) {
+//					row.add( "" + exits );
+//				} else {
+//					row.add( "" );
+//				}
+//				row.add( "" + sumOfCells );
+//
+//				data.add( row );
+//			}
+//		}
 
 		// set data
 		final DefaultTableModel model = new DefaultTableModel( data, columnNames );

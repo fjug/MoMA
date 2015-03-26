@@ -15,21 +15,21 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 import net.imglib2.IterableInterval;
-import net.imglib2.Pair;
 import net.imglib2.Point;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.integer.ShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Pair;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
 import com.jug.MotherMachine;
-import com.jug.lp.Hypothesis;
+import com.jug.segmentation.hypotheses.Hypothesis;
 import com.jug.util.filteredcomponents.FilteredComponent;
 
 /**
  * @author jug
- * 
+ *
  */
 public class Util {
 
@@ -37,14 +37,14 @@ public class Util {
 	 * <p>
 	 * Create a long[] with the location of of an {@link Point}.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Keep in mind that creating arrays wildly is not good practice and
 	 * consider using the point directly.
 	 * </p>
-	 * 
+	 *
 	 * @param point
-	 * 
+	 *
 	 * @return location of the point as a new long[]
 	 */
 	final static public long[] pointLocation( final Point point ) {
@@ -56,7 +56,7 @@ public class Util {
 
 	/**
 	 * Creates an image containing the given component (as is on screen).
-	 * 
+	 *
 	 * @param component
 	 *            the component to be captured
 	 * @return a <code>BufferedImage</code> containing a screenshot of the given
@@ -68,7 +68,7 @@ public class Util {
 
 	/**
 	 * Creates an image containing the given component (as is on screen).
-	 * 
+	 *
 	 * @param component
 	 *            the component to be captured
 	 * @param width
@@ -89,7 +89,7 @@ public class Util {
 	/**
 	 * Saves a given image in the file specified by the given
 	 * <code>filename</code>.
-	 * 
+	 *
 	 * @param image
 	 *            <code>BufferedImage</code> to be saved.
 	 * @param filename
@@ -137,7 +137,7 @@ public class Util {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param input
 	 * @param min
 	 * @param max
@@ -236,9 +236,9 @@ public class Util {
 	 * @return
 	 */
 	private static long[] getTopLeftInSourceImg( final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long middle ) {
-		Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( hyp.getWrappedHypothesis() );
-		if ( hyp.getWrappedHypothesis() instanceof FilteredComponent ) {
-			limits = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) hyp.getWrappedHypothesis() );
+		Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( hyp.getSegment() );
+		if ( hyp.getSegment() instanceof FilteredComponent ) {
+			limits = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) hyp.getSegment() );
 		}
 		final long left = middle - MotherMachine.GL_WIDTH_IN_PIXELS / 2;
 		final long top = limits.getA() + MotherMachine.GL_OFFSET_TOP;;
@@ -250,9 +250,9 @@ public class Util {
 	 * @return
 	 */
 	private static long[] getRightBottomInSourceImg( final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long middle ) {
-		Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( hyp.getWrappedHypothesis() );
-		if ( hyp.getWrappedHypothesis() instanceof FilteredComponent ) {
-			limits = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) hyp.getWrappedHypothesis() );
+		Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( hyp.getSegment() );
+		if ( hyp.getSegment() instanceof FilteredComponent ) {
+			limits = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) hyp.getSegment() );
 		}
 		final long right = middle + MotherMachine.GL_WIDTH_IN_PIXELS / 2 + MotherMachine.GL_WIDTH_IN_PIXELS % 2 - 1;
 		final long bottom = limits.getB() + MotherMachine.GL_OFFSET_TOP;
@@ -275,7 +275,7 @@ public class Util {
 	/**
 	 * Returns the summed length of straight line sements connectiong the points
 	 * in the given list (in the listed order).
-	 * 
+	 *
 	 * @param centerLine
 	 * @param startIndex
 	 * @param endIndex

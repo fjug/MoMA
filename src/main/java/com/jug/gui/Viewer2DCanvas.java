@@ -3,7 +3,6 @@
  */
 package com.jug.gui;
 
-import gurobi.GRBException;
 import ij.IJ;
 import ij.ImagePlus;
 
@@ -11,13 +10,11 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
-import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.event.MouseInputListener;
 
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.converter.RealARGBConverter;
 import net.imglib2.display.projector.IterableIntervalProjector2D;
 import net.imglib2.display.screenimage.awt.ARGBScreenImage;
@@ -30,8 +27,6 @@ import net.imglib2.view.Views;
 
 import com.jug.GrowthLineFrame;
 import com.jug.MotherMachine;
-import com.jug.lp.GrowthLineTrackingILP;
-import com.jug.lp.Hypothesis;
 
 /**
  * @author jug
@@ -80,7 +75,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 
 	/**
 	 * Sets the image data to be displayed when paintComponent is called.
-	 * 
+	 *
 	 * @param glf
 	 *            the GrowthLineFrameto be displayed
 	 * @param viewImg
@@ -97,7 +92,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 
 	/**
 	 * Exports the part of the original image that is seen in this canvas.
-	 * 
+	 *
 	 * @param path
 	 *            note that the extension you give determines the file format!
 	 */
@@ -108,7 +103,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 
 	/**
 	 * Exports the part of the original image that is seen in this canvas.
-	 * 
+	 *
 	 * @param path
 	 *            note that the extension you give determines the file format!
 	 */
@@ -145,7 +140,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 			glf.drawCenterLine( screenImage, view );
 			//TODO NOT nice... do something against that, please!
 			final int t = glf.getParent().getFrames().indexOf( glf );
-			glf.drawOptimalSegmentation( screenImage, view, glf.getParent().getIlp().getOptimalSegmentation( t ) );
+//			glf.drawOptimalSegmentation( screenImage, view, glf.getParent().getIlp().getOptimalSegmentation( t ) );
 		} catch ( final ArrayIndexOutOfBoundsException e ) {
 			// this can happen if a growth line, due to shift, exists in one
 			// frame, and does not exist in others.
@@ -161,32 +156,32 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 		}
 
 		// Mouse-position related stuff...
-		String strToShow = "";
-		String str2ToShow = " ";
-		if ( !this.isDragging && this.isMouseOver && glf != null && glf.getParent().getIlp() != null ) {
-			float cost = Float.NaN;
-			//TODO NOT nice... do something against that, please!
-			final int t = glf.getTime();
-			Hypothesis< Component< FloatType, ? >> hyp = glf.getParent().getIlp().getOptimalSegmentationAtLocation( t, this.mousePosY );
-			if ( hyp != null ) {
-				cost = hyp.getCosts();
-				strToShow = String.format( "c=%.4f", cost );
-				str2ToShow = "-";
-			}
-			// figure out which hyps are at current location
-			hyp = glf.getParent().getIlp().getLowestInTreeHypAt( t, this.mousePosY );
-			if ( hyp != null ) {
-				final Component< FloatType, ? > comp = hyp.getWrappedHypothesis();
-				glf.drawOptionalSegmentation( screenImage, view, comp );
-				if ( str2ToShow.endsWith( "-" ) ) {
-					str2ToShow += "/+";
-				} else {
-					str2ToShow += "+";
-				}
-			} else {
-				str2ToShow = "  noseg";
-			}
-		}
+		final String strToShow = "";
+		final String str2ToShow = " ";
+//		if ( !this.isDragging && this.isMouseOver && glf != null && glf.getParent().getIlp() != null ) {
+//			float cost = Float.NaN;
+//			//TODO NOT nice... do something against that, please!
+//			final int t = glf.getTime();
+//			Hypothesis< Component< FloatType, ? >> hyp = glf.getParent().getIlp().getOptimalSegmentationAtLocation( t, this.mousePosY );
+//			if ( hyp != null ) {
+//				cost = hyp.getCosts();
+//				strToShow = String.format( "c=%.4f", cost );
+//				str2ToShow = "-";
+//			}
+//			// figure out which hyps are at current location
+//			hyp = glf.getParent().getIlp().getLowestInTreeHypAt( t, this.mousePosY );
+//			if ( hyp != null ) {
+//				final Component< FloatType, ? > comp = hyp.getSegment();
+//				glf.drawOptionalSegmentation( screenImage, view, comp );
+//				if ( str2ToShow.endsWith( "-" ) ) {
+//					str2ToShow += "/+";
+//				} else {
+//					str2ToShow += "+";
+//				}
+//			} else {
+//				str2ToShow = "  noseg";
+//			}
+//		}
 
 		g.drawImage( screenImage.image(), 0, 0, w, h, null );
 		if ( !strToShow.equals( "" ) ) {
@@ -213,39 +208,39 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 	@Override
 	public void mouseClicked( final MouseEvent e ) {
 		final int t = glf.getTime();
-		final GrowthLineTrackingILP ilp = glf.getParent().getIlp();
+//		final GrowthLineTrackingILP ilp = glf.getParent().getIlp();
 
 		if ( e.isControlDown() ) {
-			final List< Hypothesis< Component< FloatType, ? >>> hyps2avoid = ilp.getSegmentsAtLocation( t, this.mousePosY );
-			try {
-				for ( final Hypothesis< Component< FloatType, ? >> hyp2avoid : hyps2avoid ) {
-					if ( hyp2avoid.getSegmentSpecificConstraint() != null ) {
-						ilp.model.remove( hyp2avoid.getSegmentSpecificConstraint() );
-					}
-					ilp.addSegmentNotInSolutionConstraint( hyp2avoid );
-				}
-			} catch ( final GRBException e1 ) {
-				e1.printStackTrace();
-			}
+//			final List< Hypothesis< Component< FloatType, ? >>> hyps2avoid = ilp.getSegmentsAtLocation( t, this.mousePosY );
+//			try {
+//				for ( final Hypothesis< Component< FloatType, ? >> hyp2avoid : hyps2avoid ) {
+//					if ( hyp2avoid.getSegmentSpecificConstraint() != null ) {
+//						ilp.model.remove( hyp2avoid.getSegmentSpecificConstraint() );
+//					}
+//					ilp.addSegmentNotInSolutionConstraint( hyp2avoid );
+//				}
+//			} catch ( final GRBException e1 ) {
+//				e1.printStackTrace();
+//			}
 		} else {
-			final Hypothesis< Component< FloatType, ? >> hyp2add = ilp.getLowestInTreeHypAt( t, this.mousePosY );
-			final List< Hypothesis< Component< FloatType, ? >>> hyps2remove = ilp.getOptimalSegmentationsInConflict( t, hyp2add );
+//			final Hypothesis< Component< FloatType, ? >> hyp2add = ilp.getLowestInTreeHypAt( t, this.mousePosY );
+//			final List< Hypothesis< Component< FloatType, ? >>> hyps2remove = ilp.getOptimalSegmentationsInConflict( t, hyp2add );
 
-			try {
-				if ( hyp2add.getSegmentSpecificConstraint() != null ) {
-					ilp.model.remove( hyp2add.getSegmentSpecificConstraint() );
-				}
-				ilp.addSegmentInSolutionConstraint( hyp2add, hyps2remove );
-			} catch ( final GRBException e1 ) {
-				e1.printStackTrace();
-			}
+//			try {
+//				if ( hyp2add.getSegmentSpecificConstraint() != null ) {
+//					ilp.model.remove( hyp2add.getSegmentSpecificConstraint() );
+//				}
+//				ilp.addSegmentInSolutionConstraint( hyp2add, hyps2remove );
+//			} catch ( final GRBException e1 ) {
+//				e1.printStackTrace();
+//			}
 		}
 
 		class IlpThread extends Thread {
 
 			@Override
 			public void run() {
-				ilp.run();
+//				ilp.run();
 			}
 		}
 		final IlpThread thread = new IlpThread();

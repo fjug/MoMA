@@ -3,20 +3,11 @@
  */
 package com.jug.gui;
 
-import java.util.HashMap;
-import java.util.Set;
-
 import javax.swing.BorderFactory;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import net.imglib2.algorithm.componenttree.Component;
-import net.imglib2.type.numeric.real.FloatType;
-
-import com.jug.lp.AbstractAssignment;
-import com.jug.lp.GrowthLineTrackingILP;
-import com.jug.lp.Hypothesis;
 import com.jug.util.OSValidator;
 
 /**
@@ -38,7 +29,7 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 	private AssignmentView inactiveExitAssignments;
 	private AssignmentView fixedAssignments;
 
-	private HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >> data;
+//	private HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >> data;
 
 	private final MotherMachineGui gui;
 
@@ -71,11 +62,11 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 		inactiveExitAssignments = new AssignmentView( height, gui );
 		fixedAssignments = new AssignmentView( height, gui );
 
-		activeAssignments.display( data, true );
-		inactiveMappingAssignments.display( data, false, GrowthLineTrackingILP.ASSIGNMENT_MAPPING );
-		inactiveDivisionAssignments.display( data, false, GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
-		inactiveExitAssignments.display( data, false, GrowthLineTrackingILP.ASSIGNMENT_EXIT );
-		fixedAssignments.display( data, false );
+//		activeAssignments.display( data, true );
+//		inactiveMappingAssignments.display( data, false, GrowthLineTrackingILP.ASSIGNMENT_MAPPING );
+//		inactiveDivisionAssignments.display( data, false, GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
+//		inactiveExitAssignments.display( data, false, GrowthLineTrackingILP.ASSIGNMENT_EXIT );
+//		fixedAssignments.display( data, false );
 		fixedAssignments.setFilterGroundTruth( true );
 
 		this.add( "OPT", activeAssignments );
@@ -89,42 +80,42 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 
 	/**
 	 * Receives and visualizes a new HashMap of assignments.
-	 * 
+	 *
 	 * @param hashMap
 	 *            a <code>HashMap</code> containing pairs of segmentation
 	 *            hypothesis at some time-point t and assignments towards t+1.
 	 */
-	public void display( final HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >> hashMap ) {
-		this.data = hashMap;
-		activeAssignments.setData( data, true );
-		inactiveMappingAssignments.setData( data, false );
-		inactiveDivisionAssignments.setData( data, false );
-		inactiveExitAssignments.setData( data, false );
-		fixedAssignments.setData( data, false );
-	}
+//	public void display( final HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >> hashMap ) {
+//		this.data = hashMap;
+//		activeAssignments.setData( data, true );
+//		inactiveMappingAssignments.setData( data, false );
+//		inactiveDivisionAssignments.setData( data, false );
+//		inactiveExitAssignments.setData( data, false );
+//		fixedAssignments.setData( data, false );
+//	}
 
 	/**
 	 * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
 	 */
 	@Override
 	public void stateChanged( final ChangeEvent e ) {
-		if ( this.getSelectedComponent().equals( activeAssignments ) ) {
-			activeAssignments.setData( data, true );
-		} else if ( this.getSelectedComponent().equals( inactiveMappingAssignments ) ) {
-			inactiveMappingAssignments.setData( data, false );
-		} else if ( this.getSelectedComponent().equals( inactiveDivisionAssignments ) ) {
-			inactiveDivisionAssignments.setData( data, false );
-		} else if ( this.getSelectedComponent().equals( inactiveExitAssignments ) ) {
-			inactiveExitAssignments.setData( data, false );
-		} else {
-			fixedAssignments.setData( data, false );
-		}
+//		if ( this.getSelectedComponent().equals( activeAssignments ) ) {
+//			activeAssignments.setData( data, true );
+//		} else if ( this.getSelectedComponent().equals( inactiveMappingAssignments ) ) {
+//			inactiveMappingAssignments.setData( data, false );
+//		} else if ( this.getSelectedComponent().equals( inactiveDivisionAssignments ) ) {
+//			inactiveDivisionAssignments.setData( data, false );
+//		} else if ( this.getSelectedComponent().equals( inactiveExitAssignments ) ) {
+//			inactiveExitAssignments.setData( data, false );
+//		} else {
+//			fixedAssignments.setData( data, false );
+//		}
 	}
 
 	/**
 	 * Returns the <code>AssignmentView</code> that holds all active
 	 * assignments.
-	 * 
+	 *
 	 * @return
 	 */
 	public AssignmentView getActiveAssignments() {

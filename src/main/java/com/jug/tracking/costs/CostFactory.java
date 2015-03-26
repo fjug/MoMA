@@ -1,10 +1,10 @@
 /**
  *
  */
-package com.jug.lp.costs;
+package com.jug.tracking.costs;
 
-import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
+import net.imglib2.util.Pair;
 
 import com.jug.MotherMachine;
 import com.jug.util.ComponentTreeUtils;

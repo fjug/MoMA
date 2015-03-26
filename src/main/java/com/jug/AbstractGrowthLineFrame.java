@@ -6,14 +6,11 @@ package com.jug;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Set;
 import java.util.Vector;
 
-import net.imglib2.Localizable;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
@@ -33,10 +30,8 @@ import net.imglib2.util.ValuePair;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
-import com.jug.lp.AbstractAssignment;
-import com.jug.lp.GrowthLineTrackingILP;
-import com.jug.lp.Hypothesis;
 import com.jug.segmentation.GrowthLineSegmentationMagic;
+import com.jug.segmentation.hypotheses.Hypothesis;
 import com.jug.util.ArgbDrawingUtils;
 import com.jug.util.SimpleFunctionAnalysis;
 import com.jug.util.Util;
@@ -195,7 +190,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	/**
 	 * Reads out all image intensities along the GrowthLine center (green
 	 * pixels).
-	 * 
+	 *
 	 * @param img
 	 *            - an Img.
 	 * @return a float array containing the image intensities in
@@ -226,7 +221,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 	/**
 	 * Adds a detected center point to a GrowthsLineFrame.
-	 * 
+	 *
 	 * @param point
 	 */
 	public void addPoint( final Point point ) {
@@ -248,7 +243,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 	/**
 	 * Gets a detected center point of a GrowthsLine.
-	 * 
+	 *
 	 * @param idx
 	 *            - index of the Point to be returned.
 	 */
@@ -273,7 +268,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	/**
 	 * Using the imglib2 component tree to find the most stable components
 	 * (bacteria).
-	 * 
+	 *
 	 * @param img
 	 */
 	public void generateSimpleSegmentationHypotheses( final Img< FloatType > img ) {
@@ -296,7 +291,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	/**
 	 * Using the imglib2 component tree to find the most stable components
 	 * (bacteria).
-	 * 
+	 *
 	 * @param img
 	 */
 	public void generateAwesomeSegmentationHypotheses( final Img< FloatType > img ) {
@@ -325,7 +320,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	 * tree, put each node in a priority queue, take then the numComponents
 	 * first elements out of it, put them in a ArrayList and give them back to
 	 * the caller. Efficiency: O(turbo-puke) !!
-	 * 
+	 *
 	 * @param numComponents
 	 * @return null, if there are less components in the tree then the callee
 	 *         requested
@@ -389,7 +384,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 	/**
 	 * GapSep guesses based on the intensity image alone
-	 * 
+	 *
 	 * @param img
 	 * @return
 	 */
@@ -412,7 +407,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	 * Because the GL stops there and below come dark, dark pixels.
 	 * This is a way out. (How well this does in cases where the bottom cell
 	 * moves up considerably has to be seen...)
-	 * 
+	 *
 	 * @param fkt
 	 * @return
 	 */
@@ -432,7 +427,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 	/**
 	 * GapSep guesses based on the awesome paramaxflow-sum-image...
-	 * 
+	 *
 	 * @param img
 	 * @return
 	 */
@@ -452,7 +447,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 		awesomeSepValues = getInvertedIntensitiesAtImgLocations( paramaxflowSumImageFloatTyped, true );
 
-		// special case: simple value is better then trained random forest: leave some simple value in there and 
+		// special case: simple value is better then trained random forest: leave some simple value in there and
 		// it might help to divide at right spots
 		if ( MotherMachine.SEGMENTATION_MIX_CT_INTO_PMFRF > 0.00001 ) {
 			final float percSimpleToStay = MotherMachine.SEGMENTATION_MIX_CT_INTO_PMFRF;
@@ -469,7 +464,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 	/**
 	 * Trying to look there a bit smarter... ;)
-	 * 
+	 *
 	 * @param img
 	 * @param wellPoints
 	 * @return
@@ -480,7 +475,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 	/**
 	 * Trying to look there a bit smarter... ;)
-	 * 
+	 *
 	 * @param img
 	 * @param wellPoints
 	 * @return
@@ -543,7 +538,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	/**
 	 * Draws the GrowthLine center line into the given annotation
 	 * <code>Img</code>.
-	 * 
+	 *
 	 * @param img
 	 *            the Img to draw into.
 	 */
@@ -554,7 +549,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	/**
 	 * Draws the GrowthLine center line into the given annotation
 	 * <code>Img</code>.
-	 * 
+	 *
 	 * @param img
 	 *            the Img to draw into.
 	 * @param view
@@ -591,7 +586,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	/**
 	 * Draws the optimal segmentation (determined by the solved ILP) into the
 	 * given <code>Img</code>.
-	 * 
+	 *
 	 * @param img
 	 *            the Img to draw into.
 	 * @param view
@@ -604,31 +599,6 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	 */
 	public void drawOptimalSegmentation( final Img< ARGBType > img, final IntervalView< FloatType > view, final List< Hypothesis< Component< FloatType, ? >>> optimalSegmentation ) {
 		final RandomAccess< ARGBType > raAnnotationImg = img.randomAccess();
-
-		long offsetX = 0;
-		long offsetY = 0;
-
-		if ( view != null ) {
-			// Lord, forgive me!
-			if ( view.min( 0 ) == 0 ) {
-				// In case I give the cropped paramaxflow-baby I lost the offset and must do ugly shit...
-				// I promise this is only done because I need to finish the f****** paper!
-				offsetX = -( this.getAvgXpos() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS );
-				offsetY = view.min( 1 );
-			} else {
-				offsetX = view.min( 0 );
-				offsetY = view.min( 1 );
-			}
-		}
-
-		for ( final Hypothesis< Component< FloatType, ? >> hyp : optimalSegmentation ) {
-			final Component< FloatType, ? > ctn = hyp.getWrappedHypothesis();
-			if ( hyp.getSegmentSpecificConstraint() != null ) {
-				ArgbDrawingUtils.taintForcedComponentTreeNode( ctn, raAnnotationImg, offsetX + getAvgXpos(), offsetY + MotherMachine.GL_OFFSET_TOP );
-			} else {
-				ArgbDrawingUtils.taintComponentTreeNode( ctn, raAnnotationImg, offsetX + getAvgXpos(), offsetY + MotherMachine.GL_OFFSET_TOP );
-			}
-		}
 	}
 
 	public void drawOptionalSegmentation( final Img< ARGBType > img, final IntervalView< FloatType > view, final Component< FloatType, ? > optionalSegmentation ) {
@@ -726,68 +696,17 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	}
 
 	public int getSolutionStats_numCells() {
-		int cells = 0;
-		final GrowthLineTrackingILP ilp = getParent().getIlp();
-		for ( final Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > set : ilp.getOptimalRightAssignments( this.getTime() ).values() ) {
-
-			for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> ora : set ) {
-				cells++;
-			}
-		}
+		final int cells = 0;
 		return cells;
 	}
 
 	public Vector< ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > >> getSolutionStats_limitsAndRightAssType() {
 		final Vector< ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > >> ret = new Vector< ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > >>();
-		for ( final Hypothesis< Component< FloatType, ? > > hyp : getParent().getIlp().getOptimalRightAssignments( this.getTime() ).keySet() ) {
-
-			final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> aa = getParent().getIlp().getOptimalRightAssignments( this.getTime() ).get( hyp ).iterator().next();
-
-			int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
-			final Iterator< Localizable > componentIterator = hyp.getWrappedHypothesis().iterator();
-			while ( componentIterator.hasNext() ) {
-				final int ypos = componentIterator.next().getIntPosition( 0 );
-				min = Math.min( min, ypos );
-				max = Math.max( max, ypos );
-			}
-
-			ret.add( new ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > >( new ValuePair< Integer, Integer >( new Integer( min ), new Integer( max ) ), new ValuePair< Integer, Integer >( new Integer( aa.getType() ), new Integer( ( aa.isGroundTruth() || aa.isGroundUntruth() ) ? 1 : 0 ) ) ) );
-		}
-
-		Collections.sort( ret, new Comparator< ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > >>() {
-
-			@Override
-			public int compare( final ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > > o1, final ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > > o2 ) {
-				return o1.a.a.compareTo( o2.a.a );
-			}
-		} );
-		return ret;
+		return null;
 	}
 
 	public Vector< ValuePair< Integer, Hypothesis< Component< FloatType, ? > >>> getSortedActiveHypsAndPos() {
 		final Vector< ValuePair< Integer, Hypothesis< Component< FloatType, ? > >>> positionedHyps = new Vector< ValuePair< Integer, Hypothesis< Component< FloatType, ? > >>>();
-
-		for ( final Hypothesis< Component< FloatType, ? > > hyp : getParent().getIlp().getOptimalRightAssignments( this.getTime() ).keySet() ) {
-			// find out where this hypothesis is located along the GL
-			int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
-			final Iterator< Localizable > componentIterator = hyp.getWrappedHypothesis().iterator();
-			while ( componentIterator.hasNext() ) {
-				final int ypos = componentIterator.next().getIntPosition( 0 );
-				min = Math.min( min, ypos );
-				max = Math.max( max, ypos );
-			}
-
-			positionedHyps.add( new ValuePair< Integer, Hypothesis< Component< FloatType, ? >> >( -max, hyp ) );
-		}
-
-		Collections.sort( positionedHyps, new Comparator< ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> >() {
-
-			@Override
-			public int compare( final ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> o1, final ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> o2 ) {
-				return o1.a.compareTo( o2.a );
-			}
-		} );
-
-		return positionedHyps;
+		return null;
 	}
 }

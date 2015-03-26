@@ -3,7 +3,6 @@
  */
 package com.jug.gui;
 
-import gurobi.GRBException;
 import ij.ImageJ;
 import ij.Prefs;
 
@@ -17,7 +16,6 @@ import java.awt.MenuItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.swing.AbstractAction;
@@ -41,8 +39,6 @@ import javax.swing.event.ChangeListener;
 import loci.formats.gui.ExtensionFileFilter;
 import net.imglib2.Localizable;
 import net.imglib2.algorithm.componenttree.Component;
-import net.imglib2.algorithm.componenttree.ComponentForest;
-import net.imglib2.converter.Converters;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
@@ -55,13 +51,8 @@ import com.jug.GrowthLineFrame;
 import com.jug.MotherMachine;
 import com.jug.export.CellStatsExporter;
 import com.jug.export.HtmlOverviewExporter;
-import com.jug.gui.progress.DialogProgress;
-import com.jug.lp.GrowthLineTrackingILP;
-import com.jug.lp.Hypothesis;
-import com.jug.util.ComponentTreeUtils;
 import com.jug.util.SimpleFunctionAnalysis;
 import com.jug.util.Util;
-import com.jug.util.converter.RealFloatNormalizeConverter;
 import com.jug.util.filteredcomponents.FilteredComponent;
 
 /**
@@ -157,7 +148,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	// -------------------------------------------------------------------------------------
 	/**
 	 * Construction
-	 * 
+	 *
 	 * @param mmm
 	 *            the MotherMachineModel to show
 	 */
@@ -393,28 +384,28 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			@Override
 			public void actionPerformed( final ActionEvent e ) {
 				int numCells = 0;
-				final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+//				final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
 				try {
 					numCells = Integer.parseInt( txtNumCells.getText() );
 				} catch ( final NumberFormatException nfe ) {
 					numCells = -1;
 					txtNumCells.setText( "?" );
-					ilp.removeSegmentsInFrameCountConstraint( model.getCurrentTime() );
+//					ilp.removeSegmentsInFrameCountConstraint( model.getCurrentTime() );
 				}
 				if ( numCells != -1 ) {
-					try {
-						ilp.removeSegmentsInFrameCountConstraint( model.getCurrentTime() );
-						ilp.addSegmentsInFrameCountConstraint( model.getCurrentTime(), numCells );
-					} catch ( final GRBException e1 ) {
-						e1.printStackTrace();
-					}
+//					try {
+//						ilp.removeSegmentsInFrameCountConstraint( model.getCurrentTime() );
+//						ilp.addSegmentsInFrameCountConstraint( model.getCurrentTime(), numCells );
+//					} catch ( final GRBException e1 ) {
+//						e1.printStackTrace();
+//					}
 				}
 
 				final Thread t = new Thread( new Runnable() {
 
 					@Override
 					public void run() {
-						model.getCurrentGL().runILP();
+//						model.getCurrentGL().runILP();
 						dataToDisplayChanged();
 						sliderTime.requestFocus();
 					}
@@ -459,7 +450,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		JPanel panelHorizontalHelper;
 		JLabel labelHelper;
 
-		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+//		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
 
 		// --- Left data viewer (t-1) -------------
 
@@ -479,8 +470,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		// - - - - - -
 		leftAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ), this );
-		if ( ilp != null )
-			leftAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( model.getCurrentTime() - 1 ) );
+//		if ( ilp != null )
+//			leftAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( model.getCurrentTime() - 1 ) );
 		panelVerticalHelper.add( leftAssignmentViewer, BorderLayout.CENTER );
 		panelView.add( panelVerticalHelper );
 
@@ -502,8 +493,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		// - - - - - -
 		rightAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ), this );
-		if ( ilp != null )
-			rightAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( model.getCurrentTime() ) );
+//		if ( ilp != null )
+//			rightAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( model.getCurrentTime() ) );
 		panelVerticalHelper.add( rightAssignmentViewer, BorderLayout.CENTER );
 		panelView.add( panelVerticalHelper );
 
@@ -547,7 +538,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 */
 	private void updatePlotPanels() {
 
-		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+//		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
 
 		// Intensity plot
 		// --------------
@@ -573,50 +564,50 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		// ComponentTreeNodes
 		// ------------------
-		if ( ilp != null ) {
-			dumpCosts( model.getCurrentGLF().getComponentTree(), ySegmentationData, ilp );
-		}
+//		if ( ilp != null ) {
+//			dumpCosts( model.getCurrentGLF().getComponentTree(), ySegmentationData, ilp );
+//		}
 	}
 
-	private < C extends Component< FloatType, C > > void dumpCosts( final ComponentForest< C > ct, final float[] ySegmentationData, final GrowthLineTrackingILP ilp ) {
-		final int numCTNs = ComponentTreeUtils.countNodes( ct );
-		final float[][] xydxdyCTNBorders = new float[ numCTNs ][ 4 ];
-		final int t = sliderTime.getValue();
-		final float[][] xydxdyCTNBordersActive = new float[ ilp.getOptimalSegmentation( t ).size() ][ 4 ];
-
-		int i = 0;
-		for ( final C root : ct.roots() ) {
-			System.out.println( "" );
-			int level = 0;
-			ArrayList< C > ctnLevel = new ArrayList< C >();
-			ctnLevel.add( root );
-			while ( ctnLevel.size() > 0 ) {
-				for ( final Component< ?, ? > ctn : ctnLevel ) {
-					addBoxAtIndex( i, ctn, xydxdyCTNBorders, ySegmentationData, level );
-					if ( cbWhichImgToShow.getSelectedItem().equals( itemPMFRF ) ) {
-						System.out.print( String.format( "%.4f;\t", ilp.localParamaxflowBasedCost( t, ctn ) ) );
-					} else {
-						System.out.print( String.format( "%.4f;\t", ilp.localIntensityBasedCost( t, ctn ) ) );
-					}
-					i++;
-				}
-				ctnLevel = ComponentTreeUtils.getAllChildren( ctnLevel );
-				level++;
-				System.out.println( "" );
-			}
-
-			i = 0;
-			for ( final Hypothesis< Component< FloatType, ? >> hyp : ilp.getOptimalSegmentation( t ) ) {
-				final Component< FloatType, ? > ctn = hyp.getWrappedHypothesis();
-				addBoxAtIndex( i, ctn, xydxdyCTNBordersActive, ySegmentationData, ComponentTreeUtils.getLevelInTree( ctn ) );
-				i++;
-			}
-		}
-		plot.addBoxPlot( "Seg. Hypothesis", new Color( 127, 127, 127, 255 ), Util.makeDoubleArray2d( xydxdyCTNBorders ) );
-		if ( ilp.getOptimalSegmentation( t ).size() > 0 ) {
-			plot.addBoxPlot( "Active Seg. Hypothesis", new Color( 255, 0, 0, 255 ), Util.makeDoubleArray2d( xydxdyCTNBordersActive ) );
-		}
-	}
+//	private < C extends Component< FloatType, C > > void dumpCosts( final ComponentForest< C > ct, final float[] ySegmentationData, final GrowthLineTrackingILP ilp ) {
+//		final int numCTNs = ComponentTreeUtils.countNodes( ct );
+//		final float[][] xydxdyCTNBorders = new float[ numCTNs ][ 4 ];
+//		final int t = sliderTime.getValue();
+//		final float[][] xydxdyCTNBordersActive = new float[ ilp.getOptimalSegmentation( t ).size() ][ 4 ];
+//
+//		int i = 0;
+//		for ( final C root : ct.roots() ) {
+//			System.out.println( "" );
+//			int level = 0;
+//			ArrayList< C > ctnLevel = new ArrayList< C >();
+//			ctnLevel.add( root );
+//			while ( ctnLevel.size() > 0 ) {
+//				for ( final Component< ?, ? > ctn : ctnLevel ) {
+//					addBoxAtIndex( i, ctn, xydxdyCTNBorders, ySegmentationData, level );
+//					if ( cbWhichImgToShow.getSelectedItem().equals( itemPMFRF ) ) {
+//						System.out.print( String.format( "%.4f;\t", ilp.localParamaxflowBasedCost( t, ctn ) ) );
+//					} else {
+//						System.out.print( String.format( "%.4f;\t", ilp.localIntensityBasedCost( t, ctn ) ) );
+//					}
+//					i++;
+//				}
+//				ctnLevel = ComponentTreeUtils.getAllChildren( ctnLevel );
+//				level++;
+//				System.out.println( "" );
+//			}
+//
+//			i = 0;
+//			for ( final Hypothesis< Component< FloatType, ? >> hyp : ilp.getOptimalSegmentation( t ) ) {
+//				final Component< FloatType, ? > ctn = hyp.getSegment();
+//				addBoxAtIndex( i, ctn, xydxdyCTNBordersActive, ySegmentationData, ComponentTreeUtils.getLevelInTree( ctn ) );
+//				i++;
+//			}
+//		}
+//		plot.addBoxPlot( "Seg. Hypothesis", new Color( 127, 127, 127, 255 ), Util.makeDoubleArray2d( xydxdyCTNBorders ) );
+//		if ( ilp.getOptimalSegmentation( t ).size() > 0 ) {
+//			plot.addBoxPlot( "Active Seg. Hypothesis", new Color( 255, 0, 0, 255 ), Util.makeDoubleArray2d( xydxdyCTNBordersActive ) );
+//		}
+//	}
 
 	/**
 	 * @param index
@@ -658,16 +649,16 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	public void dataToDisplayChanged() {
 
-		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+//		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
 
 		// IF 'COUNTING VIEW' VIEW IS ACTIVE
 		// =================================
 		if ( tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelCountingView ) ) {
-			if ( ilp != null ) {
-				panelCountingView.showData( model.getCurrentGL() );
-			} else {
+//			if ( ilp != null ) {
+//				panelCountingView.showData( model.getCurrentGL() );
+//			} else {
 				panelCountingView.showData( null );
-			}
+//			}
 		}
 
 		// IF SEGMENTATION AND ASSIGNMENT VIEW IS ACTIVE
@@ -710,12 +701,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemChannel1 ) ) {
 				final IntervalView< FloatType > viewToShow = Views.hyperSlice( model.mm.getRawChannelImgs().get( 1 ), 2, glf.getOffsetF() );
 				Util.computeMinMax( Views.iterable( viewToShow ), min, max );
-				viewImgCenterActive = Views.offset( Converters.convert( viewToShow, new RealFloatNormalizeConverter( max.get() ), new FloatType() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+//				viewImgCenterActive = Views.offset( Converters.convert( viewToShow, new RealFloatNormalizeConverter( max.get() ), new FloatType() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
 			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemChannel2 ) ) {
 				final IntervalView< FloatType > viewToShow = Views.hyperSlice( model.mm.getRawChannelImgs().get( 2 ), 2, glf.getOffsetF() );
 				Util.computeMinMax( Views.iterable( viewToShow ), min, max );
-				viewImgCenterActive = Views.offset( Converters.convert( viewToShow, new RealFloatNormalizeConverter( max.get() ), new FloatType() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+//				viewImgCenterActive = Views.offset( Converters.convert( viewToShow, new RealFloatNormalizeConverter( max.get() ), new FloatType() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
 			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemClassified ) ) {
 				final Thread t = new Thread() {
@@ -732,8 +723,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 					@Override
 					public void run() {
-						final IntervalView< FloatType > sizeEstimationImageFloatTyped = Views.offset( Converters.convert( Views.hyperSlice( model.mm.getCellSegmentedChannelImgs(), 2, glf.getOffsetF() ), new RealFloatNormalizeConverter( 1.0f ), new FloatType() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
-						imgCanvasActiveCenter.setScreenImage( glf, sizeEstimationImageFloatTyped );
+//						final IntervalView< FloatType > sizeEstimationImageFloatTyped = Views.offset( Converters.convert( Views.hyperSlice( model.mm.getCellSegmentedChannelImgs(), 2, glf.getOffsetF() ), new RealFloatNormalizeConverter( 1.0f ), new FloatType() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+//						imgCanvasActiveCenter.setScreenImage( glf, sizeEstimationImageFloatTyped );
 					}
 				};
 				t.start();
@@ -752,22 +743,22 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 			// - -  assignment-views  - - - - - -
 
-			if ( ilp != null ) {
-				final int t = sliderTime.getValue();
-				if ( t == 0 ) {
-					leftAssignmentViewer.display( null );
-				} else {
-					leftAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( t - 1 ) );
-				}
-				if ( t == sliderTime.getMaximum() ) {
-					rightAssignmentViewer.display( null );
-				} else {
-					rightAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( t ) );
-				}
-			} else {
-				leftAssignmentViewer.display( null );
-				rightAssignmentViewer.display( null );
-			}
+//			if ( ilp != null ) {
+//				final int t = sliderTime.getValue();
+//				if ( t == 0 ) {
+//					leftAssignmentViewer.display( null );
+//				} else {
+//					leftAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( t - 1 ) );
+//				}
+//				if ( t == sliderTime.getMaximum() ) {
+//					rightAssignmentViewer.display( null );
+//				} else {
+//					rightAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( t ) );
+//				}
+//			} else {
+//				leftAssignmentViewer.display( null );
+//				rightAssignmentViewer.display( null );
+//			}
 		}
 
 		// IF DETAILED DATA VIEW IS ACTIVE
@@ -790,14 +781,14 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		if ( e.getSource().equals( sliderTime ) ) {
 			this.lblCurrentTime.setText( String.format( " t = %4d", sliderTime.getValue() ) );
 			this.model.setCurrentGLF( sliderTime.getValue() );
-			if ( model.getCurrentGL().getIlp() != null ) {
-				final int rhs = model.getCurrentGL().getIlp().getSegmentsInFrameCountConstraintRHS( sliderTime.getValue() );
-				if ( rhs == -1 ) {
-					txtNumCells.setText( "?" );
-				} else {
-					txtNumCells.setText( "" + rhs );
-				}
-			}
+//			if ( model.getCurrentGL().getIlp() != null ) {
+//				final int rhs = model.getCurrentGL().getIlp().getSegmentsInFrameCountConstraintRHS( sliderTime.getValue() );
+//				if ( rhs == -1 ) {
+//					txtNumCells.setText( "?" );
+//				} else {
+//					txtNumCells.setText( "" + rhs );
+//				}
+//			}
 		}
 
 		dataToDisplayChanged();
@@ -871,10 +862,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					}
 
 					System.out.println( "Generating ILP..." );
-					model.getCurrentGL().generateILP( new DialogProgress( self, "Building tracking model...", ( model.getCurrentGL().size() - 1 ) * 2 ) );
+//					model.getCurrentGL().generateILP( new DialogProgress( self, "Building tracking model...", ( model.getCurrentGL().size() - 1 ) * 2 ) );
 
 					System.out.println( "Finding optimal result..." );
-					model.getCurrentGL().runILP();
+//					model.getCurrentGL().runILP();
 					System.out.println( "...done!" );
 					dataToDisplayChanged();
 				}
@@ -904,28 +895,28 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void exportDataFiles() {
-		if ( model.getCurrentGL().getIlp() == null ) {
-			JOptionPane.showMessageDialog( this, "The current GL can only be exported after being tracked (optimized)!" );
-			return;
-		}
+//		if ( model.getCurrentGL().getIlp() == null ) {
+//			JOptionPane.showMessageDialog( this, "The current GL can only be exported after being tracked (optimized)!" );
+//			return;
+//		}
 
 		final CellStatsExporter exporter = new CellStatsExporter( this );
 		exporter.export();
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void exportHtmlOverview() {
 		final MotherMachineGui self = this;
 
-		if ( model.getCurrentGL().getIlp() == null ) {
-			JOptionPane.showMessageDialog( this, "The current GL can only be exported after being tracked (optimized)!" );
-			return;
-		}
+//		if ( model.getCurrentGL().getIlp() == null ) {
+//			JOptionPane.showMessageDialog( this, "The current GL can only be exported after being tracked (optimized)!" );
+//			return;
+//		}
 
 		boolean doExport = true;
 		int startFrame = 0;
@@ -1073,10 +1064,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	/**
 	 * Exports current tracking solution as individual PNG images in the given
 	 * folder.
-	 * 
+	 *
 	 * @param endFrame
 	 * @param startFrame
-	 * 
+	 *
 	 * @param folder
 	 *            path to folder in which to store PNGs.
 	 */

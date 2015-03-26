@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.jug.export;
 
@@ -38,11 +38,7 @@ import com.jug.gui.DialogCellStatsExportSetup;
 import com.jug.gui.MotherMachineGui;
 import com.jug.gui.OsDependentFolderChooser;
 import com.jug.gui.progress.DialogProgress;
-import com.jug.lp.AbstractAssignment;
-import com.jug.lp.DivisionAssignment;
-import com.jug.lp.GrowthLineTrackingILP;
-import com.jug.lp.Hypothesis;
-import com.jug.lp.MappingAssignment;
+import com.jug.segmentation.hypotheses.Hypothesis;
 import com.jug.util.ComponentTreeUtils;
 import com.jug.util.Util;
 import com.jug.util.filteredcomponents.FilteredComponent;
@@ -117,28 +113,28 @@ public class CellStatsExporter {
 		/**
 		 * @return
 		 */
-		public SegmentRecord nextSegmentInTime( final GrowthLineTrackingILP ilp ) {
-			SegmentRecord ret = this;
-
-			try {
-				final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> rightAssmt = ilp.getOptimalRightAssignment( this.hyp );
-				if ( rightAssmt == null ) {
-					exists = false;
-					terminated_by = SegmentRecord.ENDOFTRACKING;
-				} else if ( rightAssmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ) {
-					final MappingAssignment ma = ( MappingAssignment ) rightAssmt;
-					ret = new SegmentRecord( this );
-					ret.hyp = ma.getDestinationHypothesis();
-				} else {
-					terminated_by = rightAssmt.getType();
-					exists = false;
-				}
-			} catch ( final GRBException ge ) {
-				exists = false;
-				System.err.println( ge.getMessage() );
-			}
-			return ret;
-		}
+//		public SegmentRecord nextSegmentInTime( final GrowthLineTrackingILP ilp ) {
+//			SegmentRecord ret = this;
+//
+//			try {
+//				final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> rightAssmt = ilp.getOptimalRightAssignment( this.hyp );
+//				if ( rightAssmt == null ) {
+//					exists = false;
+//					terminated_by = SegmentRecord.ENDOFTRACKING;
+//				} else if ( rightAssmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ) {
+//					final MappingAssignment ma = ( MappingAssignment ) rightAssmt;
+//					ret = new SegmentRecord( this );
+//					ret.hyp = ma.getDestinationHypothesis();
+//				} else {
+//					terminated_by = rightAssmt.getType();
+//					exists = false;
+//				}
+//			} catch ( final GRBException ge ) {
+//				exists = false;
+//				System.err.println( ge.getMessage() );
+//			}
+//			return ret;
+//		}
 
 		/**
 		 * @return true if the current segment is valid.
@@ -309,7 +305,7 @@ public class CellStatsExporter {
 		final Vector< String > linesToExport = new Vector< String >();
 
 		final GrowthLineFrame firstGLF = gui.model.getCurrentGL().getFrames().get( 0 );
-		final GrowthLineTrackingILP ilp = firstGLF.getParent().getIlp();
+//		final GrowthLineTrackingILP ilp = firstGLF.getParent().getIlp();
 		final Vector< ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> > segmentsInFirstFrame = firstGLF.getSortedActiveHypsAndPos();
 		final List< SegmentRecord > startingPoints = new ArrayList< SegmentRecord >();
 
@@ -328,39 +324,39 @@ public class CellStatsExporter {
 		while ( !queue.isEmpty() ) {
 			final SegmentRecord prepPoint = queue.poll();
 
-			final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> rightAssmt = ilp.getOptimalRightAssignment( prepPoint.hyp );
-
-			if ( rightAssmt == null ) {
-				continue;
-			}
-			// MAPPING -- JUST DROP SEGMENT STATS
-			if ( rightAssmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ) {
-				final MappingAssignment ma = ( MappingAssignment ) rightAssmt;
-				final SegmentRecord next = new SegmentRecord( prepPoint );
-				next.hyp = ma.getDestinationHypothesis();
-				queue.add( next );
-			}
-			// DIVISON -- NEW CELLS ARE BORN CURRENT ONE ENDS
-			if ( rightAssmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION ) {
-				final DivisionAssignment da = ( DivisionAssignment ) rightAssmt;
-
-				prepPoint.pid = prepPoint.id;
-				prepPoint.tbirth = prepPoint.frame;
-
-				prepPoint.id = nextCellId;
-				prepPoint.hyp = da.getLowerDesinationHypothesis();
-				prepPoint.daughterType = SegmentRecord.LOWER;
-				startingPoints.add( prepPoint.clone() );
-				queue.add( new SegmentRecord( prepPoint ) );
-				nextCellId++;
-
-				prepPoint.id = nextCellId;
-				prepPoint.hyp = da.getUpperDesinationHypothesis();
-				prepPoint.daughterType = SegmentRecord.UPPER;
-				startingPoints.add( prepPoint.clone() );
-				queue.add( new SegmentRecord( prepPoint ) );
-				nextCellId++;
-			}
+//			final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> rightAssmt = ilp.getOptimalRightAssignment( prepPoint.hyp );
+//
+//			if ( rightAssmt == null ) {
+//				continue;
+//			}
+//			// MAPPING -- JUST DROP SEGMENT STATS
+//			if ( rightAssmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ) {
+//				final MappingAssignment ma = ( MappingAssignment ) rightAssmt;
+//				final SegmentRecord next = new SegmentRecord( prepPoint );
+//				next.hyp = ma.getDestinationHypothesis();
+//				queue.add( next );
+//			}
+//			// DIVISON -- NEW CELLS ARE BORN CURRENT ONE ENDS
+//			if ( rightAssmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION ) {
+//				final DivisionAssignment da = ( DivisionAssignment ) rightAssmt;
+//
+//				prepPoint.pid = prepPoint.id;
+//				prepPoint.tbirth = prepPoint.frame;
+//
+//				prepPoint.id = nextCellId;
+//				prepPoint.hyp = da.getLowerDesinationHypothesis();
+//				prepPoint.daughterType = SegmentRecord.LOWER;
+//				startingPoints.add( prepPoint.clone() );
+//				queue.add( new SegmentRecord( prepPoint ) );
+//				nextCellId++;
+//
+//				prepPoint.id = nextCellId;
+//				prepPoint.hyp = da.getUpperDesinationHypothesis();
+//				prepPoint.daughterType = SegmentRecord.UPPER;
+//				startingPoints.add( prepPoint.clone() );
+//				queue.add( new SegmentRecord( prepPoint ) );
+//				nextCellId++;
+//			}
 		}
 
 		// INITIALIZE PROGRESS-BAR if not run headless
@@ -383,13 +379,13 @@ public class CellStatsExporter {
 
 		// Export all cells (we found all their starting segments above)
 		for ( int cid = 0; cid < startingPoints.size(); cid++ ) {
-			SegmentRecord segmentRecord = startingPoints.get( cid );
+			final SegmentRecord segmentRecord = startingPoints.get( cid );
 
 			linesToExport.add( segmentRecord.toString() );
 			do {
-				Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( segmentRecord.hyp.getWrappedHypothesis() );
-				if ( segmentRecord.hyp.getWrappedHypothesis() instanceof FilteredComponent ) {
-					limits = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) segmentRecord.hyp.getWrappedHypothesis() );
+				Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( segmentRecord.hyp.getSegment() );
+				if ( segmentRecord.hyp.getSegment() instanceof FilteredComponent ) {
+					limits = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) segmentRecord.hyp.getSegment() );
 				}
 
 //				final int height = limits.getB() - limits.getA() + 1;  // OLD - wish was to replace it by length of green center line...
@@ -458,24 +454,24 @@ public class CellStatsExporter {
 						linesToExport.add( intensityStr );
 					}
 				}
-				segmentRecord = segmentRecord.nextSegmentInTime( ilp );
+//				segmentRecord = segmentRecord.nextSegmentInTime( ilp );
 			}
 			while ( segmentRecord.exists() );
 
-			if ( segmentRecord.terminated_by == GrowthLineTrackingILP.ASSIGNMENT_EXIT ) {
-				linesToExport.add( "\tEXIT\n" );
-			} else if ( segmentRecord.terminated_by == GrowthLineTrackingILP.ASSIGNMENT_DIVISION ) {
-				linesToExport.add( "\tDIVISION\n" );
-			} else if ( segmentRecord.terminated_by == SegmentRecord.ENDOFTRACKING ) {
-				// UGLY TRICK ALERT: remember the trick to fix the tracking towards the last frame?
-				// Yes, we double the last frame. This also means that we should not export this fake frame, ergo we remove it here!
-				for ( int i = 0; i < MotherMachine.instance.getRawChannelImgs().size() + 1; i++ ) {
-					linesToExport.remove( linesToExport.size() - 1 );
-				}
-				linesToExport.add( "\tENDOFDATA\n" );
-			} else {
-				linesToExport.add( "\tGUROBI_EXCEPTION\n" );
-			}
+//			if ( segmentRecord.terminated_by == GrowthLineTrackingILP.ASSIGNMENT_EXIT ) {
+//				linesToExport.add( "\tEXIT\n" );
+//			} else if ( segmentRecord.terminated_by == GrowthLineTrackingILP.ASSIGNMENT_DIVISION ) {
+//				linesToExport.add( "\tDIVISION\n" );
+//			} else if ( segmentRecord.terminated_by == SegmentRecord.ENDOFTRACKING ) {
+//				// UGLY TRICK ALERT: remember the trick to fix the tracking towards the last frame?
+//				// Yes, we double the last frame. This also means that we should not export this fake frame, ergo we remove it here!
+//				for ( int i = 0; i < MotherMachine.instance.getRawChannelImgs().size() + 1; i++ ) {
+//					linesToExport.remove( linesToExport.size() - 1 );
+//				}
+//				linesToExport.add( "\tENDOFDATA\n" );
+//			} else {
+//				linesToExport.add( "\tGUROBI_EXCEPTION\n" );
+//			}
 
 			// REPORT PROGRESS if needbe
 			if ( !MotherMachine.HEADLESS ) {
