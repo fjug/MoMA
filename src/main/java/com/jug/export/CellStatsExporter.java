@@ -21,13 +21,13 @@ import java.util.Vector;
 import javax.swing.JOptionPane;
 
 import net.imglib2.IterableInterval;
-import net.imglib2.Pair;
 import net.imglib2.Point;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.histogram.Histogram1d;
 import net.imglib2.histogram.Real1dBinMapper;
 import net.imglib2.type.numeric.integer.ShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
