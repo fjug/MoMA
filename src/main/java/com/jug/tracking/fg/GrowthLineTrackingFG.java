@@ -4,10 +4,12 @@
 package com.jug.tracking.fg;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.indago.fg.factor.Factor;
 import com.indago.fg.function.Function;
 import com.jug.GrowthLine;
+import com.jug.tracking.assignments.TrackingAssignment;
 import com.jug.tracking.fg.variables.BooleanAssignmentVariable;
 
 /**
@@ -28,6 +30,9 @@ public class GrowthLineTrackingFG {
 	final ArrayList< BooleanAssignmentVariable< ? > > variables =
 			new ArrayList< BooleanAssignmentVariable< ? > >();
 
+	final HashMap< ? extends TrackingAssignment, BooleanAssignmentVariable< ? > > assignmentVariableDict =
+			new HashMap< TrackingAssignment, BooleanAssignmentVariable< ? >>();
+
 	// -------------------------------------------------------------------------------------
 	// construction
 	// -------------------------------------------------------------------------------------
@@ -40,5 +45,6 @@ public class GrowthLineTrackingFG {
 	// methods
 	// -------------------------------------------------------------------------------------
 	public void buildFG() {
+
 	}
 }

@@ -38,7 +38,9 @@ import javax.swing.event.ChangeListener;
 
 import loci.formats.gui.ExtensionFileFilter;
 import net.imglib2.Localizable;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.componenttree.Component;
+import net.imglib2.converter.Converters;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
@@ -51,8 +53,10 @@ import com.jug.GrowthLineFrame;
 import com.jug.MotherMachine;
 import com.jug.export.CellStatsExporter;
 import com.jug.export.HtmlOverviewExporter;
+import com.jug.gui.progress.DialogProgress;
 import com.jug.util.SimpleFunctionAnalysis;
 import com.jug.util.Util;
+import com.jug.util.converter.RealFloatNormalizeConverter;
 import com.jug.util.filteredcomponents.FilteredComponent;
 
 /**
@@ -701,12 +705,26 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemChannel1 ) ) {
 				final IntervalView< FloatType > viewToShow = Views.hyperSlice( model.mm.getRawChannelImgs().get( 1 ), 2, glf.getOffsetF() );
 				Util.computeMinMax( Views.iterable( viewToShow ), min, max );
-//				viewImgCenterActive = Views.offset( Converters.convert( viewToShow, new RealFloatNormalizeConverter( max.get() ), new FloatType() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+				viewImgCenterActive =
+						Views.offset(
+								Converters.convert(
+										( RandomAccessibleInterval< FloatType > ) viewToShow,
+										new RealFloatNormalizeConverter( max.get() ),
+										new FloatType() ),
+								glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS,
+								glf.getOffsetY() );
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
 			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemChannel2 ) ) {
 				final IntervalView< FloatType > viewToShow = Views.hyperSlice( model.mm.getRawChannelImgs().get( 2 ), 2, glf.getOffsetF() );
 				Util.computeMinMax( Views.iterable( viewToShow ), min, max );
-//				viewImgCenterActive = Views.offset( Converters.convert( viewToShow, new RealFloatNormalizeConverter( max.get() ), new FloatType() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+				viewImgCenterActive =
+						Views.offset(
+								Converters.convert(
+										( RandomAccessibleInterval< FloatType > ) viewToShow,
+										new RealFloatNormalizeConverter( max.get() ),
+										new FloatType() ),
+								glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS,
+								glf.getOffsetY() );
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
 			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemClassified ) ) {
 				final Thread t = new Thread() {
@@ -861,8 +879,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 						}
 					}
 
-					System.out.println( "Generating ILP..." );
-//					model.getCurrentGL().generateILP( new DialogProgress( self, "Building tracking model...", ( model.getCurrentGL().size() - 1 ) * 2 ) );
+					System.out.println( "Generating FactorGraph..." );
+					model.getCurrentGL().generateFG(
+							new DialogProgress( self, "Building tracking model...", ( model.getCurrentGL().size() - 1 ) * 2 ) );
 
 					System.out.println( "Finding optimal result..." );
 //					model.getCurrentGL().runILP();

@@ -396,7 +396,7 @@ public class MotherMachine {
 			fileUserProps = new File( cmd.getOptionValue( "p" ) );
 		}
 
-		int minChannelIdx = 0;
+		int minChannelIdx = 1;
 		if ( cmd.hasOption( "cmin" ) ) {
 			minChannelIdx = Integer.parseInt( cmd.getOptionValue( "cmin" ) );
 		}
@@ -1150,10 +1150,10 @@ public class MotherMachine {
 		for ( int cIdx = minChannelIdx; cIdx < minChannelIdx + numChannels; cIdx++ ) {
 
 			// load tiffs from folder
-			final String filter = String.format( "_c%02d", cIdx );
+			final String filter = String.format( "_c%04d", cIdx );
 			System.out.println( String.format( "Loading tiff sequence for channel, identified by '%s', from '%s'...", filter, path ) );
 			try {
-				if ( cIdx == minChannelIdx ) { // TODO load unnormalized!!! Normalize later...
+				if ( cIdx == minChannelIdx ) {
 					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, true, filter ) );
 				} else {
 					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, false, filter ) );
