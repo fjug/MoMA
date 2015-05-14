@@ -191,6 +191,12 @@ public class MotherMachine {
 	 */
 	public static final boolean DISABLE_EXIT_CONSTRAINTS = false;
 
+	/**
+	 * Used to decide which mappings and divisions to include in FactorGraph
+	 * and which to cut out of it.
+	 */
+	public static final float ENUMERATION_CUTOFF_COST = 2f;
+
 	// - - - - - - - - - - - - - -
 	// GUI-WINDOW RELATED STATICS
 	// - - - - - - - - - - - - - -

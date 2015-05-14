@@ -144,10 +144,11 @@ public class ComponentTreeUtils {
 	 * @param to
 	 * @return
 	 */
-	public static List< Component< FloatType, ? >> getRightNeighbors( final Component< FloatType, ? > node ) {
-		final ArrayList< Component< FloatType, ? >> ret = new ArrayList< Component< FloatType, ? >>();
+	public static List< FilteredComponent< FloatType >> getRightNeighbors(
+			final FilteredComponent< FloatType > node ) {
+		final ArrayList< FilteredComponent< FloatType >> ret = new ArrayList<>();
 
-		Component< FloatType, ? > rightNeighbor = getRightNeighbor( node );
+		FilteredComponent< FloatType > rightNeighbor = getRightNeighbor( node );
 		if ( rightNeighbor != null ) {
 			ret.add( rightNeighbor );
 			while ( rightNeighbor.getChildren().size() > 0 ) {
@@ -163,11 +164,12 @@ public class ComponentTreeUtils {
 	 * @param node
 	 * @return
 	 */
-	private static Component< FloatType, ? > getRightNeighbor( final Component< FloatType, ? > node ) {
+	private static FilteredComponent< FloatType > getRightNeighbor(
+			final FilteredComponent< FloatType > node ) {
 		// TODO Note that we do not find the right neighbor in case the
 		// component tree has several roots and the
 		// right neighbor is somewhere down another root.
-		final Component< FloatType, ? > father = node.getParent();
+		final FilteredComponent< FloatType > father = node.getParent();
 
 		if ( father != null ) {
 			final int idx = father.getChildren().indexOf( node );

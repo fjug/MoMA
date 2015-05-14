@@ -4,6 +4,7 @@
 package com.jug.tracking.costs;
 
 import net.imglib2.algorithm.componenttree.Component;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Pair;
 
 import com.jug.MotherMachine;
@@ -17,7 +18,10 @@ public class CostFactory {
 
 	public static String latestCostEvaluation = "";
 
-	public static float getMigrationCost( final float oldPosition, final float newPosition, final float normalizer ) {
+	private static float getMigrationCost(
+			final float oldPosition,
+			final float newPosition,
+			final float normalizer ) {
 		float deltaH = ( oldPosition - newPosition ) / normalizer;
 		float power = 0.0f;
 		float costDeltaH = 0.0f;
@@ -33,7 +37,10 @@ public class CostFactory {
 		return costDeltaH;
 	}
 
-	public static float getGrowthCost( final float oldSize, final float newSize, final float normalizer ) {
+	private static float getGrowthCost(
+			final float oldSize,
+			final float newSize,
+			final float normalizer ) {
 		float deltaL = ( newSize - oldSize ) / normalizer;
 		float power = 0.0f;
 		float costDeltaL = 0.0f;
@@ -49,7 +56,9 @@ public class CostFactory {
 		return costDeltaL;
 	}
 
-	public static float getIntensityMismatchCost( final float oldIntensity, final float newIntensity ) {
+	private static float getIntensityMismatchCost(
+			final float oldIntensity,
+			final float newIntensity ) {
 		final float deltaV = Math.max( 0.0f, newIntensity - oldIntensity ); // nur heller werden wird bestraft!
 		final float power = 1.0f;
 		final float freeUntil = 0.1f;
@@ -62,7 +71,9 @@ public class CostFactory {
 		return 0.0f * costDeltaV;
 	}
 
-	public static float getUnevenDivisionCost( final float sizeFirstChild, final float sizeSecondChild ) {
+	private static float getUnevenDivisionCost(
+			final float sizeFirstChild,
+			final float sizeSecondChild ) {
 		final float deltaS = Math.abs( sizeFirstChild - sizeSecondChild ) / Math.min( sizeFirstChild, sizeSecondChild );
 		float power = 2.0f;
 		float costDeltaL = 0.0f;
@@ -152,6 +163,132 @@ public class CostFactory {
 		if ( a > 0 && b + 1 < gapSepFkt.length && b - a < MotherMachine.MIN_CELL_LENGTH ) { // if a==0 or b==gapSepFkt.len, only a part of the cell is seen!
 			cost = 100;
 		}
+		return cost;
+	}
+
+	/**
+	 * Computes the compatibility-mapping-costs between the two given
+	 * hypothesis.
+	 *
+	 * @param from
+	 *            the segmentation hypothesis from which the mapping originates.
+	 * @param to
+	 *            the segmentation hypothesis towards which the
+	 *            mapping-assignment leads.
+	 * @param glLength
+	 *            the length of the GL (number of pixels along the green
+	 *            center-line).
+	 * @return the cost we want to set for the given combination of segmentation
+	 *         hypothesis.
+	 */
+	public static float compatibilityCostOfMapping(
+			final Component< FloatType, ? > from,
+			final Component< FloatType, ? > to,
+			final int glLength ) {
+
+		final long sizeFrom = from.size();
+		final long sizeTo = to.size();
+
+		final float valueFrom = from.value().get();
+		final float valueTo = to.value().get();
+
+		final Pair< Integer, Integer > intervalFrom =
+				ComponentTreeUtils.getTreeNodeInterval( from );
+		final Pair< Integer, Integer > intervalTo =
+				ComponentTreeUtils.getTreeNodeInterval( to );
+
+		final float oldPosU = intervalFrom.getA().intValue();
+		final float newPosU = intervalTo.getA().intValue();
+		final float oldPosL = intervalFrom.getB().intValue();
+		final float newPosL = intervalTo.getB().intValue();
+
+		// Finally the costs are computed...
+		final float costDeltaHU = CostFactory.getMigrationCost( oldPosU, newPosU, glLength );
+		final float costDeltaHL = CostFactory.getMigrationCost( oldPosL, newPosL, glLength );
+		final float costDeltaH = Math.max( costDeltaHL, costDeltaHU );
+		final float costDeltaL = CostFactory.getGrowthCost( sizeFrom, sizeTo, glLength );
+		final float costDeltaV = CostFactory.getIntensityMismatchCost( valueFrom, valueTo );
+
+		float cost = costDeltaL + costDeltaV + costDeltaH;
+
+		// Border case bullshit
+		// if the target cell touches the upper or lower border (then don't count uneven and shrinking)
+		// (It is not super obvious why this should be true for bottom ones... some data has shitty
+		// contrast at bottom, hence we trick this condition in here not to loose the mother -- which would
+		// mean to loose all future tracks!!!)
+		if ( intervalTo.getA().intValue() == 0 || intervalTo.getB().intValue() + 1 >= glLength ) {
+			cost = costDeltaH + costDeltaV;
+		}
+
+//		System.out.println( String.format( ">>> %f + %f + %f = %f", costDeltaL, costDeltaV, costDeltaH, cost ) );
+		return cost;
+	}
+
+	/**
+	 * Computes the compatibility-mapping-costs between the two given
+	 * hypothesis.
+	 *
+	 * @param from
+	 *            the segmentation hypothesis from which the mapping originates.
+	 * @param to
+	 *            the upper (left) segmentation hypothesis towards which the
+	 *            mapping-assignment leads.
+	 * @param lowerNeighbor
+	 *            the lower (right) segmentation hypothesis towards which the
+	 *            mapping-assignment leads.
+	 * @return the cost we want to set for the given combination of segmentation
+	 *         hypothesis.
+	 */
+	public static float compatibilityCostOfDivision(
+			final Component< FloatType, ? > from,
+			final Component< FloatType, ? > toUpper,
+			final Component< FloatType, ? > toLower,
+			final int glLength ) {
+		final long sizeFrom = from.size();
+		final long sizeToU = toUpper.size();
+		final long sizeToL = toLower.size();
+		final long sizeTo = sizeToU + sizeToL;
+
+		final float valueFrom = from.value().get();
+		final float valueTo = 0.5f * ( toUpper.value().get() + toLower.value().get() );
+
+		final Pair< Integer, Integer > intervalFrom = ComponentTreeUtils.getTreeNodeInterval( from );
+		final Pair< Integer, Integer > intervalToU =
+				ComponentTreeUtils.getTreeNodeInterval( toUpper );
+		final Pair< Integer, Integer > intervalToL =
+				ComponentTreeUtils.getTreeNodeInterval( toLower );
+
+		final float oldPosU = intervalFrom.getA().intValue();
+		final float newPosU = intervalToU.getA().intValue();
+		final float oldPosL = intervalFrom.getB().intValue();
+		final float newPosL = intervalToL.getB().intValue();
+
+		// Finally the costs are computed...
+		final float costDeltaHU = CostFactory.getMigrationCost( oldPosU, newPosU, glLength );
+		final float costDeltaHL = CostFactory.getMigrationCost( oldPosL, newPosL, glLength );
+		final float costDeltaH = Math.max( costDeltaHL, costDeltaHU );
+		final float costDeltaL = CostFactory.getGrowthCost( sizeFrom, sizeTo, glLength );
+		final float costDeltaL_ifAtTop =
+				CostFactory.getGrowthCost( sizeFrom, sizeToL * 2, glLength );
+		final float costDeltaV = CostFactory.getIntensityMismatchCost( valueFrom, valueTo );
+		final float costDeltaS = CostFactory.getUnevenDivisionCost( sizeToU, sizeToL );
+
+		float cost = costDeltaL + costDeltaV + costDeltaH + costDeltaS;
+
+		// Border case bullshit
+		// if the upper cell touches the upper border (then don't count shrinking and be nicer to uneven)
+		if ( intervalToU.getA().intValue() == 0 || intervalToL.getB().intValue() + 1 >= glLength ) {
+			// In case the upper cell is still at least like 1/2 in
+			if ( ( 1.0 * sizeToU ) / ( 1.0 * sizeToL ) > 0.5 ) {
+				// don't count uneven div cost (but pay a bit to avoid exit+division instead of two mappings)
+				cost = costDeltaL_ifAtTop + costDeltaH + costDeltaV + 0.1f;
+			} else {
+				// otherwise do just leave out shrinking cost alone - yeah!
+				cost = costDeltaL_ifAtTop + costDeltaH + costDeltaV + costDeltaS + 0.03f;
+			}
+		}
+
+//		System.out.println( String.format( ">>> %f + %f + %f + %f = %f", costDeltaL, costDeltaV, costDeltaH, costDeltaS, cost ) );
 		return cost;
 	}
 }

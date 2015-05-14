@@ -7,9 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.indago.fg.FactorGraph;
-import com.indago.fg.factor.Factor;
-import com.indago.fg.function.Function;
-import com.indago.fg.variable.ComponentVariable;
+import com.jug.fg.TimmFgImpl;
 import com.jug.gui.progress.DialogProgress;
 
 /**
@@ -99,24 +97,7 @@ public class GrowthLine {
 	 * @param dialogProgress
 	 * @return
 	 */
-	public FactorGraph generateFG( final DialogProgress dialogProgress ) {
-		final ArrayList< Function< ?, ? > > functions = new ArrayList<>();
-		final ArrayList< Factor< ?, ?, ? > > factors = new ArrayList<>();
-		final ArrayList< ComponentVariable< ? > > variables = new ArrayList<>();
-
-		final int factorId = 0;
-		final int functionId = 0;
-
-		// Collect all segment hypotheses and create associated variables
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-		// Build all functions needed for the FG
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-		// Connect variables by factors (using previously prepared functions)
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-		fg = ( new FactorGraph( variables, factors, functions ) );
-		return fg;
+	public TimmFgImpl generateFG( final DialogProgress dialogProgress ) {
+		return new TimmFgImpl( this );
 	}
 }

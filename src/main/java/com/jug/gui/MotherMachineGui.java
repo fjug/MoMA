@@ -16,6 +16,7 @@ import java.awt.MenuItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.swing.AbstractAction;
@@ -40,6 +41,7 @@ import loci.formats.gui.ExtensionFileFilter;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.componenttree.Component;
+import net.imglib2.algorithm.componenttree.ComponentForest;
 import net.imglib2.converter.Converters;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
@@ -54,6 +56,7 @@ import com.jug.MotherMachine;
 import com.jug.export.CellStatsExporter;
 import com.jug.export.HtmlOverviewExporter;
 import com.jug.gui.progress.DialogProgress;
+import com.jug.util.ComponentTreeUtils;
 import com.jug.util.SimpleFunctionAnalysis;
 import com.jug.util.Util;
 import com.jug.util.converter.RealFloatNormalizeConverter;
@@ -568,50 +571,67 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		// ComponentTreeNodes
 		// ------------------
-//		if ( ilp != null ) {
-//			dumpCosts( model.getCurrentGLF().getComponentTree(), ySegmentationData, ilp );
-//		}
+		showSegmentsInPlot( model.getCurrentGLF().getComponentTree(), ySegmentationData );
 	}
 
-//	private < C extends Component< FloatType, C > > void dumpCosts( final ComponentForest< C > ct, final float[] ySegmentationData, final GrowthLineTrackingILP ilp ) {
-//		final int numCTNs = ComponentTreeUtils.countNodes( ct );
-//		final float[][] xydxdyCTNBorders = new float[ numCTNs ][ 4 ];
-//		final int t = sliderTime.getValue();
-//		final float[][] xydxdyCTNBordersActive = new float[ ilp.getOptimalSegmentation( t ).size() ][ 4 ];
-//
-//		int i = 0;
-//		for ( final C root : ct.roots() ) {
-//			System.out.println( "" );
-//			int level = 0;
-//			ArrayList< C > ctnLevel = new ArrayList< C >();
-//			ctnLevel.add( root );
-//			while ( ctnLevel.size() > 0 ) {
-//				for ( final Component< ?, ? > ctn : ctnLevel ) {
-//					addBoxAtIndex( i, ctn, xydxdyCTNBorders, ySegmentationData, level );
+	private < C extends Component< FloatType, C > > void showSegmentsInPlot(
+			final ComponentForest< C > ct,
+			final float[] ySegmentationData ) {
+
+		final int numCTNs = ComponentTreeUtils.countNodes( ct );
+		final float[][] xydxdyCTNBorders = new float[ numCTNs ][ 4 ];
+		final int t = sliderTime.getValue();
+//		final float[][] xydxdyCTNBordersActive =
+//				new float[ ilp.getOptimalSegmentation( t ).size() ][ 4 ];
+
+		int i = 0;
+		for ( final C root : ct.roots() ) {
+			System.out.println( "" );
+			int level = 0;
+			ArrayList< C > ctnLevel = new ArrayList< C >();
+			ctnLevel.add( root );
+			while ( ctnLevel.size() > 0 ) {
+				for ( final Component< ?, ? > ctn : ctnLevel ) {
+					addBoxAtIndex( i, ctn, xydxdyCTNBorders, ySegmentationData, level );
 //					if ( cbWhichImgToShow.getSelectedItem().equals( itemPMFRF ) ) {
-//						System.out.print( String.format( "%.4f;\t", ilp.localParamaxflowBasedCost( t, ctn ) ) );
+//						System.out.print( String.format(
+//								"%.4f;\t",
+//								ilp.localParamaxflowBasedCost( t, ctn ) ) );
 //					} else {
-//						System.out.print( String.format( "%.4f;\t", ilp.localIntensityBasedCost( t, ctn ) ) );
+//						System.out.print( String.format(
+//								"%.4f;\t",
+//								ilp.localIntensityBasedCost( t, ctn ) ) );
 //					}
-//					i++;
-//				}
-//				ctnLevel = ComponentTreeUtils.getAllChildren( ctnLevel );
-//				level++;
-//				System.out.println( "" );
-//			}
-//
+					i++;
+				}
+				ctnLevel = ComponentTreeUtils.getAllChildren( ctnLevel );
+				level++;
+				System.out.println( "" );
+			}
+
 //			i = 0;
 //			for ( final Hypothesis< Component< FloatType, ? >> hyp : ilp.getOptimalSegmentation( t ) ) {
 //				final Component< FloatType, ? > ctn = hyp.getSegment();
-//				addBoxAtIndex( i, ctn, xydxdyCTNBordersActive, ySegmentationData, ComponentTreeUtils.getLevelInTree( ctn ) );
+//				addBoxAtIndex(
+//						i,
+//						ctn,
+//						xydxdyCTNBordersActive,
+//						ySegmentationData,
+//						ComponentTreeUtils.getLevelInTree( ctn ) );
 //				i++;
 //			}
-//		}
-//		plot.addBoxPlot( "Seg. Hypothesis", new Color( 127, 127, 127, 255 ), Util.makeDoubleArray2d( xydxdyCTNBorders ) );
+		}
+		plot.addBoxPlot(
+				"Seg. Hypothesis",
+				new Color( 127, 127, 127, 255 ),
+				Util.makeDoubleArray2d( xydxdyCTNBorders ) );
 //		if ( ilp.getOptimalSegmentation( t ).size() > 0 ) {
-//			plot.addBoxPlot( "Active Seg. Hypothesis", new Color( 255, 0, 0, 255 ), Util.makeDoubleArray2d( xydxdyCTNBordersActive ) );
+//			plot.addBoxPlot(
+//					"Active Seg. Hypothesis",
+//					new Color( 255, 0, 0, 255 ),
+//					Util.makeDoubleArray2d( xydxdyCTNBordersActive ) );
 //		}
-//	}
+	}
 
 	/**
 	 * @param index
