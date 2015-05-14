@@ -70,13 +70,15 @@ public class TimmFgImpl {
 		// ---------------------------------------------------------------------------------------------------------------
 
 		for ( final GrowthLineFrame glf : gl.getFrames() ) {
-			final ComponentForest< FilteredComponent< FloatType >> seghyps = glf.getComponentTree();
+			final float[] gapSepFkt =
+					glf.getSimpleGapSeparationValues( MotherMachine.instance.getImgTemp() );
+
 			for ( final FilteredComponent< FloatType > ctRoot : glf.getComponentTree().roots() ) {
-				recursivelyAddSegmentBranch(
-						ctRoot,
-						glf.getSimpleGapSeparationValues( MotherMachine.instance.getImgTemp() ) );
+				addSegmentBranch( ctRoot, gapSepFkt );
+				addTreePathConstraints( ctRoot );
 			}
 		}
+
 
 		// ---------------------------------------------------------------------------------------------------------------
 		// HIGHER ORDER POTENTIALS HIGHER ORDER POTENTIALS HIGHER ORDER POTENTIALS HIGHER ORDER POTENTIALS HIGHER ORDER
@@ -93,6 +95,7 @@ public class TimmFgImpl {
 
 			addMappings( glfT, glfTp1 );
 			addDivisions( glfT, glfTp1 );
+			addExits( glfT );
 		}
 
 		// Divisions
@@ -109,7 +112,7 @@ public class TimmFgImpl {
 	 * @param ctRoot
 	 * @param gapSepFkt
 	 */
-	public void recursivelyAddSegmentBranch(
+	public void addSegmentBranch(
 			final FilteredComponent< FloatType > ctNode,
 			final float[] gapSepFkt ) {
 
@@ -121,8 +124,15 @@ public class TimmFgImpl {
 		addUnaryTo( ctNode, newVar );
 
 		for ( final FilteredComponent< FloatType > child : ctNode.getChildren() ) {
-			recursivelyAddSegmentBranch( child, gapSepFkt );
+			addSegmentBranch( child, gapSepFkt );
 		}
+	}
+
+	/**
+	 * @param ctRoot
+	 */
+	private void addTreePathConstraints( final FilteredComponent< FloatType > ctRoot ) {
+		// TODO Find all leaves -- then go upwards to parent and collect for monster-constraints
 	}
 
 	/**
@@ -239,7 +249,7 @@ public class TimmFgImpl {
 			ln = new HashMap<>();
 			leftNeighbors.put( ctNodeTp1, ln );
 		}
-		ln.put( ctNodeT, newVar );
+		ln.put( ctNodeTp1, newVar );
 
 		HashMap< FilteredComponent< FloatType >, AssignmentVariable< FilteredComponent< FloatType >>> rn =
 				rightNeighbors.get( ctNodeT );
@@ -247,7 +257,7 @@ public class TimmFgImpl {
 			rn = new HashMap<>();
 			rightNeighbors.put( ctNodeT, rn );
 		}
-		rn.put( ctNodeTp1, newVar );
+		rn.put( ctNodeT, newVar );
 
 		// --- connect variables by a constraint factor -----------------------------------------------------
 		final BooleanFactor factor = new BooleanFactor( mappingDomain, factorId++ );
@@ -270,7 +280,6 @@ public class TimmFgImpl {
 
 		functions.add( btt );
 		factors.add( unaryFactor );
-
 	}
 
 	/**
@@ -366,7 +375,7 @@ public class TimmFgImpl {
 		// --- add new variable -----------------------------------------------------------------------------
 		final AssignmentVariable< FilteredComponent< FloatType >> newVar =
 				new AssignmentVariable< FilteredComponent< FloatType > >( ctNodeT );
-		varMappings.add( newVar );
+		varDivisions.add( newVar );
 
 		// --- add new variable into left- and right neighborhoods ------------------------------------------
 		HashMap< FilteredComponent< FloatType >, AssignmentVariable< FilteredComponent< FloatType >>> ln =
@@ -375,14 +384,14 @@ public class TimmFgImpl {
 			ln = new HashMap<>();
 			leftNeighbors.put( ctNodeTp1_upper, ln );
 		}
-		ln.put( ctNodeT, newVar );
+		ln.put( ctNodeTp1_upper, newVar );
 
 		ln = leftNeighbors.get( ctNodeTp1_lower );
 		if ( ln == null ) {
 			ln = new HashMap<>();
 			leftNeighbors.put( ctNodeTp1_lower, ln );
 		}
-		ln.put( ctNodeT, newVar );
+		ln.put( ctNodeTp1_lower, newVar );
 
 		HashMap< FilteredComponent< FloatType >, AssignmentVariable< FilteredComponent< FloatType >>> rn =
 				rightNeighbors.get( ctNodeT );
@@ -390,8 +399,7 @@ public class TimmFgImpl {
 			rn = new HashMap<>();
 			rightNeighbors.put( ctNodeT, rn );
 		}
-		rn.put( ctNodeTp1_upper, newVar );
-		rn.put( ctNodeTp1_lower, newVar );
+		rn.put( ctNodeT, newVar );
 
 		// --- connect variables by a constraint factor -----------------------------------------------------
 		final BooleanFactor factor = new BooleanFactor( divisionDomain, factorId++ );
@@ -419,6 +427,62 @@ public class TimmFgImpl {
 	}
 
 	/**
+	 * @param glf
+	 */
+	private void addExits( final GrowthLineFrame glf ) {
+
+		for ( final FilteredComponent< FloatType > root : glf.getComponentTree().roots() ) {
+			final LinkedList< FilteredComponent< FloatType >> queue = new LinkedList<>();
+			queue.add( root );
+			while ( !queue.isEmpty() ) {
+				final FilteredComponent< FloatType > node = queue.removeFirst();
+				final float fromCost = varSegHyps.get( node ).getAnnotatedCost();
+
+				final double cost = Math.min( 0.0f, fromCost / 2.0f ); // NOTE: 0 or negative but only hyp/2 to prefer map or div if exists...
+				addExitTo( node, cost );
+
+				for ( final FilteredComponent< FloatType > child : node.getChildren() ) {
+					queue.push( child );
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param node
+	 * @param cost
+	 */
+	private void addExitTo( final FilteredComponent< FloatType > ctNode, final double cost ) {
+		// --- add new variable -----------------------------------------------------------------------------
+		final AssignmentVariable< FilteredComponent< FloatType >> newVar =
+				new AssignmentVariable< FilteredComponent< FloatType > >( ctNode );
+		varExits.add( newVar );
+
+		// --- add new variable into right neighborhood -----------------------------------------------------
+		HashMap< FilteredComponent< FloatType >, AssignmentVariable< FilteredComponent< FloatType >>> rn =
+				rightNeighbors.get( ctNode );
+		if ( rn == null ) {
+			rn = new HashMap<>();
+			rightNeighbors.put( ctNode, rn );
+		}
+		rn.put( ctNode, newVar );
+
+		// --- connect variables by a constraint factor -----------------------------------------------------
+		//TODO missing exit constraints!!!
+
+		// --- unary costs to new assignment variable -------------------------------------------------------
+		final double[] entries =
+				new double[] { 0.0, cost };
+		final BooleanTensorTable btt = new BooleanTensorTable( unaryDomain, entries, functionId++ );
+		final BooleanFactor unaryFactor = new BooleanFactor( unaryDomain, factorId++ );
+		unaryFactor.setFunction( btt );
+		unaryFactor.setVariable( 0, newVar );
+
+		functions.add( btt );
+		factors.add( unaryFactor );
+	}
+
+	/**
 	 *
 	 */
 	public void show() {
@@ -426,12 +490,12 @@ public class TimmFgImpl {
 		for ( final ComponentVariable< FilteredComponent< FloatType >> var : varSegHyps.values() ) {
 			vars.add( var );
 		}
-		for ( final AssignmentVariable< FilteredComponent< FloatType > > var : varMappings ) {
-			vars.add( var );
-		}
-		for ( final AssignmentVariable< FilteredComponent< FloatType > > var : varDivisions ) {
-			vars.add( var );
-		}
+//		for ( final AssignmentVariable< FilteredComponent< FloatType > > var : varMappings ) {
+//			vars.add( var );
+//		}
+//		for ( final AssignmentVariable< FilteredComponent< FloatType > > var : varDivisions ) {
+//			vars.add( var );
+//		}
 		for ( final AssignmentVariable< FilteredComponent< FloatType > > var : varExits ) {
 			vars.add( var );
 		}
