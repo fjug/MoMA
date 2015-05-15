@@ -844,8 +844,8 @@ public class MotherMachine {
 			}
 		};
 
-		System.setOut( new PrintStream( out, true ) );
-		System.setErr( new PrintStream( err, true ) );
+//		System.setOut( new PrintStream( out, true ) );
+//		System.setErr( new PrintStream( err, true ) );
 	}
 
 	private void updateConsoleTextArea( final String text ) {

@@ -3,29 +3,37 @@
  */
 package com.jug.fg;
 
+import gurobi.GRBException;
+
 import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JFrame;
 
 import net.imglib2.algorithm.componenttree.ComponentForest;
 import net.imglib2.type.numeric.real.FloatType;
 
+import com.indago.fg.Assignment;
 import com.indago.fg.FactorGraph;
 import com.indago.fg.domain.BooleanFunctionDomain;
 import com.indago.fg.factor.BooleanFactor;
 import com.indago.fg.factor.Factor;
 import com.indago.fg.function.BooleanAssignmentConstraint;
+import com.indago.fg.function.BooleanConflictConstraint;
 import com.indago.fg.function.BooleanTensorTable;
+import com.indago.fg.function.BooleanWeightedIndexSumConstraint;
 import com.indago.fg.function.Function;
+import com.indago.fg.function.WeightedIndexSumConstraint.Relation;
 import com.indago.fg.gui.FgPanel;
 import com.indago.fg.variable.AssignmentVariable;
 import com.indago.fg.variable.BooleanVariable;
 import com.indago.fg.variable.ComponentVariable;
+import com.indago.ilp.SolveBooleanFGGurobi;
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
 import com.jug.MotherMachine;
@@ -104,7 +112,8 @@ public class TimmFgImpl {
 		// Exits
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-		show();
+//		show();
+		solve();
 	}
 
 	/**
@@ -132,7 +141,52 @@ public class TimmFgImpl {
 	 * @param ctRoot
 	 */
 	private void addTreePathConstraints( final FilteredComponent< FloatType > ctRoot ) {
-		// TODO Find all leaves -- then go upwards to parent and collect for monster-constraints
+		final LinkedList< FilteredComponent< FloatType >> leaves = new LinkedList<>();
+
+		// --- find leaves ------------------------------------------------------------------------
+		final LinkedList< FilteredComponent< FloatType >> queue = new LinkedList<>();
+		queue.add( ctRoot );
+		while ( !queue.isEmpty() ) {
+			final FilteredComponent< FloatType > node = queue.removeFirst();
+
+			if ( node.getChildren().size() == 0 ) {
+				leaves.push( node );
+			} else {
+				for ( final FilteredComponent< FloatType > child : node.getChildren() ) {
+					queue.push( child );
+				}
+			}
+		}
+
+		// --- per leave compose path constraint --------------------------------------------------
+		while ( !leaves.isEmpty() ) {
+			final FilteredComponent< FloatType > leave = leaves.removeFirst();
+
+			final List< ComponentVariable< FilteredComponent< FloatType >> > path =
+					new ArrayList<>();
+			FilteredComponent< FloatType > runningNode = leave;
+			path.add( varSegHyps.get( runningNode ) );
+			while ( runningNode.getParent() != null ) {
+				runningNode = runningNode.getParent();
+				path.add( varSegHyps.get( runningNode ) );
+			}
+
+			// --- add only if path is not only a root --------------------------------------------
+			if ( path.size() > 1 ) {
+				// --- connect variables collected along path by a path constraint ----------------
+				final BooleanFactor factor =
+						new BooleanFactor( new BooleanFunctionDomain( path.size() ), factorId++ );
+				final BooleanConflictConstraint bcc = new BooleanConflictConstraint();
+				factor.setFunction( bcc );
+				int i = 0;
+				for ( final ComponentVariable< FilteredComponent< FloatType >> var : path ) {
+					factor.setVariable( i, var );
+					i++;
+				}
+				functions.add( bcc );
+				factors.add( factor );
+			}
+		}
 	}
 
 	/**
@@ -439,7 +493,7 @@ public class TimmFgImpl {
 				final float fromCost = varSegHyps.get( node ).getAnnotatedCost();
 
 				final double cost = Math.min( 0.0f, fromCost / 2.0f ); // NOTE: 0 or negative but only hyp/2 to prefer map or div if exists...
-				addExitTo( node, cost );
+				addExitTo( node, glf.getComponentTree().roots(), cost );
 
 				for ( final FilteredComponent< FloatType > child : node.getChildren() ) {
 					queue.push( child );
@@ -449,10 +503,17 @@ public class TimmFgImpl {
 	}
 
 	/**
-	 * @param node
+	 * @param ctNode
+	 * @param roots
+	 *            The roots from which all segment hypotheses of this time-point
+	 *            can be found. We need this here in order to assemble the exit
+	 *            constraints!
 	 * @param cost
 	 */
-	private void addExitTo( final FilteredComponent< FloatType > ctNode, final double cost ) {
+	private void addExitTo(
+			final FilteredComponent< FloatType > ctNode,
+			final Set< FilteredComponent< FloatType >> roots,
+			final double cost ) {
 		// --- add new variable -----------------------------------------------------------------------------
 		final AssignmentVariable< FilteredComponent< FloatType >> newVar =
 				new AssignmentVariable< FilteredComponent< FloatType > >( ctNode );
@@ -467,8 +528,34 @@ public class TimmFgImpl {
 		}
 		rn.put( ctNode, newVar );
 
-		// --- connect variables by a constraint factor -----------------------------------------------------
-		//TODO missing exit constraints!!!
+		// --- collect the segment hyps above ctNode (in Hup) ---------------------------------
+		final List< FilteredComponent< FloatType >> Hup = FgUtils.getHup( ctNode, roots );
+
+		// --- add constraint connecting Hup --------------------------------------------------
+		if ( Hup.size() > 0 ) {
+
+			//TODO finish below...
+
+			// --- connect variables collected along path by a path constraint ----------------
+			final int[] coefficients = new int[ Hup.size() + 1 ];
+			for ( int i = 0; i < coefficients.length; i++ )
+				coefficients[ i ] = 1;
+			coefficients[ 0 ] = Hup.size();
+			final BooleanWeightedIndexSumConstraint bwisc =
+					new BooleanWeightedIndexSumConstraint( coefficients, Relation.LE, Hup.size() );
+
+			final BooleanFactor factor = new BooleanFactor( bwisc.getDomain(), factorId++ );
+
+			factor.setFunction( bwisc );
+			factor.setVariable( 0, varSegHyps.get( ctNode ) );
+			int i = 1;
+			for ( final FilteredComponent< FloatType > seghyp : Hup ) {
+				factor.setVariable( i, varSegHyps.get( seghyp ) );
+				i++;
+			}
+			functions.add( bwisc );
+			factors.add( factor );
+		}
 
 		// --- unary costs to new assignment variable -------------------------------------------------------
 		final double[] entries =
@@ -486,21 +573,7 @@ public class TimmFgImpl {
 	 *
 	 */
 	public void show() {
-		final Collection< BooleanVariable > vars = new ArrayList< BooleanVariable >();
-		for ( final ComponentVariable< FilteredComponent< FloatType >> var : varSegHyps.values() ) {
-			vars.add( var );
-		}
-//		for ( final AssignmentVariable< FilteredComponent< FloatType > > var : varMappings ) {
-//			vars.add( var );
-//		}
-//		for ( final AssignmentVariable< FilteredComponent< FloatType > > var : varDivisions ) {
-//			vars.add( var );
-//		}
-		for ( final AssignmentVariable< FilteredComponent< FloatType > > var : varExits ) {
-			vars.add( var );
-		}
-
-		final FactorGraph fg = new FactorGraph( vars, factors, functions );
+		final FactorGraph fg = assembleFactorGraph();
 
 		final FgPanel panel = new FgPanel( fg );
 		final JFrame frame = new JFrame( "TimmFgImpl - dump" );
@@ -510,4 +583,38 @@ public class TimmFgImpl {
 		frame.setVisible( true );
 	}
 
+	/**
+	 * @return
+	 */
+	private FactorGraph assembleFactorGraph() {
+		final Collection< BooleanVariable > vars = new ArrayList< BooleanVariable >();
+		for ( final ComponentVariable< FilteredComponent< FloatType >> var : varSegHyps.values() ) {
+			vars.add( var );
+		}
+		for ( final AssignmentVariable< FilteredComponent< FloatType > > var : varMappings ) {
+			vars.add( var );
+		}
+		for ( final AssignmentVariable< FilteredComponent< FloatType > > var : varDivisions ) {
+			vars.add( var );
+		}
+		for ( final AssignmentVariable< FilteredComponent< FloatType > > var : varExits ) {
+			vars.add( var );
+		}
+
+		return new FactorGraph( vars, factors, functions );
+	}
+
+	public Assignment solve() {
+		final FactorGraph fg = assembleFactorGraph();
+
+		Assignment assignment = null;
+		try {
+			final SolveBooleanFGGurobi solver = new SolveBooleanFGGurobi();
+			assignment = solver.solve( fg );
+		} catch ( final GRBException e ) {
+			System.err.println( "Gurobi trouble... Boolean FactorGraph could not be solved!" );
+			e.printStackTrace();
+		}
+		return assignment;
+	}
 }
