@@ -6,7 +6,7 @@ package com.jug;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.indago.fg.FactorGraph;
+import com.indago.fg.Assignment;
 import com.jug.fg.TimmFgImpl;
 import com.jug.gui.progress.DialogProgress;
 
@@ -19,7 +19,8 @@ public class GrowthLine {
 	// fields
 	// -------------------------------------------------------------------------------------
 	private final List< GrowthLineFrame > frames;
-	private FactorGraph fg;
+	private TimmFgImpl timmFg;
+	private Assignment timmFgSolution;
 
 	// Hypothesis< Component< FloatType, ? > >,
 	// AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > ilp;
@@ -35,11 +36,25 @@ public class GrowthLine {
 	}
 
 	/**
-	 * @return the FactorGraph built for this GL (or null if no FG was built
-	 *         yet).
+	 * @param f
+	 * @return
 	 */
-	public FactorGraph getFg() {
-		return fg;
+	public GrowthLineFrame get( final int i ) {
+		return this.getFrames().get( i );
+	}
+
+	/**
+	 * @return the timmFg
+	 */
+	public TimmFgImpl getTimmFg() {
+		return timmFg;
+	}
+
+	/**
+	 * @return the timmFgSolution
+	 */
+	public Assignment getTimmFgSolution() {
+		return timmFgSolution;
 	}
 
 	// -------------------------------------------------------------------------------------
@@ -84,20 +99,29 @@ public class GrowthLine {
 	}
 
 	/**
-	 * @param f
-	 * @return
-	 */
-	public GrowthLineFrame get( final int i ) {
-		return this.getFrames().get( i );
-	}
-
-	/**
 	 * Generates the tracking FactorGraph for this GL.
 	 *
 	 * @param dialogProgress
 	 * @return
 	 */
 	public TimmFgImpl generateFG( final DialogProgress dialogProgress ) {
-		return new TimmFgImpl( this );
+		timmFg = new TimmFgImpl( this );
+		return timmFg;
+	}
+
+	/**
+	 * Solves the tracking built FactorGraph for this GL.
+	 * If it was not previously built using <code>generateFG</code>, that method
+	 * will be called here.
+	 *
+	 * @param dialogProgress
+	 * @return
+	 */
+	public Assignment solveFG( final DialogProgress dialogProgress ) {
+		if ( timmFg == null ) {
+			generateFG( dialogProgress );
+		}
+		timmFgSolution = timmFg.solve();
+		return timmFgSolution;
 	}
 }

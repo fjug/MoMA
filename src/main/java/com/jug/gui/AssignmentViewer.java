@@ -3,12 +3,19 @@
  */
 package com.jug.gui;
 
+import java.util.HashMap;
+import java.util.List;
+
 import javax.swing.BorderFactory;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import net.imglib2.type.numeric.real.FloatType;
+
+import com.indago.fg.variable.AssignmentVariable;
 import com.jug.util.OSValidator;
+import com.jug.util.filteredcomponents.FilteredComponent;
 
 /**
  * @author jug
@@ -80,19 +87,39 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 
 	/**
 	 * Receives and visualizes a new HashMap of assignments.
-	 *
-	 * @param hashMap
-	 *            a <code>HashMap</code> containing pairs of segmentation
-	 *            hypothesis at some time-point t and assignments towards t+1.
+	 * 
+	 * @param activeRightNeighborhood
+	 *            a <code>HashMap</code> indexed by segmentations, giving
+	 *            assignments towards t++.
+	 *            (Given as yet another hash map from
+	 *            <code>AssignmentVariable</code>s to a <code>List</code> of
+	 *            segments.)
+	 *            Active meaning that all contained assignments are part of the
+	 *            solution found by the tracking machinery.
+	 * 
+	 * @param completeRightNeighborhood
+	 *            a <code>HashMap</code> indexed by segmentations, giving
+	 *            assignments towards t++.
+	 *            (Given as yet another hash map from
+	 *            <code>AssignmentVariable</code>s to a <code>List</code> of
+	 *            segments.)
 	 */
-//	public void display( final HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >> hashMap ) {
+	public void display(
+			final HashMap< FilteredComponent< FloatType >, HashMap< AssignmentVariable< FilteredComponent< FloatType >>, List< FilteredComponent< FloatType >>> > activeRightNeighborhood,
+			final HashMap< FilteredComponent< FloatType >, HashMap< AssignmentVariable< FilteredComponent< FloatType >>, List< FilteredComponent< FloatType >>> > completeRightNeighborhood ) {
 //		this.data = hashMap;
-//		activeAssignments.setData( data, true );
-//		inactiveMappingAssignments.setData( data, false );
-//		inactiveDivisionAssignments.setData( data, false );
-//		inactiveExitAssignments.setData( data, false );
+		activeAssignments.setData( activeRightNeighborhood );
+		inactiveMappingAssignments.setData(
+				completeRightNeighborhood,
+				AssignmentVariable.ASSIGNMENT_MAPPING );
+		inactiveDivisionAssignments.setData(
+				completeRightNeighborhood,
+				AssignmentVariable.ASSIGNMENT_DIVISION );
+		inactiveExitAssignments.setData(
+				completeRightNeighborhood,
+				AssignmentVariable.ASSIGNMENT_EXIT );
 //		fixedAssignments.setData( data, false );
-//	}
+	}
 
 	/**
 	 * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)

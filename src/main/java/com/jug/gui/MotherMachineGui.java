@@ -50,11 +50,13 @@ import net.imglib2.view.Views;
 
 import org.math.plot.Plot2DPanel;
 
+import com.indago.fg.Assignment;
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
 import com.jug.MotherMachine;
 import com.jug.export.CellStatsExporter;
 import com.jug.export.HtmlOverviewExporter;
+import com.jug.fg.TimmFgImpl;
 import com.jug.gui.progress.DialogProgress;
 import com.jug.util.ComponentTreeUtils;
 import com.jug.util.SimpleFunctionAnalysis;
@@ -391,7 +393,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			@Override
 			public void actionPerformed( final ActionEvent e ) {
 				int numCells = 0;
-//				final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+//TODO				final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
 				try {
 					numCells = Integer.parseInt( txtNumCells.getText() );
 				} catch ( final NumberFormatException nfe ) {
@@ -457,7 +459,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		JPanel panelHorizontalHelper;
 		JLabel labelHelper;
 
-//		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+		final TimmFgImpl timmFg = model.getCurrentGL().getTimmFg();
+		final Assignment timmFgSolution = model.getCurrentGL().getTimmFgSolution();
 
 		// --- Left data viewer (t-1) -------------
 
@@ -477,8 +480,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		// - - - - - -
 		leftAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ), this );
-//		if ( ilp != null )
-//			leftAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( model.getCurrentTime() - 1 ) );
+		if ( timmFg != null )
+			leftAssignmentViewer.display(
+					timmFg.getActiveRightNeighborsAt( model.getCurrentTime() - 1 ),
+					timmFg.getAllRightNeighborsAt( model.getCurrentTime() - 1 ) );
 		panelVerticalHelper.add( leftAssignmentViewer, BorderLayout.CENTER );
 		panelView.add( panelVerticalHelper );
 
@@ -500,8 +505,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		// - - - - - -
 		rightAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ), this );
-//		if ( ilp != null )
-//			rightAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( model.getCurrentTime() ) );
+		if ( timmFg != null )
+			leftAssignmentViewer.display(
+					timmFg.getActiveRightNeighborsAt( model.getCurrentTime() ),
+					timmFg.getAllRightNeighborsAt( model.getCurrentTime() ) );
 		panelVerticalHelper.add( rightAssignmentViewer, BorderLayout.CENTER );
 		panelView.add( panelVerticalHelper );
 
@@ -673,7 +680,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	@SuppressWarnings( { "unchecked", "rawtypes" } )
 	public void dataToDisplayChanged() {
 
-//		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+		final TimmFgImpl timmFg = model.getCurrentGL().getTimmFg();
+		final Assignment timmFgSolution = model.getCurrentGL().getTimmFgSolution();
 
 		// IF 'COUNTING VIEW' VIEW IS ACTIVE
 		// =================================
@@ -781,22 +789,26 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 			// - -  assignment-views  - - - - - -
 
-//			if ( ilp != null ) {
-//				final int t = sliderTime.getValue();
-//				if ( t == 0 ) {
-//					leftAssignmentViewer.display( null );
-//				} else {
-//					leftAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( t - 1 ) );
-//				}
-//				if ( t == sliderTime.getMaximum() ) {
-//					rightAssignmentViewer.display( null );
-//				} else {
-//					rightAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( t ) );
-//				}
-//			} else {
-//				leftAssignmentViewer.display( null );
-//				rightAssignmentViewer.display( null );
-//			}
+			if ( timmFg != null ) {
+				final int t = sliderTime.getValue();
+				if ( t == 0 ) {
+					leftAssignmentViewer.display( null, null );
+				} else {
+					leftAssignmentViewer.display(
+							timmFg.getActiveRightNeighborsAt( t - 1 ),
+							timmFg.getAllRightNeighborsAt( t - 1 ) );
+				}
+				if ( t == sliderTime.getMaximum() ) {
+					rightAssignmentViewer.display( null, null );
+				} else {
+					leftAssignmentViewer.display(
+							timmFg.getActiveRightNeighborsAt( t ),
+							timmFg.getAllRightNeighborsAt( t ) );
+				}
+			} else {
+				leftAssignmentViewer.display( null, null );
+				rightAssignmentViewer.display( null, null );
+			}
 		}
 
 		// IF DETAILED DATA VIEW IS ACTIVE
@@ -904,7 +916,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 							new DialogProgress( self, "Building tracking model...", ( model.getCurrentGL().size() - 1 ) * 2 ) );
 
 					System.out.println( "Finding optimal result..." );
-//					model.getCurrentGL().runILP();
+					model.getCurrentGL().solveFG(
+							new DialogProgress( self, "Solving tracking model...", 10 ) );
 					System.out.println( "...done!" );
 					dataToDisplayChanged();
 				}
