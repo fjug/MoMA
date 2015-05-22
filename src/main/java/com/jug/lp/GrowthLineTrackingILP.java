@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import javax.swing.JOptionPane;
+
 import net.imglib2.Localizable;
 import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
@@ -1513,6 +1515,24 @@ public class GrowthLineTrackingILP {
 			out.newLine();
 			out.newLine();
 
+			// Write T, numHyps, numAssmnts
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			final int numT = gl.size();
+			int numH = 0;
+			for ( final List< Hypothesis< Component< FloatType, ? >>> innerList : nodes.getAllHypotheses() ) {
+				for ( @SuppressWarnings( "unused" )
+				final Hypothesis< Component< FloatType, ? >> hypothesis : innerList ) {
+					numH++;
+				}
+			}
+			int numA = 0;
+			for ( final List< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > innerList : nodes.getAllAssignments() ) {
+				for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assignment : innerList ) {
+					numA++;
+				}
+			}
+			out.write( String.format( "DATAPROPS, %d, %d, %d", numT, numH, numA ) );
+
 			// SegmentsInFrameCountConstraints
 			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 			out.write( "# SegmentsInFrameCountConstraints\n" );
@@ -1583,6 +1603,42 @@ public class GrowthLineTrackingILP {
 			final String[] columns = line.split( "," );
 			if ( columns.length > 1 ) {
 				final String constraintType = columns[ 0 ].trim();
+
+				// DataProperties (to see if this load makes any sense)
+				// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+				if ( constraintType.equals( "DATAPROPS" ) ) {
+					final int readNumT = Integer.parseInt( columns[1].trim() );
+					final int readNumH = Integer.parseInt( columns[ 2 ].trim() );
+					final int readNumA = Integer.parseInt( columns[ 3 ].trim() );
+
+					final int numT = gl.size();
+					int numH = 0;
+					for ( final List< Hypothesis< Component< FloatType, ? >>> innerList : nodes.getAllHypotheses() ) {
+						for ( @SuppressWarnings( "unused" )
+						final Hypothesis< Component< FloatType, ? >> hypothesis : innerList ) {
+							numH++;
+						}
+					}
+					int numA = 0;
+					for ( final List< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > innerList : nodes.getAllAssignments() ) {
+						for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assignment : innerList ) {
+							numA++;
+						}
+					}
+					if ( !( numT == readNumT ) || !( numH == readNumH ) || !( numA == readNumA ) ) {
+						if ( !MotherMachine.HEADLESS ) {
+							JOptionPane.showMessageDialog(
+									MotherMachine.getGui(),
+									"Tracking to be loaded does not fit the opened dataset.",
+									"Error",
+									JOptionPane.ERROR_MESSAGE );
+							return;
+						} else {
+							System.out.println( "Tracking to be loaded does not fit the opened dataset. Abort headless TIMM instance..." );
+							System.exit( 946 );
+						}
+					}
+				}
 
 				// SegmentsInFrameCountConstraints
 				// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

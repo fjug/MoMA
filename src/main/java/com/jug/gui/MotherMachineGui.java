@@ -183,9 +183,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		final MenuBar menuBar = new MenuBar();
 		final Menu menuFile = new Menu( "File" );
-		menuLoad = new MenuItem( "Load tracking for this data..." );
+		menuLoad = new MenuItem( "Load tracking..." );
 		menuLoad.addActionListener( this );
-		menuSave = new MenuItem( "Save tracking for this data..." );
+		menuSave = new MenuItem( "Save tracking..." );
 		menuSave.addActionListener( this );
 		menuFile.add( menuLoad );
 		menuFile.add( menuSave );
@@ -870,7 +870,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			try {
 				ilp.loadState( file );
 			} catch ( final IOException e1 ) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 		}
