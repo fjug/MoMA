@@ -105,7 +105,9 @@ public class GrowthLine {
 		}
 
 		ilp = new GrowthLineTrackingILP( this );
-		ilp.addProgressListener( guiProgressReceiver );
+		if ( guiProgressReceiver != null ) {
+			ilp.addProgressListener( guiProgressReceiver );
+		}
 		ilp.buildILP();
 
 		if ( guiProgressReceiver != null ) {

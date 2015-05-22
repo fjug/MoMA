@@ -17,6 +17,7 @@ import java.awt.MenuItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -133,7 +134,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private JButton btnOptimize;
 	private JButton btnExportHtml;
 	private JButton btnExportData;
-	private JButton btnSaveFG;
+//	private JButton btnSaveFG;
 
 	String itemChannel0BGSubtr = "BG-subtr. Ch.0";
 	String itemChannel0 = "Raw Channel 0";
@@ -273,8 +274,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		btnExportHtml.addActionListener( this );
 		btnExportData = new JButton( "Export Data" );
 		btnExportData.addActionListener( this );
-		btnSaveFG = new JButton( "Save FG" );
-		btnSaveFG.addActionListener( this );
+//		btnSaveFG = new JButton( "Save FG" );
+//		btnSaveFG.addActionListener( this );
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.RIGHT, 5, 0 ) );
 		panelHorizontalHelper.add( btnRedoAllHypotheses );
 		panelHorizontalHelper.add( btnOptimize );
@@ -798,6 +799,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				leftAssignmentViewer.display( null );
 				rightAssignmentViewer.display( null );
 			}
+
+			// - -  i see ? cells  - - - - - -
+			updateNumCellsField();
 		}
 
 		// IF DETAILED DATA VIEW IS ACTIVE
@@ -818,20 +822,29 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		}
 
 		if ( e.getSource().equals( sliderTime ) ) {
-			this.lblCurrentTime.setText( String.format( " t = %4d", sliderTime.getValue() ) );
-			this.model.setCurrentGLF( sliderTime.getValue() );
-			if ( model.getCurrentGL().getIlp() != null ) {
-				final int rhs = model.getCurrentGL().getIlp().getSegmentsInFrameCountConstraintRHS( sliderTime.getValue() );
-				if ( rhs == -1 ) {
-					txtNumCells.setText( "?" );
-				} else {
-					txtNumCells.setText( "" + rhs );
-				}
-			}
+			updateNumCellsField();
 		}
 
 		dataToDisplayChanged();
 		this.repaint();
+	}
+
+	/**
+	 *
+	 */
+	private void updateNumCellsField() {
+		this.lblCurrentTime.setText( String.format( " t = %4d", sliderTime.getValue() ) );
+		this.model.setCurrentGLF( sliderTime.getValue() );
+		if ( model.getCurrentGL().getIlp() != null ) {
+			final int rhs =
+					model.getCurrentGL().getIlp().getSegmentsInFrameCountConstraintRHS(
+							sliderTime.getValue() );
+			if ( rhs == -1 ) {
+				txtNumCells.setText( "?" );
+			} else {
+				txtNumCells.setText( "" + rhs );
+			}
+		}
 	}
 
 	/**
@@ -841,11 +854,25 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	public void actionPerformed( final ActionEvent e ) {
 
 		if ( e.getSource().equals( menuLoad ) ) {
-			JOptionPane.showMessageDialog(
+
+			GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+
+			if ( ilp == null ) {
+				model.getCurrentGL().generateILP( null );
+				ilp = model.getCurrentGL().getIlp();
+			}
+			final File file = OsDependentFileChooser.showLoadFileChooser(
 					this,
-					"Not yet implemented!",
-					"Error",
-					JOptionPane.ERROR_MESSAGE );
+					MotherMachine.STATS_OUTPUT_PATH,
+					"Choose tracking to load...",
+					null );
+			System.out.println( "File to load tracking from: " + file.getAbsolutePath() );
+			try {
+				ilp.loadState( file );
+			} catch ( final IOException e1 ) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		}
 		if ( e.getSource().equals( menuSave ) ) {
 
@@ -879,37 +906,37 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			new ImageJ();
 			ImageJFunctions.show( MotherMachine.instance.getRawChannelImgs().get( 0 ), "raw data (ch.0)" );
 		}
-		if ( e.getSource().equals( btnSaveFG ) ) {
-			final MotherMachineGui self = this;
-			final Thread t = new Thread( new Runnable() {
-
-				@Override
-				public void run() {
-					final JFileChooser fc = new JFileChooser( MotherMachine.DEFAULT_PATH );
-					fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "txt", "TXT" }, "TXT-file" ) );
-
-					if ( fc.showSaveDialog( self ) == JFileChooser.APPROVE_OPTION ) {
-						File file = fc.getSelectedFile();
-						if ( !file.getAbsolutePath().endsWith( ".txt" ) && !file.getAbsolutePath().endsWith( ".TXT" ) ) {
-							file = new File( file.getAbsolutePath() + ".txt" );
-						}
-						MotherMachine.DEFAULT_PATH = file.getParent();
-
-						if ( model.getCurrentGL().getIlp() == null ) {
-							System.out.println( "Generating ILP..." );
-							model.getCurrentGL().generateILP( new DialogProgress( self, "Building tracking model...", ( model.getCurrentGL().size() - 1 ) * 2 ) );
-						} else {
-							System.out.println( "Using existing ILP (possibly containing user-defined ground-truth bits)..." );
-						}
-						System.out.println( "Saving ILP as FactorGraph..." );
-						model.getCurrentGL().getIlp().exportFG( file );
-						System.out.println( "...done!" );
-					}
-
-				}
-			} );
-			t.start();
-		}
+//		if ( e.getSource().equals( btnSaveFG ) ) {
+//			final MotherMachineGui self = this;
+//			final Thread t = new Thread( new Runnable() {
+//
+//				@Override
+//				public void run() {
+//					final JFileChooser fc = new JFileChooser( MotherMachine.DEFAULT_PATH );
+//					fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "txt", "TXT" }, "TXT-file" ) );
+//
+//					if ( fc.showSaveDialog( self ) == JFileChooser.APPROVE_OPTION ) {
+//						File file = fc.getSelectedFile();
+//						if ( !file.getAbsolutePath().endsWith( ".txt" ) && !file.getAbsolutePath().endsWith( ".TXT" ) ) {
+//							file = new File( file.getAbsolutePath() + ".txt" );
+//						}
+//						MotherMachine.DEFAULT_PATH = file.getParent();
+//
+//						if ( model.getCurrentGL().getIlp() == null ) {
+//							System.out.println( "Generating ILP..." );
+//							model.getCurrentGL().generateILP( new DialogProgress( self, "Building tracking model...", ( model.getCurrentGL().size() - 1 ) * 2 ) );
+//						} else {
+//							System.out.println( "Using existing ILP (possibly containing user-defined ground-truth bits)..." );
+//						}
+//						System.out.println( "Saving ILP as FactorGraph..." );
+//						model.getCurrentGL().getIlp().exportFG( file );
+//						System.out.println( "...done!" );
+//					}
+//
+//				}
+//			} );
+//			t.start();
+//		}
 		if ( e.getSource().equals( btnRedoAllHypotheses ) ) {
 
 //			final int choiceAwesome = JOptionPane.showOptionDialog( this, "Do you want to reset to PMFRF segmentations?\n(Otherwise fast CT segments will be built.)", "PMFRF or CT?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null );

@@ -11,8 +11,10 @@ import gurobi.GRBLinExpr;
 import gurobi.GRBModel;
 import gurobi.GRBVar;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -71,8 +73,10 @@ public class GrowthLineTrackingILP {
 	public GRBModel model;
 	private int status = OPTIMIZATION_NEVER_PERFORMED;
 
-	public final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< FloatType, ? > > >, Hypothesis< Component< FloatType, ? > > > nodes = new AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< FloatType, ? > > >, Hypothesis< Component< FloatType, ? > > >();
-	public final HypothesisNeighborhoods< Hypothesis< Component< FloatType, ? > >, AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > edgeSets = new HypothesisNeighborhoods< Hypothesis< Component< FloatType, ? > >, AbstractAssignment< Hypothesis< Component< FloatType, ? > > > >();
+	public final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< FloatType, ? > > >, Hypothesis< Component< FloatType, ? > > > nodes =
+			new AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< FloatType, ? > > >, Hypothesis< Component< FloatType, ? > > >();
+	public final HypothesisNeighborhoods< Hypothesis< Component< FloatType, ? > >, AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > edgeSets =
+			new HypothesisNeighborhoods< Hypothesis< Component< FloatType, ? > >, AbstractAssignment< Hypothesis< Component< FloatType, ? > > > >();
 
 	private int pbcId = 0;
 
@@ -184,112 +188,112 @@ public class GrowthLineTrackingILP {
 	 *
 	 * @throws IOException
 	 */
-	public void exportFG( final File file ) {
-		// Here I collect all the lines I will eventually write into the FG-file...
-		final FactorGraphFileBuilder fgFile = new FactorGraphFileBuilder();
-
-		// FIRST RUN: we export all variables and set varId's for second run...
-		for ( int t = 0; t < nodes.getNumberOfTimeSteps(); t++ ) {
-			// TODO puke!
-			final int regionId = ( t + 1 ) / 2;
-
-			fgFile.addVarComment( "=== VAR-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
-			fgFile.addVarComment( "--- VAR-SECTION :: Assignment-variables ---------------" );
-
-			fgFile.addFktComment( "=== FKT-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
-			fgFile.addFktComment( "--- FKT-SECTION :: Unary (Segmentation) Costs ---------" );
-
-			fgFile.addFactorComment( "=== FAC-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
-			fgFile.addFactorComment( "--- FAC-SECTION :: Unary (Segmentation) Factors -------" );
-
-			final List< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > assmts_t = nodes.getAssignmentsAt( t );
-			for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assmt : assmts_t ) {
-				final int var_id = fgFile.addVar( 2 );
-				assmt.setVarId( var_id );
-
-				float cost = 0.0f;
-				if ( assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ) {
-					fgFile.addVarComment( "- - MAPPING (var: " + var_id + ") - - - - - " );
-					fgFile.addFktComment( "- - MAPPING (var: " + var_id + ") - - - - - " );
-					final MappingAssignment ma = ( MappingAssignment ) assmt;
-					cost = ma.getSourceHypothesis().getCosts() + ma.getDestinationHypothesis().getCosts();
-				} else if ( assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION ) {
-					fgFile.addVarComment( "- - DIVISION (var: " + var_id + ") - - - - - " );
-					fgFile.addFktComment( "- - DIVISION (var: " + var_id + ") - - - - - " );
-					final DivisionAssignment da = ( DivisionAssignment ) assmt;
-					cost = da.getSourceHypothesis().getCosts() + da.getUpperDesinationHypothesis().getCosts() + da.getLowerDesinationHypothesis().getCosts();
-				} else if ( assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_EXIT ) {
-					fgFile.addVarComment( "- - EXIT (var: " + var_id + ") - - - - - " );
-					fgFile.addFktComment( "- - EXIT (var: " + var_id + ") - - - - - " );
-					final ExitAssignment ea = ( ExitAssignment ) assmt;
-					cost = ea.getAssociatedHypothesis().getCosts();
-				}
-
-				final int fkt_id = fgFile.addFkt( String.format( "table 1 2 0 %f", cost ) );
-				fgFile.addFactor( fkt_id, var_id, regionId );
-			}
-		}
-		// SECOND RUN: export all the rest (now that we have the right varId's).
-		for ( int t = 0; t < nodes.getNumberOfTimeSteps(); t++ ) {
-			// TODO puke!
-			final int regionId = ( t + 1 ) / 2;
-
-			fgFile.addFktComment( "=== FKT-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
-			fgFile.addFktComment( "--- FKT-SECTION :: Assignment Constraints (HUP-stuff for EXITs) -------------" );
-
-			fgFile.addFactorComment( "=== FAC-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
-			fgFile.addFactorComment( "--- FAC-SECTION :: Assignment Factors ----------------" );
-
-			final List< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > assmts_t = nodes.getAssignmentsAt( t );
-			for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assmt : assmts_t ) {
-				final List< Integer > regionIds = new ArrayList< Integer >();
-				regionIds.add( new Integer( regionId ) );
-				assmt.addFunctionsAndFactors( fgFile, regionIds );
-			}
-
-			// NOTE: last time-point does not get Path-Blocking or Explanation-Continuity-Constraints!
-			if ( t == nodes.getNumberOfTimeSteps() - 1 ) continue;
-
-			fgFile.addFktComment( "--- FKT-SECTION :: Path-Blocking Constraints ------------" );
-			fgFile.addFactorComment( "--- FAC-SECTION :: Path-Blocking Constraints ------------" );
-
-			final ComponentForest< ? > ct = gl.get( t ).getComponentTree();
-			recursivelyAddPathBlockingConstraints( ct, t, fgFile );
-
-			if ( t > 0 && t < nodes.getNumberOfTimeSteps() ) {
-				fgFile.addFktComment( "--- FKT-SECTION :: Explanation-Continuity Constraints ------" );
-				fgFile.addFactorComment( "--- FAC-SECTION :: Explanation-Continuity Constraints ------" );
-
-				for ( final Hypothesis< Component< FloatType, ? >> hyp : nodes.getHypothesesAt( t ) ) {
-					final List< Integer > varIds = new ArrayList< Integer >();
-					final List< Integer > coeffs = new ArrayList< Integer >();
-
-					if ( edgeSets.getLeftNeighborhood( hyp ) != null ) {
-						for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> a_j : edgeSets.getLeftNeighborhood( hyp ) ) {
-							//expr.addTerm( 1.0, a_j.getGRBVar() );
-							coeffs.add( new Integer( 1 ) );
-							varIds.add( new Integer( a_j.getVarIdx() ) );
-						}
-					}
-					if ( edgeSets.getRightNeighborhood( hyp ) != null ) {
-						for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> a_j : edgeSets.getRightNeighborhood( hyp ) ) {
-							//expr.addTerm( -1.0, a_j.getGRBVar() );
-							coeffs.add( new Integer( -1 ) );
-							varIds.add( new Integer( a_j.getVarIdx() ) );
-						}
-					}
-
-					// add the constraint for this hypothesis
-					//model.addConstr( expr, GRB.EQUAL, 0.0, "ecc_" + eccId );
-					final int fkt_id = fgFile.addConstraintFkt( coeffs, "==", 0 );
-					fgFile.addFactor( fkt_id, varIds, regionId );
-				}
-			}
-		}
-
-		// WRITE FILE
-		fgFile.write( file );
-	}
+//	public void exportFG( final File file ) {
+//		// Here I collect all the lines I will eventually write into the FG-file...
+//		final FactorGraphFileBuilder fgFile = new FactorGraphFileBuilder();
+//
+//		// FIRST RUN: we export all variables and set varId's for second run...
+//		for ( int t = 0; t < nodes.getNumberOfTimeSteps(); t++ ) {
+//			// TODO puke!
+//			final int regionId = ( t + 1 ) / 2;
+//
+//			fgFile.addVarComment( "=== VAR-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
+//			fgFile.addVarComment( "--- VAR-SECTION :: Assignment-variables ---------------" );
+//
+//			fgFile.addFktComment( "=== FKT-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
+//			fgFile.addFktComment( "--- FKT-SECTION :: Unary (Segmentation) Costs ---------" );
+//
+//			fgFile.addFactorComment( "=== FAC-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
+//			fgFile.addFactorComment( "--- FAC-SECTION :: Unary (Segmentation) Factors -------" );
+//
+//			final List< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > assmts_t = nodes.getAssignmentsAt( t );
+//			for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assmt : assmts_t ) {
+//				final int var_id = fgFile.addVar( 2 );
+//				assmt.setVarId( var_id );
+//
+//				float cost = 0.0f;
+//				if ( assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ) {
+//					fgFile.addVarComment( "- - MAPPING (var: " + var_id + ") - - - - - " );
+//					fgFile.addFktComment( "- - MAPPING (var: " + var_id + ") - - - - - " );
+//					final MappingAssignment ma = ( MappingAssignment ) assmt;
+//					cost = ma.getSourceHypothesis().getCosts() + ma.getDestinationHypothesis().getCosts();
+//				} else if ( assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION ) {
+//					fgFile.addVarComment( "- - DIVISION (var: " + var_id + ") - - - - - " );
+//					fgFile.addFktComment( "- - DIVISION (var: " + var_id + ") - - - - - " );
+//					final DivisionAssignment da = ( DivisionAssignment ) assmt;
+//					cost = da.getSourceHypothesis().getCosts() + da.getUpperDesinationHypothesis().getCosts() + da.getLowerDesinationHypothesis().getCosts();
+//				} else if ( assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_EXIT ) {
+//					fgFile.addVarComment( "- - EXIT (var: " + var_id + ") - - - - - " );
+//					fgFile.addFktComment( "- - EXIT (var: " + var_id + ") - - - - - " );
+//					final ExitAssignment ea = ( ExitAssignment ) assmt;
+//					cost = ea.getAssociatedHypothesis().getCosts();
+//				}
+//
+//				final int fkt_id = fgFile.addFkt( String.format( "table 1 2 0 %f", cost ) );
+//				fgFile.addFactor( fkt_id, var_id, regionId );
+//			}
+//		}
+//		// SECOND RUN: export all the rest (now that we have the right varId's).
+//		for ( int t = 0; t < nodes.getNumberOfTimeSteps(); t++ ) {
+//			// TODO puke!
+//			final int regionId = ( t + 1 ) / 2;
+//
+//			fgFile.addFktComment( "=== FKT-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
+//			fgFile.addFktComment( "--- FKT-SECTION :: Assignment Constraints (HUP-stuff for EXITs) -------------" );
+//
+//			fgFile.addFactorComment( "=== FAC-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
+//			fgFile.addFactorComment( "--- FAC-SECTION :: Assignment Factors ----------------" );
+//
+//			final List< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > assmts_t = nodes.getAssignmentsAt( t );
+//			for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assmt : assmts_t ) {
+//				final List< Integer > regionIds = new ArrayList< Integer >();
+//				regionIds.add( new Integer( regionId ) );
+//				assmt.addFunctionsAndFactors( fgFile, regionIds );
+//			}
+//
+//			// NOTE: last time-point does not get Path-Blocking or Explanation-Continuity-Constraints!
+//			if ( t == nodes.getNumberOfTimeSteps() - 1 ) continue;
+//
+//			fgFile.addFktComment( "--- FKT-SECTION :: Path-Blocking Constraints ------------" );
+//			fgFile.addFactorComment( "--- FAC-SECTION :: Path-Blocking Constraints ------------" );
+//
+//			final ComponentForest< ? > ct = gl.get( t ).getComponentTree();
+//			recursivelyAddPathBlockingConstraints( ct, t, fgFile );
+//
+//			if ( t > 0 && t < nodes.getNumberOfTimeSteps() ) {
+//				fgFile.addFktComment( "--- FKT-SECTION :: Explanation-Continuity Constraints ------" );
+//				fgFile.addFactorComment( "--- FAC-SECTION :: Explanation-Continuity Constraints ------" );
+//
+//				for ( final Hypothesis< Component< FloatType, ? >> hyp : nodes.getHypothesesAt( t ) ) {
+//					final List< Integer > varIds = new ArrayList< Integer >();
+//					final List< Integer > coeffs = new ArrayList< Integer >();
+//
+//					if ( edgeSets.getLeftNeighborhood( hyp ) != null ) {
+//						for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> a_j : edgeSets.getLeftNeighborhood( hyp ) ) {
+//							//expr.addTerm( 1.0, a_j.getGRBVar() );
+//							coeffs.add( new Integer( 1 ) );
+//							varIds.add( new Integer( a_j.getVarIdx() ) );
+//						}
+//					}
+//					if ( edgeSets.getRightNeighborhood( hyp ) != null ) {
+//						for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> a_j : edgeSets.getRightNeighborhood( hyp ) ) {
+//							//expr.addTerm( -1.0, a_j.getGRBVar() );
+//							coeffs.add( new Integer( -1 ) );
+//							varIds.add( new Integer( a_j.getVarIdx() ) );
+//						}
+//					}
+//
+//					// add the constraint for this hypothesis
+//					//model.addConstr( expr, GRB.EQUAL, 0.0, "ecc_" + eccId );
+//					final int fkt_id = fgFile.addConstraintFkt( coeffs, "==", 0 );
+//					fgFile.addFactor( fkt_id, varIds, regionId );
+//				}
+//			}
+//		}
+//
+//		// WRITE FILE
+//		fgFile.write( file );
+//	}
 
 	private < C extends Component< ?, C > > void recursivelyAddPathBlockingConstraints( final ComponentForest< C > ct, final int t, final FactorGraphFileBuilder fgFile ) {
 		for ( final C ctRoot : ct.roots() ) {
@@ -744,7 +748,7 @@ public class GrowthLineTrackingILP {
 					for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> a : edgeSets.getRightNeighborhood( hypothesis ) ) {
 						// exprR.addTerm( 1.0, a.getGRBVar() );
 						coeffs.add( new Integer( 1 ) );
-						varIds.add( new Integer( a.getVarIdx() ) );
+//						varIds.add( new Integer( a.getVarIdx() ) );
 					}
 				}
 				runnerNode = runnerNode.getParent();
@@ -752,7 +756,7 @@ public class GrowthLineTrackingILP {
 			// model.addConstr( exprR, GRB.LESS_EQUAL, 1.0, name );
 			final int fkt_id = fgFile.addConstraintFkt( coeffs, "<=", 1 );
 			// TODO puke!
-			fgFile.addFactor( fkt_id, varIds, ( t + 1 ) / 2 );
+//			fgFile.addFactor( fkt_id, varIds, ( t + 1 ) / 2 );
 		} else {
 			// if ctNode is a inner node -> recursion
 			for ( final C ctChild : ctNode.getChildren() ) {
@@ -1507,10 +1511,154 @@ public class GrowthLineTrackingILP {
 			out = new BufferedWriter( new FileWriter( file ) );
 			out.write( "# " + MotherMachine.VERSION_STRING );
 			out.newLine();
+			out.newLine();
+
+			// SegmentsInFrameCountConstraints
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			out.write( "# SegmentsInFrameCountConstraints\n" );
+			for ( int t = 0; t < gl.size(); t++ ) {
+				final int value = getSegmentsInFrameCountConstraintRHS( t );
+				if ( value >= 0 ) {
+					out.write( String.format( "\tSIFCC, %d, %d\n", t, value ) );
+				}
+			}
+
+			// Include/Exclude Segment Constraints
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			out.write( "# SegmentSelectionConstraints (SSC)\n" );
+			for ( int t = 0; t < gl.size(); t++ ) {
+				final List< Hypothesis< Component< FloatType, ? >>> hyps =
+						nodes.getHypothesesAt( t );
+				for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
+					if ( hyp.getSegmentSpecificConstraint() != null ) {
+						double rhs;
+						try {
+							rhs = hyp.getSegmentSpecificConstraint().get( GRB.DoubleAttr.RHS );
+							out.write( String.format( "\tSSC, %d, %d, %s\n", t, hyp.getId(), rhs ) );
+						} catch ( final GRBException e ) {
+							out.write( String.format( "\tSSC, %d, %d, GUROBI_ERROR\n", t, hyp.getId() ) );
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+
+			// Include/Exclude Assignment Constraints
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			out.write( "# AssignmentSelectionConstraints (ASC)\n" );
+			for ( int t = 0; t < gl.size(); t++ ) {
+				final List< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > assmnts =
+						nodes.getAssignmentsAt( t );
+				for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assmnt : assmnts ) {
+					if ( assmnt.getGroundTroothConstraint() != null ) {
+						double rhs;
+						try {
+							rhs = assmnt.getGroundTroothConstraint().get( GRB.DoubleAttr.RHS );
+							out.write( String.format( "\tASC, %d, %d, %s\n", t, assmnt.getId(), rhs ) );
+						} catch ( final GRBException e ) {
+							out.write( String.format("\tASC, %d, %d, GUROBI_ERROR\n", t, assmnt.getId() ) );
+							e.printStackTrace();
+						}
+					}
+				}
+			}
 
 			out.close();
 		} catch ( final IOException e ) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * @param file
+	 * @throws IOException
+	 */
+	public void loadState( final File file ) throws IOException {
+		final BufferedReader reader = new BufferedReader( new FileReader( file ) );
+		String line;
+		while ( ( line = reader.readLine() ) != null ) {
+			// ignore comments and empty lines
+			if ( line.trim().startsWith( "#" ) || line.trim().length() == 0 ) continue;
+
+			final String[] columns = line.split( "," );
+			if ( columns.length > 1 ) {
+				final String constraintType = columns[ 0 ].trim();
+
+				// SegmentsInFrameCountConstraints
+				// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+				if ( constraintType.equals( "SIFCC" ) ) {
+					try {
+						final int t = Integer.parseInt( columns[ 1 ].trim() );
+						final int numCells = Integer.parseInt( columns[ 2 ].trim() );
+						try {
+							System.out.println( String.format( "SIFCC %d %d", t, numCells ) );
+							this.addSegmentsInFrameCountConstraint( t, numCells );
+						} catch ( final GRBException e ) {
+							e.printStackTrace();
+						}
+					} catch ( final NumberFormatException e ) {
+						e.printStackTrace();
+					}
+				}
+				// SegmentationConstraints
+				// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+				if ( constraintType.equals( "SSC" ) ) {
+					try {
+						final int t = Integer.parseInt( columns[ 1 ].trim() );
+						final int id = Integer.parseInt( columns[ 2 ].trim() );
+						final double rhs = Double.parseDouble( columns[ 3 ].trim() );
+						try {
+							System.out.println( String.format( "SSC %d %d %f", t, id, rhs ) );
+							final List< Hypothesis< Component< FloatType, ? >>> hyps =
+									nodes.getHypothesesAt( t );
+							for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
+								if ( hyp.getId() == id ) {
+									if ( 1 == ( int ) rhs ) {
+										addSegmentInSolutionConstraint( hyp, null );
+									} else {
+										addSegmentNotInSolutionConstraint( hyp );
+									}
+								}
+							}
+						} catch ( final GRBException e ) {
+							e.printStackTrace();
+						}
+					} catch ( final NumberFormatException e ) {
+						e.printStackTrace();
+					}
+				}
+				// AssignmentConstraints
+				// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+				if ( constraintType.equals( "ASC" ) ) {
+					try {
+						final int t = Integer.parseInt( columns[ 1 ].trim() );
+						final int id = Integer.parseInt( columns[ 2 ].trim() );
+						final double rhs = Double.parseDouble( columns[ 3 ].trim() );
+						System.out.println( String.format( "ASC %d %d %f", t, id, rhs ) );
+						final List< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > assmnts =
+								nodes.getAssignmentsAt( t );
+						for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assmnt : assmnts ) {
+							if ( assmnt.getId() == id ) {
+								if ( 1 == ( int ) rhs ) {
+									assmnt.setGroundTruth( true );
+								} else {
+									assmnt.setGroundUntruth( true );
+								}
+							}
+						}
+					} catch ( final NumberFormatException e ) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+
+		try {
+			model.update();
+			run();
+		} catch ( final GRBException e ) {
+			e.printStackTrace();
+		}
+		MotherMachine.getGui().dataToDisplayChanged();
 	}
 }

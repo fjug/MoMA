@@ -16,17 +16,22 @@ import java.util.List;
  * The main purpose of such a class is to store the value of the corresponding
  * Gurobi assignment variable and the ability to add assignment specific
  * constraints to the ILP (model).
- * 
+ *
  * @author jug
  */
+@SuppressWarnings( "restriction" )
 public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
+
+	private static int nextId = 0;
 
 	private int type;
 
 	protected GrowthLineTrackingILP ilp;
 
-	private int exportVarIdx = -1;
+//	private int exportVarIdx = -1;
 	private GRBVar ilpVar;
+
+	private final int id;
 
 	private boolean isGroundTruth = false;
 	private boolean isGroundUntruth = false;
@@ -34,14 +39,19 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 
 	/**
 	 * Creates an assignment...
-	 * 
+	 *
 	 * @param type
 	 * @param cost
 	 */
 	public AbstractAssignment( final int type, final GRBVar ilpVariable, final GrowthLineTrackingILP ilp ) {
+		id = nextId++;
 		this.setType( type );
 		setGRBVar( ilpVariable );
 		setGrowthLineTrackingILP( ilp );
+	}
+
+	public int getId() {
+		return id;
 	}
 
 	/**
@@ -59,20 +69,20 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 		this.type = type;
 	}
 
-	/**
-	 * This function is for example used when exporting a FactorGraph
-	 * that describes the entire optimization problem at hand.
-	 * 
-	 * @return a variable index that is unique for the indicator
-	 *         variable used for this assignment.
-	 * @throws Exception
-	 */
-	public int getVarIdx() {
-		if ( exportVarIdx == -1 ) {
-			System.out.println( "AAAAACHTUNG!!! Variable index not initialized before export was attempted!" );
-		}
-		return exportVarIdx;
-	}
+//	/**
+//	 * This function is for example used when exporting a FactorGraph
+//	 * that describes the entire optimization problem at hand.
+//	 *
+//	 * @return a variable index that is unique for the indicator
+//	 *         variable used for this assignment.
+//	 * @throws Exception
+//	 */
+//	public int getVarIdx() {
+//		if ( exportVarIdx == -1 ) {
+//			System.out.println( "AAAAACHTUNG!!! Variable index not initialized before export was attempted!" );
+//		}
+//		return exportVarIdx;
+//	}
 
 	/**
 	 * @return the ilpVar
@@ -89,16 +99,16 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 		this.ilpVar = ilpVar;
 	}
 
-	/**
-	 * One can set a variable id.
-	 * This is used for exporting purposes like e.g. by
-	 * <code>FactorGraphFileBuilder</code>.
-	 * 
-	 * @param varId
-	 */
-	public void setVarId( final int varId ) {
-		this.exportVarIdx = varId;
-	}
+//	/**
+//	 * One can set a variable id.
+//	 * This is used for exporting purposes like e.g. by
+//	 * <code>FactorGraphFileBuilder</code>.
+//	 *
+//	 * @param varId
+//	 */
+//	public void setVarId( final int varId ) {
+//		this.exportVarIdx = varId;
+//	}
 
 	/**
 	 * @param model
@@ -136,7 +146,7 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	/**
 	 * Abstract method that will, once implemented, add a set of assignment
 	 * related constraints to the ILP (model) later to be solved by Gurobi.
-	 * 
+	 *
 	 * @throws GRBException
 	 */
 	public abstract void addConstraintsToLP() throws GRBException;
@@ -169,7 +179,6 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 		this.isGroundTruth = groundTruth;
 		this.isGroundUntruth = false;
 		addOrRemoveGroundTroothConstraint( groundTruth );
-		reoptimize();
 	}
 
 	/**
@@ -179,13 +188,12 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 		this.isGroundTruth = false;
 		this.isGroundUntruth = groundUntruth;
 		addOrRemoveGroundTroothConstraint( groundUntruth );
-		reoptimize();
 	}
 
 	/**
-	 * @throws GRBException
+	 *
 	 */
-	private void reoptimize() {
+	public void reoptimize() {
 		try {
 			ilp.model.update();
 			System.out.print( "Running ILP with new ground-(un)truth knowledge in new thread!" );
@@ -214,10 +222,21 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 				exprGroundTruth.addTerm( 1.0, getGRBVar() );
 				constrGroundTruth = ilp.model.addConstr( exprGroundTruth, GRB.EQUAL, value, "GroundTruthConstraint_" + getGRBVar().toString() );
 			} else {
-				ilp.model.remove( constrGroundTruth );
+				if ( constrGroundTruth != null ) {
+					ilp.model.remove( constrGroundTruth );
+					constrGroundTruth = null;
+				}
 			}
 		} catch ( final GRBException e ) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 *
+	 * @return null if not set, otherwise the GRBConstr.
+	 */
+	public GRBConstr getGroundTroothConstraint() {
+		return constrGroundTruth;
 	}
 }

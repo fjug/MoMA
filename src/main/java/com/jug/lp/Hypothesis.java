@@ -4,19 +4,24 @@
 package com.jug.lp;
 
 import gurobi.GRBConstr;
+import net.imglib2.algorithm.componenttree.Component;
+import net.imglib2.type.numeric.real.FloatType;
 
 /**
  * This class is used to wrap away whatever object that represents one of the
  * segmentation hypothesis. See {@link AbstractAssignment} for a place where
  * this is
  * used.
- * 
+ *
  * @author jug
  */
-public class Hypothesis< T > {
+public class Hypothesis< T extends Component< FloatType, ? > > {
+
+	private static int nextId = 0;
 
 	private final T wrappedHypothesis;
 	private final float costs;
+	private final int id;
 
 	/**
 	 * Used to store a 'segment in solution constraint' after it was added to
@@ -29,6 +34,11 @@ public class Hypothesis< T > {
 		// setSegmentHypothesis( elementToWrap );
 		this.wrappedHypothesis = elementToWrap;
 		this.costs = costs;
+		this.id = nextId++;
+	}
+
+	public int getId() {
+		return id;
 	}
 
 	/**
@@ -67,7 +77,7 @@ public class Hypothesis< T > {
 	/**
 	 * Used to store a 'segment in solution constraint' or a 'segment not in
 	 * solution constraint' after it was added to the ILP.
-	 * 
+	 *
 	 * @param constr
 	 *            the installed constraint.
 	 */
