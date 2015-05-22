@@ -285,7 +285,7 @@ public class MotherMachine {
 
 	/**
 	 * PROJECT MAIN
-	 * 
+	 *
 	 * @param args
 	 */
 	public static void main( final String[] args ) {
@@ -396,7 +396,7 @@ public class MotherMachine {
 			fileUserProps = new File( cmd.getOptionValue( "p" ) );
 		}
 
-		int minChannelIdx = 0;
+		int minChannelIdx = 1;
 		if ( cmd.hasOption( "cmin" ) ) {
 			minChannelIdx = Integer.parseInt( cmd.getOptionValue( "cmin" ) );
 		}
@@ -441,7 +441,7 @@ public class MotherMachine {
 			System.out.println( "\n>>>>> Java library path: " + jlp + "\n" );
 			System.exit( 99 );
 		}
-		// ******* END CHECK GUROBI **** END CHECK GUROBI **** END CHECK GUROBI ******** 
+		// ******* END CHECK GUROBI **** END CHECK GUROBI **** END CHECK GUROBI ********
 
 		final MotherMachine main = new MotherMachine();
 		if ( !HEADLESS ) {
@@ -869,7 +869,7 @@ public class MotherMachine {
 	/**
 	 * Initializes the MotherMachine main app. This method contains platform
 	 * specific code like setting icons, etc.
-	 * 
+	 *
 	 * @param guiFrame
 	 *            the JFrame containing the MotherMachine.
 	 */
@@ -895,7 +895,7 @@ public class MotherMachine {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param guiFrame
 	 *            parent frame
 	 * @param datapath
@@ -923,7 +923,7 @@ public class MotherMachine {
 			file = showFolderChooser( guiFrame, parentFolder );
 		}
 
-		// CLASSIFIER TO BE LOADED --- CLASSIFIER TO BE LOADED --- CLASSIFIER TO BE LOADED 
+		// CLASSIFIER TO BE LOADED --- CLASSIFIER TO BE LOADED --- CLASSIFIER TO BE LOADED
 
 		final String message = "Should this classifier be used:\n" + SEGMENTATION_CLASSIFIER_MODEL_FILE + "\n\nIn case you want to choose a different one, please select 'No'...";
 		final String title = "MotherMachine Classifier Selection";
@@ -959,7 +959,7 @@ public class MotherMachine {
 	/**
 	 * Shows a JFileChooser set up to accept the selection of folders. If
 	 * 'cancel' is pressed this method terminates the MotherMachine app.
-	 * 
+	 *
 	 * @param guiFrame
 	 *            parent frame
 	 * @param path
@@ -1016,7 +1016,7 @@ public class MotherMachine {
 	/**
 	 * Loads the file 'mm.properties' and returns an instance of
 	 * {@link Properties} containing the key-value pairs found in that file.
-	 * 
+	 *
 	 * @return instance of {@link Properties} containing the key-value pairs
 	 *         found in that file.
 	 */
@@ -1071,7 +1071,7 @@ public class MotherMachine {
 	/**
 	 * Saves a file 'mm.properties' in the current folder. This file contains
 	 * all MotherMachine specific properties as key-value pairs.
-	 * 
+	 *
 	 * @param props
 	 *            an instance of {@link Properties} containing all key-value
 	 *            pairs used by the MotherMachine.
@@ -1129,10 +1129,10 @@ public class MotherMachine {
 	 * extracts growth lines, subtracts background, builds segmentation
 	 * hypothesis and a Markov random field for tracking. Finally it even solves
 	 * this model using Gurobi and reads out the MAP.
-	 * 
+	 *
 	 * Note: multi-channel assumption is that filename encodes channel by
 	 * containing a substring of format "_c%02d".
-	 * 
+	 *
 	 * @param path
 	 *            the folder to be processed.
 	 * @param minTime
@@ -1150,7 +1150,7 @@ public class MotherMachine {
 		for ( int cIdx = minChannelIdx; cIdx < minChannelIdx + numChannels; cIdx++ ) {
 
 			// load tiffs from folder
-			final String filter = String.format( "_c%02d", cIdx );
+			final String filter = String.format( "_c%04d", cIdx );
 			System.out.println( String.format( "Loading tiff sequence for channel, identified by '%s', from '%s'...", filter, path ) );
 			try {
 				if ( cIdx == minChannelIdx ) { // TODO load unnormalized!!! Normalize later...
@@ -1234,7 +1234,7 @@ public class MotherMachine {
 	/**
 	 * Simple but effective method to subtract uneven illumination from the
 	 * growth-line data.
-	 * 
+	 *
 	 * @param img
 	 *            DoubleType image stack.
 	 */
@@ -1287,7 +1287,7 @@ public class MotherMachine {
 
 	/**
 	 * Adds all intensity values of row i in view to rowSums[i].
-	 * 
+	 *
 	 * @param view
 	 * @param rowSums
 	 */
@@ -1304,7 +1304,7 @@ public class MotherMachine {
 
 	/**
 	 * Removes the value values[i] from all columns in row i of the given view.
-	 * 
+	 *
 	 * @param view
 	 * @param values
 	 */
@@ -1323,7 +1323,7 @@ public class MotherMachine {
 	 * estimates. Those estimates are obtained by convolving the image with a
 	 * Gaussian (parameterized by SIGMA_GL_DETECTION_*) and looking for local
 	 * maxima in that image.
-	 * 
+	 *
 	 * This function operates on 'imgTemp' and sets 'glCenterPoints' as well as
 	 * 'growthLines'.
 	 */
