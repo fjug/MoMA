@@ -153,12 +153,15 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private MenuItem menuShowImgRaw;
 	private MenuItem menuShowImgTemp;
 
+	private MenuItem menuLoad;
+	private MenuItem menuSave;
+
 	// -------------------------------------------------------------------------------------
 	// construction & gui creation
 	// -------------------------------------------------------------------------------------
 	/**
 	 * Construction
-	 * 
+	 *
 	 * @param mmm
 	 *            the MotherMachineModel to show
 	 */
@@ -177,6 +180,15 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private void buildGui() {
 
 		final MenuBar menuBar = new MenuBar();
+		final Menu menuFile = new Menu( "File" );
+		menuLoad = new MenuItem( "Load tracking for this data..." );
+		menuLoad.addActionListener( this );
+		menuSave = new MenuItem( "Load tracking for this data..." );
+		menuSave.addActionListener( this );
+		menuFile.add( menuLoad );
+		menuFile.add( menuSave );
+		menuBar.add( menuFile );
+
 		final Menu menuView = new Menu( "View" );
 		menuViewShowConsole = new MenuItem( "Show/hide Console" );
 		menuViewShowConsole.addActionListener( this );
@@ -814,6 +826,33 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	@Override
 	public void actionPerformed( final ActionEvent e ) {
 
+		if ( e.getSource().equals( menuLoad ) ) {
+			JOptionPane.showMessageDialog(
+					this,
+					"Not yet implemented!",
+					"Error",
+					JOptionPane.ERROR_MESSAGE );
+		}
+		if ( e.getSource().equals( menuSave ) ) {
+
+			final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+
+			if ( ilp != null ) { // && ilp.getStatus() != GrowthLineTrackingILP.OPTIMIZATION_NEVER_PERFORMED
+				final File file = OsDependentFileChooser.showSaveFileChooser(
+						this,
+						MotherMachine.STATS_OUTPUT_PATH,
+						"Save current tracking to...",
+						null );
+				System.out.println( "File to save tracking to: " + file.getAbsolutePath() );
+				ilp.saveState( file );
+			} else {
+				JOptionPane.showMessageDialog(
+						this,
+						"Loaded data must be optimized before tracking can be saved!",
+						"Error",
+						JOptionPane.ERROR_MESSAGE );
+			}
+		}
 		if ( e.getSource().equals( menuViewShowConsole ) ) {
 			MotherMachine.instance.showConsoleWindow( !MotherMachine.instance.isConsoleVisible() );
 			MotherMachine.getGuiFrame().setVisible( true );
@@ -939,7 +978,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void exportDataFiles() {
 		if ( model.getCurrentGL().getIlp() == null ) {
@@ -952,7 +991,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void exportHtmlOverview() {
 		final MotherMachineGui self = this;
@@ -1108,10 +1147,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	/**
 	 * Exports current tracking solution as individual PNG images in the given
 	 * folder.
-	 * 
+	 *
 	 * @param endFrame
 	 * @param startFrame
-	 * 
+	 *
 	 * @param folder
 	 *            path to folder in which to store PNGs.
 	 */

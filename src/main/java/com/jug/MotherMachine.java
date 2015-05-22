@@ -191,6 +191,11 @@ public class MotherMachine {
 	 */
 	public static final boolean DISABLE_EXIT_CONSTRAINTS = false;
 
+	/**
+	 * Identifier of current version
+	 */
+	public static final String VERSION_STRING = "TIMM_0.9beta";
+
 	// - - - - - - - - - - - - - -
 	// GUI-WINDOW RELATED STATICS
 	// - - - - - - - - - - - - - -

@@ -11,7 +11,9 @@ import gurobi.GRBLinExpr;
 import gurobi.GRBModel;
 import gurobi.GRBVar;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -178,7 +180,7 @@ public class GrowthLineTrackingILP {
 	/**
 	 * Writes the FactorGraph corresponding to the optimization problem of the
 	 * given growth-line into a file.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	public void exportFG( final File file ) {
@@ -316,7 +318,7 @@ public class GrowthLineTrackingILP {
 	/**
 	 * Adds all hypothesis given by the nodes in the component tree to
 	 * <code>nodes</code>.
-	 * 
+	 *
 	 * @param ctNode
 	 *            a node in a <code>ComponentTree</code>.
 	 * @param t
@@ -365,7 +367,7 @@ public class GrowthLineTrackingILP {
 	 * available segmentation-hypothesis, and enumerates all potentially
 	 * interesting assignments using the <code>addXXXAsignment(...)</code>
 	 * methods.
-	 * 
+	 *
 	 * @throws GRBException
 	 */
 	private void enumerateAndAddAssignments() throws GRBException {
@@ -390,7 +392,7 @@ public class GrowthLineTrackingILP {
 	 * assigned by the solver iff all active segmentation hypotheses above one
 	 * that has an active exit-assignment are also assigned with an
 	 * exit-assignment.
-	 * 
+	 *
 	 * @param t
 	 *            the time-point.
 	 * @param hyps
@@ -416,7 +418,7 @@ public class GrowthLineTrackingILP {
 
 	/**
 	 * Add a mapping-assignment to a bunch of segmentation hypotheses.
-	 * 
+	 *
 	 * @param t
 	 *            the time-point from which the <code>curHyps</code> originate.
 	 * @param curHyps
@@ -469,7 +471,7 @@ public class GrowthLineTrackingILP {
 	/**
 	 * Computes the compatibility-mapping-costs between the two given
 	 * hypothesis.
-	 * 
+	 *
 	 * @param from
 	 *            the segmentation hypothesis from which the mapping originates.
 	 * @param to
@@ -506,8 +508,8 @@ public class GrowthLineTrackingILP {
 
 		// Border case bullshit
 		// if the target cell touches the upper or lower border (then don't count uneven and shrinking)
-		// (It is not super obvious why this should be true for bottom ones... some data has shitty 
-		// contrast at bottom, hence we trick this condition in here not to loose the mother -- which would 
+		// (It is not super obvious why this should be true for bottom ones... some data has shitty
+		// contrast at bottom, hence we trick this condition in here not to loose the mother -- which would
 		// mean to loose all future tracks!!!)
 		if ( intervalTo.getA().intValue() == 0 || intervalTo.getB().intValue() + 1 >= glLength ) {
 			cost = costDeltaH + costDeltaV;
@@ -521,7 +523,7 @@ public class GrowthLineTrackingILP {
 	 * Add a division-assignment to a bunch of segmentation hypotheses. Note
 	 * that this function also looks for suitable pairs of hypothesis in
 	 * nxtHyps, since division-assignments naturally need two right-neighbors.
-	 * 
+	 *
 	 * @param t
 	 *            the time-point from which the <code>curHyps</code> originate.
 	 * @param curHyps
@@ -576,7 +578,7 @@ public class GrowthLineTrackingILP {
 	/**
 	 * Computes the compatibility-mapping-costs between the two given
 	 * hypothesis.
-	 * 
+	 *
 	 * @param from
 	 *            the segmentation hypothesis from which the mapping originates.
 	 * @param to
@@ -646,9 +648,9 @@ public class GrowthLineTrackingILP {
 	 * Those path-blocking constraints ensure, that only 0 or 1 of the
 	 * segmentation hypothesis along such a path can be chosen during the convex
 	 * optimization.
-	 * 
+	 *
 	 * @throws GRBException
-	 * 
+	 *
 	 */
 	public void addPathBlockingConstraint() throws GRBException {
 		// For each time-point
@@ -673,7 +675,7 @@ public class GrowthLineTrackingILP {
 	 * Those path-blocking constraints ensure, that only 0 or 1 of the
 	 * segmentation hypothesis along such a path can be chosen during the convex
 	 * optimization.
-	 * 
+	 *
 	 * @param ctRoot
 	 * @param pbcId
 	 * @param t
@@ -713,7 +715,7 @@ public class GrowthLineTrackingILP {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param ctNode
 	 * @param t
 	 * @param functions
@@ -862,7 +864,7 @@ public class GrowthLineTrackingILP {
 	 * conflicting component-tree-nodes.
 	 * Calling this function makes only sense if the <code>run</code>-method was
 	 * called and the convex optimizer could find a optimal feasible solution.
-	 * 
+	 *
 	 * @param t
 	 *            the time-point at which to look for the optimal segmentation.
 	 * @return a list of <code>Hypothesis</code> containting
@@ -886,7 +888,7 @@ public class GrowthLineTrackingILP {
 	 * the gap-separation function of the corresponding GLF.
 	 * Calling this function makes only sense if the <code>run</code>-method was
 	 * called and the convex optimizer could find a optimal feasible solution.
-	 * 
+	 *
 	 * @param t
 	 *            the time-point at which to look for the optimal segmentation.
 	 * @param gapSepYPos
@@ -910,7 +912,7 @@ public class GrowthLineTrackingILP {
 	/**
 	 * Returns all active segmentations at time t that conflict with the given
 	 * hypothesis.
-	 * 
+	 *
 	 * @param t
 	 *            the time-point at which to look for the optimal segmentation.
 	 * @param hyp
@@ -929,7 +931,7 @@ public class GrowthLineTrackingILP {
 		final List< Hypothesis< Component< FloatType, ? >>> hyps = getOptimalHypotheses( t );
 		for ( final Hypothesis< Component< FloatType, ? >> h : hyps ) {
 			final Pair< Integer, Integer > ctnLimits = ComponentTreeUtils.getTreeNodeInterval( h.getWrappedHypothesis() );
-			if ( ( ctnLimits.getA().intValue() <= startpos && ctnLimits.getB().intValue() >= startpos ) || // overlap at top 
+			if ( ( ctnLimits.getA().intValue() <= startpos && ctnLimits.getB().intValue() >= startpos ) || // overlap at top
 			( ctnLimits.getA().intValue() <= endpos && ctnLimits.getB().intValue() >= endpos ) ||    // overlap at bottom
 			( ctnLimits.getA().intValue() >= startpos && ctnLimits.getB().intValue() <= endpos ) ) {  // fully contained inside
 				ret.add( h );
@@ -961,7 +963,7 @@ public class GrowthLineTrackingILP {
 	 * conflicting segmentation hypothesis.
 	 * Calling this function makes only sense if the <code>run</code>-method was
 	 * called and the convex optimizer could find a optimal feasible solution.
-	 * 
+	 *
 	 * @param t
 	 *            the time-point at which to look for the optimal segmentation.
 	 * @return a list of <code>Hypothesis< Component< FloatType, ? > ></code>
@@ -1003,7 +1005,7 @@ public class GrowthLineTrackingILP {
 	 * coming in from the left (from t-1).
 	 * Calling this function makes only sense if the <code>run</code>-method was
 	 * called and the convex optimizer could find a optimal feasible solution.
-	 * 
+	 *
 	 * @param t
 	 *            the time at which to look for active left-assignments.
 	 *            Values for t make only sense if <code>>=1</code> and
@@ -1047,7 +1049,7 @@ public class GrowthLineTrackingILP {
 	 * cell. The ILP is set up such that only 1 such assignment can be chosen by
 	 * the convex optimizer during the computation of the optimal MAP
 	 * assignment.
-	 * 
+	 *
 	 * @return the optimal (choosen by the convex optimizer) assignment
 	 *         describing the most likely data interpretation (MAP) towards the
 	 *         previous time-point.
@@ -1063,7 +1065,7 @@ public class GrowthLineTrackingILP {
 	 * going towards the right (to t+1).
 	 * Calling this function makes only sense if the <code>run</code>-method was
 	 * called and the convex optimizer could find a optimal feasible solution.
-	 * 
+	 *
 	 * @param t
 	 *            the time at which to look for active right-assignments.
 	 *            Values for t make only sense if <code>>=0</code> and
@@ -1109,7 +1111,7 @@ public class GrowthLineTrackingILP {
 	 * cell. The ILP is set up such that only 1 such assignment can be chosen by
 	 * the convex optimizer during the computation of the optimal MAP
 	 * assignment.
-	 * 
+	 *
 	 * @return the optimal (choosen by the convex optimizer) assignment
 	 *         describing the most likely data interpretation (MAP) towards the
 	 *         next time-point.
@@ -1124,7 +1126,7 @@ public class GrowthLineTrackingILP {
 	 * This method is thought to be called given a set that can only contain at
 	 * max 1 active assignment. (It will always and exclusively return the first
 	 * active assignment in the iteration order of the given set!)
-	 * 
+	 *
 	 * @return the one (first) active assignment in the given set of
 	 *         assignments. (An assignment is active iff the binary ILP variable
 	 *         associated with the assignment was set to 1 by the convex
@@ -1146,7 +1148,7 @@ public class GrowthLineTrackingILP {
 	 * An assignment in inactive, when it was NOT chosen by the ILP.
 	 * Only those assignments are collected that are left-edges from one of the
 	 * currently chosen (optimal) segmentation-hypotheses.
-	 * 
+	 *
 	 * @param t
 	 *            the time at which to look for inactive left-assignments.
 	 *            Values for t make only sense if <code>>=1</code> and
@@ -1196,7 +1198,7 @@ public class GrowthLineTrackingILP {
 	 * An assignment in inactive, when it was NOT chosen by the ILP.
 	 * Only those assignments are collected that are right-edges from one of the
 	 * currently chosen (optimal) segmentation-hypotheses.
-	 * 
+	 *
 	 * @param t
 	 *            the time at which to look for inactive right-assignments.
 	 *            Values for t make only sense if <code>>=0</code> and
@@ -1244,7 +1246,7 @@ public class GrowthLineTrackingILP {
 	 * Collects and returns all left-assignments given the optimal segmentation.
 	 * Only those assignments are collected that are left-edges from one of the
 	 * currently chosen (optimal) segmentation-hypotheses.
-	 * 
+	 *
 	 * @param t
 	 *            the time at which to look for inactive left-assignments.
 	 *            Values for t make only sense if <code>>=1</code> and
@@ -1285,7 +1287,7 @@ public class GrowthLineTrackingILP {
 	 * segmentation.
 	 * Only those assignments are collected that are right-edges from one of the
 	 * currently chosen (optimal) segmentation-hypotheses.
-	 * 
+	 *
 	 * @param t
 	 *            the time at which to look for inactive right-assignments.
 	 *            Values for t make only sense if <code>>=0</code> and
@@ -1325,7 +1327,7 @@ public class GrowthLineTrackingILP {
 	 * One of the powerful user interaction constraints.
 	 * This method constraints a frame to contain a given number of segments
 	 * (cells).
-	 * 
+	 *
 	 * @param t
 	 *            The time-index. Must be in [0,nodes.getNumberOfTimeSteps()-2]
 	 * @param numCells
@@ -1349,7 +1351,7 @@ public class GrowthLineTrackingILP {
 	/**
 	 * Removes an constraint on the number of cells at a given time-point (in
 	 * case such a constraint was ever added).
-	 * 
+	 *
 	 * @param t
 	 */
 	public void removeSegmentsInFrameCountConstraint( final int t ) {
@@ -1366,7 +1368,7 @@ public class GrowthLineTrackingILP {
 	/**
 	 * Returns the right hand side of the segment-count constraint the given
 	 * time-point.
-	 * 
+	 *
 	 * @param t
 	 *            time-point index.
 	 * @return the RHS of the constraint if one such constraint is set, -1
@@ -1388,7 +1390,7 @@ public class GrowthLineTrackingILP {
 	 * If there are more then one hypothesis at given location only the lowest
 	 * in the hypotheses tree will be returned.
 	 * (This is also the "shortest" one!)
-	 * 
+	 *
 	 * @param t
 	 * @param gapSepYPos
 	 * @return
@@ -1430,7 +1432,7 @@ public class GrowthLineTrackingILP {
 	 * To avoid requesting solutions that conflict with the tree constraints,
 	 * the second parameter can be the hypothesis at the same location for which
 	 * such a constraint exists so far.
-	 * 
+	 *
 	 * @param hyp2add
 	 *            the hypothesis for which the constraint should be installed.
 	 * @param hyp2remove
@@ -1468,7 +1470,7 @@ public class GrowthLineTrackingILP {
 	/**
 	 * Adds a constraint that forces any solution of this ILP to avoid a certain
 	 * segment hypothesis.
-	 * 
+	 *
 	 * @param hyp2avoid
 	 * @throws GRBException
 	 */
@@ -1492,6 +1494,22 @@ public class GrowthLineTrackingILP {
 	private void reportProgress() {
 		for ( final ProgressListener pl : this.progressListener ) {
 			pl.hasProgressed();
+		}
+	}
+
+	/**
+	 * @param file
+	 */
+	public void saveState( final File file ) {
+		BufferedWriter out;
+		try {
+			out = new BufferedWriter( new FileWriter( file ) );
+			out.write( "# " + MotherMachine.VERSION_STRING );
+			out.newLine();
+
+			out.close();
+		} catch ( final IOException e ) {
+			e.printStackTrace();
 		}
 	}
 }
