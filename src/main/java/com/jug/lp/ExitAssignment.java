@@ -31,7 +31,7 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< F
 
 	/**
 	 * Creates an ExitAssignment.
-	 * 
+	 *
 	 * @param nodes
 	 * @param edges
 	 * @param who
@@ -77,7 +77,7 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< F
 
 	/**
 	 * Adds a list of constraints and factors as strings.
-	 * 
+	 *
 	 * @see com.jug.lp.AbstractAssignment#getConstraint()
 	 */
 	@Override
@@ -87,7 +87,7 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< F
 
 		// expr.addTerm( Hup.size(), this.getGRBVar() );
 		coeffs.add( new Integer( Hup.size() ) );
-		varIds.add( new Integer( this.getVarIdx() ) );
+//		varIds.add( new Integer( this.getVarIdx() ) );
 
 		for ( final Hypothesis< Component< FloatType, ? >> upperHyp : Hup ) {
 			if ( edges.getRightNeighborhood( upperHyp ) != null ) {
@@ -98,7 +98,7 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< F
 					// add term if assignment is NOT another exit-assignment
 					// expr.addTerm( 1.0, a_j.getGRBVar() );
 					coeffs.add( new Integer( 1 ) );
-					varIds.add( new Integer( a_j.getVarIdx() ) );
+//					varIds.add( new Integer( a_j.getVarIdx() ) );
 				}
 			}
 		}
@@ -111,7 +111,7 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< F
 	/**
 	 * Returns the segmentation hypothesis this exit-assignment is associated
 	 * with.
-	 * 
+	 *
 	 * @return the associated segmentation-hypothesis.
 	 */
 	public Hypothesis< Component< FloatType, ? >> getAssociatedHypothesis() {

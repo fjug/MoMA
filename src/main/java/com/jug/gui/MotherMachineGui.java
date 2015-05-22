@@ -855,23 +855,33 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		if ( e.getSource().equals( menuLoad ) ) {
 
-			GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+			final MotherMachineGui self = this;
 
-			if ( ilp == null ) {
-				model.getCurrentGL().generateILP( null );
-				ilp = model.getCurrentGL().getIlp();
-			}
-			final File file = OsDependentFileChooser.showLoadFileChooser(
-					this,
-					MotherMachine.STATS_OUTPUT_PATH,
-					"Choose tracking to load...",
-					null );
-			System.out.println( "File to load tracking from: " + file.getAbsolutePath() );
-			try {
-				ilp.loadState( file );
-			} catch ( final IOException e1 ) {
-				e1.printStackTrace();
-			}
+			final Thread t = new Thread( new Runnable() {
+
+				@Override
+				public void run() {
+					GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+
+					if ( ilp == null ) {
+						prepareOptimization();
+						ilp = model.getCurrentGL().getIlp();
+					}
+					final File file = OsDependentFileChooser.showLoadFileChooser(
+							self,
+							MotherMachine.STATS_OUTPUT_PATH,
+							"Choose tracking to load...",
+							null );
+					System.out.println( "File to load tracking from: " + file.getAbsolutePath() );
+					try {
+						ilp.loadState( file );
+					} catch ( final IOException e1 ) {
+						e1.printStackTrace();
+					}
+				}
+
+			} );
+			t.start();
 		}
 		if ( e.getSource().equals( menuSave ) ) {
 
@@ -972,26 +982,18 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			}
 		}
 		if ( e.getSource().equals( btnOptimize ) ) {
-			final MotherMachineGui self = this;
 			final Thread t = new Thread( new Runnable() {
 
 				@Override
 				public void run() {
-					System.out.println( "Filling in CT hypotheses where needed..." );
-					for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
-						if ( glf.getComponentTree() == null ) {
-							glf.generateSimpleSegmentationHypotheses( MotherMachine.instance.getImgTemp() );
-						}
-					}
-
-					System.out.println( "Generating ILP..." );
-					model.getCurrentGL().generateILP( new DialogProgress( self, "Building tracking model...", ( model.getCurrentGL().size() - 1 ) * 2 ) );
+					prepareOptimization();
 
 					System.out.println( "Finding optimal result..." );
 					model.getCurrentGL().runILP();
 					System.out.println( "...done!" );
 					dataToDisplayChanged();
 				}
+
 			} );
 			t.start();
 		}
@@ -1014,6 +1016,27 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				}
 			} );
 			t.start();
+		}
+	}
+
+	/**
+	 * @param self
+	 * @return
+	 */
+	public void prepareOptimization() {
+		System.out.println( "Filling in CT hypotheses where needed..." );
+		for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
+			if ( glf.getComponentTree() == null ) {
+				glf.generateSimpleSegmentationHypotheses( MotherMachine.instance.getImgTemp() );
+			}
+		}
+
+		System.out.println( "Generating ILP..." );
+		if ( MotherMachine.HEADLESS ) {
+			model.getCurrentGL().generateILP( null );
+		} else {
+			model.getCurrentGL().generateILP(
+					new DialogProgress( this, "Building tracking model...", ( model.getCurrentGL().size() - 1 ) * 2 ) );
 		}
 	}
 

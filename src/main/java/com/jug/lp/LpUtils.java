@@ -20,7 +20,7 @@ public class LpUtils {
 	 * Builds and returns the set Hup (given as a List). Hup is defines as the
 	 * set up all Hypothesis in hyps that strictly above the Hypothesis hyp (in
 	 * image space).
-	 * 
+	 *
 	 * @param hyp
 	 *            the reference hypothesis.
 	 * @param hyps
@@ -31,7 +31,7 @@ public class LpUtils {
 	public static List< Hypothesis< Component< FloatType, ? >>> getHup( final Hypothesis< Component< FloatType, ? >> hyp, final List< Hypothesis< Component< FloatType, ? >>> hyps ) {
 		final List< Hypothesis< Component< FloatType, ? >>> Hup = new ArrayList< Hypothesis< Component< FloatType, ? >>>();
 		for ( final Hypothesis< Component< FloatType, ? >> candidate : hyps ) {
-			if ( ComponentTreeUtils.isAbove( candidate.getWrappedHypothesis(), hyp.getWrappedHypothesis() ) ) {
+			if ( ComponentTreeUtils.isAbove( candidate, hyp ) ) {
 				Hup.add( candidate );
 			}
 		}

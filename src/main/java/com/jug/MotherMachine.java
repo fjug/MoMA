@@ -196,6 +196,8 @@ public class MotherMachine {
 	 */
 	public static final String VERSION_STRING = "TIMM_0.9beta";
 
+	public static final int MAX_CELL_DROP = 50;
+
 	// - - - - - - - - - - - - - -
 	// GUI-WINDOW RELATED STATICS
 	// - - - - - - - - - - - - - -

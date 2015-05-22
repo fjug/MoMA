@@ -15,7 +15,7 @@ import com.jug.util.SimpleFunctionAnalysis;
  */
 public class CostFactory {
 
-	public static String latestCostEvaluation = "";
+//	public static String latestCostEvaluation = "";
 
 	public static float getMigrationCost( final float oldPosition, final float newPosition, final float normalizer ) {
 		float deltaH = ( oldPosition - newPosition ) / normalizer;
@@ -29,7 +29,7 @@ public class CostFactory {
 		}
 		deltaH = Math.abs( deltaH );
 		costDeltaH = deltaH * ( float ) Math.pow( 1 + deltaH, power );
-		latestCostEvaluation = String.format( "c_h = %.4f * %.4f^%.1f = %.4f", deltaH, 1 + deltaH, power, costDeltaH );
+//		latestCostEvaluation = String.format( "c_h = %.4f * %.4f^%.1f = %.4f", deltaH, 1 + deltaH, power, costDeltaH );
 		return costDeltaH;
 	}
 
@@ -45,7 +45,7 @@ public class CostFactory {
 		}
 		deltaL = Math.abs( deltaL );
 		costDeltaL = deltaL * ( float ) Math.pow( 1 + deltaL, power );
-		latestCostEvaluation = String.format( "c_l = %.4f * %.4f^%.1f = %.4f", deltaL, 1 + deltaL, power, costDeltaL );
+//		latestCostEvaluation = String.format( "c_l = %.4f * %.4f^%.1f = %.4f", deltaL, 1 + deltaL, power, costDeltaL );
 		return costDeltaL;
 	}
 
@@ -58,7 +58,7 @@ public class CostFactory {
 			costDeltaV = deltaV * ( float ) Math.pow( 1.0 + ( deltaV - freeUntil ), power );
 		}
 //		latestCostEvaluation = String.format( "c_v = %.4f * %.4f^%.1f = %.4f", deltaV, 1 + deltaV, power, costDeltaV );
-		latestCostEvaluation = String.format( "c_v = 0.0" );
+//		latestCostEvaluation = String.format( "c_v = 0.0" );
 		return 0.0f * costDeltaV;
 	}
 
@@ -71,7 +71,7 @@ public class CostFactory {
 		}
 		costDeltaL = ( float ) Math.pow( deltaS, power );
 
-		latestCostEvaluation = String.format( "c_d = %.4f^%.1f = %.4f", deltaS, power, costDeltaL );
+//		latestCostEvaluation = String.format( "c_d = %.4f^%.1f = %.4f", deltaS, power, costDeltaL );
 		return costDeltaL;
 	}
 

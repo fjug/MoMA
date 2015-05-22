@@ -15,11 +15,12 @@ import net.imglib2.algorithm.componenttree.ComponentTree;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.ValuePair;
 
+import com.jug.lp.Hypothesis;
 import com.jug.util.filteredcomponents.FilteredComponent;
 
 /**
  * @author jug
- * 
+ *
  */
 public class ComponentTreeUtils {
 
@@ -56,21 +57,26 @@ public class ComponentTreeUtils {
 	 * @param hyp
 	 * @return
 	 */
-	public static boolean isAbove( final Component< FloatType, ? > candidate, final Component< FloatType, ? > reference ) {
-		final Pair< Integer, Integer > candMinMax = getTreeNodeInterval( candidate );
-		final Pair< Integer, Integer > refMinMax = getTreeNodeInterval( reference );
+	public static boolean isAbove(
+			final Hypothesis< Component< FloatType, ? >> candidate,
+			final Hypothesis< Component< FloatType, ? >> hyp ) {
+		final Pair< Integer, Integer > candMinMax = candidate.getLocation();
+		final Pair< Integer, Integer > refMinMax = hyp.getLocation();
 		return candMinMax.getB().intValue() < refMinMax.getA().intValue();
 	}
 
 	/**
-	 * @param candidate
+	 * @param to
 	 * @param hyp
 	 * @return
 	 */
-	public static boolean isBelow( final Component< FloatType, ? > candidate, final Component< FloatType, ? > reference ) {
-		final Pair< Integer, Integer > candMinMax = getTreeNodeInterval( candidate );
-		final Pair< Integer, Integer > refMinMax = getTreeNodeInterval( reference );
-		return candMinMax.getA().intValue() > refMinMax.getB().intValue();
+	public static boolean isBelowByMoreThen(
+			final Hypothesis< Component< FloatType, ? >> to,
+			final Hypothesis< Component< FloatType, ? >> from,
+			final int numPixels ) {
+		final Pair< Integer, Integer > candMinMax = to.getLocation();
+		final Pair< Integer, Integer > refMinMax = from.getLocation();
+		return ( candMinMax.getA().intValue() - refMinMax.getB().intValue() ) > numPixels;
 	}
 
 	/**
@@ -79,7 +85,7 @@ public class ComponentTreeUtils {
 	 * Note that this function really only makes sense if the comp.-tree was
 	 * built on a one-dimensional image (as it is the case for my current
 	 * MotherMachine stuff...)
-	 * 
+	 *
 	 * @param node
 	 *            the node in question.
 	 * @return a <code>Pair</code> or two <code>Integers</code> giving the
@@ -104,7 +110,7 @@ public class ComponentTreeUtils {
 	 * Note that this function really only makes sense if the comp.-tree was
 	 * built on a one-dimensional image (as it is the case for my current
 	 * MotherMachine stuff...)
-	 * 
+	 *
 	 * @param node
 	 *            the node in question.
 	 * @return a <code>Pair</code> or two <code>Integers</code> giving the

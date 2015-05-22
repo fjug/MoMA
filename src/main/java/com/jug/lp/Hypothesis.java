@@ -4,8 +4,12 @@
 package com.jug.lp;
 
 import gurobi.GRBConstr;
+import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.FloatType;
+
+import com.jug.util.ComponentTreeUtils;
+import com.jug.util.filteredcomponents.FilteredComponent;
 
 /**
  * This class is used to wrap away whatever object that represents one of the
@@ -17,11 +21,25 @@ import net.imglib2.type.numeric.real.FloatType;
  */
 public class Hypothesis< T extends Component< FloatType, ? > > {
 
-	private static int nextId = 0;
+	public class HypLoc {
+
+		protected int t = -1;
+		protected Pair< Integer, Integer > limits;
+
+		public HypLoc( final int t, final T segment ) {
+			this.t = t;
+			if ( segment instanceof FilteredComponent ) {
+				this.limits =
+						ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) segment );
+			} else {
+				this.limits = ComponentTreeUtils.getTreeNodeInterval( segment );
+			}
+		}
+	}
 
 	private final T wrappedHypothesis;
 	private final float costs;
-	private final int id;
+	private final HypLoc location;
 
 	/**
 	 * Used to store a 'segment in solution constraint' after it was added to
@@ -30,15 +48,15 @@ public class Hypothesis< T extends Component< FloatType, ? > > {
 	 */
 	private GRBConstr segmentSpecificConstraint = null;
 
-	public Hypothesis( final T elementToWrap, final float costs ) {
+	public Hypothesis( final int t, final T elementToWrap, final float costs ) {
 		// setSegmentHypothesis( elementToWrap );
 		this.wrappedHypothesis = elementToWrap;
 		this.costs = costs;
-		this.id = nextId++;
+		location = new HypLoc( t, elementToWrap );
 	}
 
 	public int getId() {
-		return id;
+		return location.limits.getA() * 1000 + location.limits.getB();
 	}
 
 	/**
@@ -83,5 +101,17 @@ public class Hypothesis< T extends Component< FloatType, ? > > {
 	 */
 	public void setSegmentSpecificConstraint( final GRBConstr constr ) {
 		this.segmentSpecificConstraint = constr;
+	}
+
+	public Pair< Integer, Integer > getLocation() {
+		return location.limits;
+	}
+
+	public HypLoc getHypLoc() {
+		return location;
+	}
+
+	public int getTime() {
+		return location.t;
 	}
 }

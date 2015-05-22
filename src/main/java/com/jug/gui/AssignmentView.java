@@ -31,8 +31,6 @@ import com.jug.lp.ExitAssignment;
 import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.Hypothesis;
 import com.jug.lp.MappingAssignment;
-import com.jug.util.ComponentTreeUtils;
-import com.jug.util.filteredcomponents.FilteredComponent;
 
 /**
  * @author jug
@@ -319,14 +317,8 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		final Hypothesis< Component< FloatType, ? >> leftHyp = ma.getSourceHypothesis();
 		final Hypothesis< Component< FloatType, ? >> rightHyp = ma.getDestinationHypothesis();
 
-		Pair< Integer, Integer > limitsLeft = ComponentTreeUtils.getTreeNodeInterval( leftHyp.getWrappedHypothesis() );
-		if ( leftHyp.getWrappedHypothesis() instanceof FilteredComponent ) {
-			limitsLeft = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) leftHyp.getWrappedHypothesis() );
-		}
-		Pair< Integer, Integer > limitsRight = ComponentTreeUtils.getTreeNodeInterval( rightHyp.getWrappedHypothesis() );
-		if ( rightHyp.getWrappedHypothesis() instanceof FilteredComponent ) {
-			limitsRight = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) rightHyp.getWrappedHypothesis() );
-		}
+		final Pair< Integer, Integer > limitsLeft = leftHyp.getLocation();
+		final Pair< Integer, Integer > limitsRight = rightHyp.getLocation();
 
 		final int x1 = 0;
 		final int y1 = offsetY + limitsLeft.getA().intValue();
@@ -426,18 +418,9 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		final Hypothesis< Component< FloatType, ? >> rightHypUpper = da.getUpperDesinationHypothesis();
 		final Hypothesis< Component< FloatType, ? >> rightHypLower = da.getLowerDesinationHypothesis();
 
-		Pair< Integer, Integer > limitsLeft = ComponentTreeUtils.getTreeNodeInterval( leftHyp.getWrappedHypothesis() );
-		if ( leftHyp.getWrappedHypothesis() instanceof FilteredComponent ) {
-			limitsLeft = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) leftHyp.getWrappedHypothesis() );
-		}
-		Pair< Integer, Integer > limitsRightUpper = ComponentTreeUtils.getTreeNodeInterval( rightHypUpper.getWrappedHypothesis() );
-		if ( rightHypUpper.getWrappedHypothesis() instanceof FilteredComponent ) {
-			limitsRightUpper = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) rightHypUpper.getWrappedHypothesis() );
-		}
-		Pair< Integer, Integer > limitsRightLower = ComponentTreeUtils.getTreeNodeInterval( rightHypLower.getWrappedHypothesis() );
-		if ( rightHypLower.getWrappedHypothesis() instanceof FilteredComponent ) {
-			limitsRightLower = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) rightHypLower.getWrappedHypothesis() );
-		}
+		final Pair< Integer, Integer > limitsLeft = leftHyp.getLocation();
+		final Pair< Integer, Integer > limitsRightUpper = rightHypUpper.getLocation();
+		final Pair< Integer, Integer > limitsRightLower = rightHypLower.getLocation();
 
 		final int x1 = 0;
 		final int y1 = offsetY + limitsLeft.getA().intValue();
@@ -543,7 +526,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 */
 	private void drawExitAssignment( final Graphics g, final Graphics2D g2, final ExitAssignment ea, final Dimension size ) {
 		final Hypothesis< Component< FloatType, ? >> hyp = ea.getAssociatedHypothesis();
-		final Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( hyp.getWrappedHypothesis() );
+		final Pair< Integer, Integer > limits = hyp.getLocation();
 
 		final int x1 = 0;
 		final int x2 = this.getWidth() / 5;
