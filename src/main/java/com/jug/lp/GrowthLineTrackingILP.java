@@ -413,7 +413,7 @@ public class GrowthLineTrackingILP {
 		float cost = 0.0f;
 		int i = 0;
 		for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
-			cost = Math.min( 0.0f, hyp.getCosts() / 2.0f ); // NOTE: 0 or negative but only hyp/2 to prefer map or div if exists...
+			cost = Math.min( 0.0f, hyp.getCosts() / 4f ); // NOTE: 0 or negative but only hyp/4 to prefer map or div if exists...
 			final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, String.format( "a_%d^EXIT--%d", t, i ) );
 			final List< Hypothesis< Component< FloatType, ? >>> Hup = LpUtils.getHup( hyp, hyps );
 			final ExitAssignment ea = new ExitAssignment( t, newLPVar, this, nodes, edgeSets, Hup, hyp );
@@ -625,8 +625,9 @@ public class GrowthLineTrackingILP {
 		final float costDeltaL_ifAtTop = CostFactory.getGrowthCost( sizeFrom, sizeToL * 2, glLength );
 		final float costDeltaV = CostFactory.getIntensityMismatchCost( valueFrom, valueTo );
 		final float costDeltaS = CostFactory.getUnevenDivisionCost( sizeToU, sizeToL );
+		final float costDivisionLikelyhood = CostFactory.getDivisionLikelihoodCost( from );
 
-		float cost = costDeltaL + costDeltaV + costDeltaH + costDeltaS;
+		float cost = costDeltaL + costDeltaV + costDeltaH + costDeltaS + costDivisionLikelyhood;
 
 		// Border case bullshit
 		// if the upper cell touches the upper border (then don't count shrinking and be nicer to uneven)

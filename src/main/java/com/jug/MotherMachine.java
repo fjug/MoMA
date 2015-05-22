@@ -152,7 +152,7 @@ public class MotherMachine {
 	public static int MIN_CELL_LENGTH = 18;
 
 	/**
-	 * Prior knowledge: minimal contrast of an gap (also used for MSERs)
+	 * Prior knowledge: minimal contrast of a gap (also used for MSERs)
 	 */
 	public static float MIN_GAP_CONTRAST = 0.02f; // This is set to a very low
 													// value that will basically

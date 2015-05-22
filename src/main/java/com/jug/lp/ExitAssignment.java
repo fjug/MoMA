@@ -19,6 +19,7 @@ import com.jug.MotherMachine;
 /**
  * @author jug
  */
+@SuppressWarnings( "restriction" )
 public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< FloatType, ? > > > {
 
 	private final List< Hypothesis< Component< FloatType, ? >>> Hup;

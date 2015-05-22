@@ -624,9 +624,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				for ( final Component< ?, ? > ctn : ctnLevel ) {
 					addBoxAtIndex( i, ctn, xydxdyCTNBorders, ySegmentationData, level );
 //					if ( cbWhichImgToShow.getSelectedItem().equals( itemPMFRF ) ) {
-						System.out.print( String.format( "%.4f;\t", ilp.localParamaxflowBasedCost( t, ctn ) ) );
+//						System.out.print( String.format( "%8.4f;\t", ilp.localParamaxflowBasedCost( t, ctn ) ) );
 //					} else {
-//						System.out.print( String.format( "%.4f;\t", ilp.localIntensityBasedCost( t, ctn ) ) );
+					System.out.print( String.format(
+							"%8.4f;\t",
+							ilp.localIntensityBasedCost( t, ctn ) ) );
 //					}
 					i++;
 				}

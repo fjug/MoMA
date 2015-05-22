@@ -5,8 +5,10 @@ package com.jug.lp.costs;
 
 import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
+import net.imglib2.type.numeric.real.FloatType;
 
 import com.jug.MotherMachine;
+import com.jug.lp.Hypothesis;
 import com.jug.util.ComponentTreeUtils;
 import com.jug.util.SimpleFunctionAnalysis;
 
@@ -25,7 +27,8 @@ public class CostFactory {
 			deltaH = Math.max( 0, deltaH - 0.05f ); // going upwards for up to 5% is for free...
 			power = 3.0f;
 		} else { // downward migration
-			power = 12.0f;
+			Math.max( 0, deltaH - 0.01f );  // going downwards for up to 1% is for free...
+			power = 6.0f;
 		}
 		deltaH = Math.abs( deltaH );
 		costDeltaH = deltaH * ( float ) Math.pow( 1 + deltaH, power );
@@ -50,16 +53,17 @@ public class CostFactory {
 	}
 
 	public static float getIntensityMismatchCost( final float oldIntensity, final float newIntensity ) {
-		final float deltaV = Math.max( 0.0f, newIntensity - oldIntensity ); // nur heller werden wird bestraft!
-		final float power = 1.0f;
-		final float freeUntil = 0.1f;
-		float costDeltaV = 0.0f;
-		if ( deltaV > freeUntil ) { // significant jump
-			costDeltaV = deltaV * ( float ) Math.pow( 1.0 + ( deltaV - freeUntil ), power );
-		}
-//		latestCostEvaluation = String.format( "c_v = %.4f * %.4f^%.1f = %.4f", deltaV, 1 + deltaV, power, costDeltaV );
 //		latestCostEvaluation = String.format( "c_v = 0.0" );
-		return 0.0f * costDeltaV;
+		return 0f;
+//		final float deltaV = Math.max( 0.0f, newIntensity - oldIntensity ); // nur heller werden wird bestraft!
+//		final float power = 1.0f;
+//		final float freeUntil = 0.1f;
+//		float costDeltaV = 0.0f;
+//		if ( deltaV > freeUntil ) { // significant jump
+//			costDeltaV = deltaV * ( float ) Math.pow( 1.0 + ( deltaV - freeUntil ), power );
+//		}
+//		latestCostEvaluation = String.format( "c_v = %.4f * %.4f^%.1f = %.4f", deltaV, 1 + deltaV, power, costDeltaV );
+//		return costDeltaV;
 	}
 
 	public static float getUnevenDivisionCost( final float sizeFirstChild, final float sizeSecondChild ) {
@@ -85,6 +89,10 @@ public class CostFactory {
 		final int a = segInterval.getA().intValue();
 		final int b = segInterval.getB().intValue();
 
+		// 'reduced' in this context means the part inside interval [a,b] that lies between local minima
+		// closest to a (towards the right) and b (towards the left).
+		// To avoid not finding those minima in case we go first one pixel up, we first find the closes max.
+
 		int aReduced = SimpleFunctionAnalysis.getRighthandLocalMax( gapSepFkt, a ).a.intValue();
 		aReduced = SimpleFunctionAnalysis.getRighthandLocalMin( gapSepFkt, aReduced ).a.intValue();
 		int bReduced = SimpleFunctionAnalysis.getLefthandLocalMax( gapSepFkt, b ).a.intValue();
@@ -96,6 +104,7 @@ public class CostFactory {
 		final float l = gapSepFkt[ a ];
 		final float r = gapSepFkt[ b ];
 
+		// maxReduced is the  highest point within [a,b], excluding the slopes up towards a and b.
 		final float maxReduced = SimpleFunctionAnalysis.getMax( gapSepFkt, aReduced, bReduced ).b.floatValue();
 		final float min = SimpleFunctionAnalysis.getMin( gapSepFkt, a, b ).b.floatValue();
 
@@ -105,16 +114,17 @@ public class CostFactory {
 
 		// Special case: min-value is above average gap-sep-fkt value (happens often at the very top)
 		final float avgFktValue = SimpleFunctionAnalysis.getSum( gapSepFkt ) / ( gapSepFkt.length - 1 );
-//		final float distAboveAvg = Math.max( 0.0, min - avgFktValue );
 		final float medianSegmentValue = SimpleFunctionAnalysis.getMedian( gapSepFkt, a, b );
-		final float distAboveAvg = Math.max( 0.0f, medianSegmentValue - avgFktValue );
-		cost += ( distAboveAvg + 0.05 ) * Math.pow( 1 + ( distAboveAvg + 0.05 ), 8.0 );
+		final float distAboveAvg = medianSegmentValue - avgFktValue;
+		if ( distAboveAvg > 0f ) {
+			cost += ( distAboveAvg + 0.05 ) * Math.pow( 1 + ( distAboveAvg + 0.05 ), 8.0 );
+		}
 
 		// cell is too small
 		if ( a > 0 && b + 1 < gapSepFkt.length && b - a < MotherMachine.MIN_CELL_LENGTH ) { // if a==0 or b==gapSepFkt.len, only a part of the cell is seen!
 			cost = 100;
 		}
-		return cost;
+		return 2 * cost;
 	}
 
 	/**
@@ -153,5 +163,14 @@ public class CostFactory {
 			cost = 100;
 		}
 		return cost;
+	}
+
+	/**
+	 * @param from
+	 * @return
+	 */
+	public static float getDivisionLikelihoodCost( final Hypothesis< Component< FloatType, ? >> from ) {
+		if ( from.getWrappedHypothesis().getChildren().size() != 2 ) { return 0.25f; }
+		return 0f;
 	}
 }
