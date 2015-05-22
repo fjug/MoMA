@@ -139,12 +139,13 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	String itemChannel0 = "Raw Channel 0";
 	String itemChannel1 = "Raw Channel 1";
 	String itemChannel2 = "Raw Channel 2";
-	String itemPMFRF = "PMFRF Sum Image";
-	String itemClassified = "RF BG Probability";
-	String itemSegmented = "RF Cell Segmentation";
+//	String itemPMFRF = "PMFRF Sum Image";
+//	String itemClassified = "RF BG Probability";
+//	String itemSegmented = "RF Cell Segmentation";
 	private JComboBox cbWhichImgToShow;
 
-	private JLabel lActiveHyps;
+	// REMOVED because load/save does not go easy with this shit!
+//	private JLabel lActiveHyps;
 
 	private JTextField txtNumCells;
 
@@ -183,7 +184,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		final Menu menuFile = new Menu( "File" );
 		menuLoad = new MenuItem( "Load tracking for this data..." );
 		menuLoad.addActionListener( this );
-		menuSave = new MenuItem( "Load tracking for this data..." );
+		menuSave = new MenuItem( "Save tracking for this data..." );
 		menuSave.addActionListener( this );
 		menuFile.add( menuLoad );
 		menuFile.add( menuSave );
@@ -376,29 +377,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		final JPanel panelContent = new JPanel( new BorderLayout() );
 
 		final JPanel panelView = new JPanel( new FlowLayout( FlowLayout.CENTER, 0, 10 ) );
-		final JPanel panelOptions = new JPanel();
-		panelOptions.setLayout( new BoxLayout( panelOptions, BoxLayout.LINE_AXIS ) );
 
-		// =============== panelOptions-part ===================
-		cbWhichImgToShow = new JComboBox();
-		cbWhichImgToShow.addItem( itemChannel0BGSubtr );
-		cbWhichImgToShow.addItem( itemChannel0 );
-		if ( model.mm.getRawChannelImgs().size() > 1 ) {
-			cbWhichImgToShow.addItem( itemChannel1 );
-		}
-		if ( model.mm.getRawChannelImgs().size() > 2 ) {
-			cbWhichImgToShow.addItem( itemChannel2 );
-		}
-		cbWhichImgToShow.addItem( itemPMFRF );
-		cbWhichImgToShow.addItem( itemClassified );
-		cbWhichImgToShow.addItem( itemSegmented );
-		cbWhichImgToShow.addActionListener( new ActionListener() {
+		// =============== panelIsee-part ===================
+		final JPanel panelIsee = new JPanel();
+		panelIsee.setLayout( new BoxLayout( panelIsee, BoxLayout.LINE_AXIS ) );
 
-			@Override
-			public void actionPerformed( final ActionEvent e ) {
-				dataToDisplayChanged();
-			}
-		} );
 		final JLabel labelNumCells1 = new JLabel( "I see" );
 		final JLabel labelNumCells2 = new JLabel( "cells!" );
 		txtNumCells = new JTextField( "?", 2 );
@@ -439,35 +422,61 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			}
 		} );
 
-		btnExchangeSegHyps = new JButton( "switch" );
-		btnExchangeSegHyps.addActionListener( new ActionListener() {
+		panelIsee.add( Box.createHorizontalGlue() );
+		panelIsee.add( labelNumCells1 );
+		panelIsee.add( txtNumCells );
+		panelIsee.add( labelNumCells2 );
+		panelIsee.add( Box.createHorizontalGlue() );
+
+		// =============== panelDropdown-part ===================
+		final JPanel panelDropdown = new JPanel();
+		panelDropdown.setLayout( new BoxLayout( panelDropdown, BoxLayout.LINE_AXIS ) );
+		cbWhichImgToShow = new JComboBox();
+		cbWhichImgToShow.addItem( itemChannel0BGSubtr );
+		cbWhichImgToShow.addItem( itemChannel0 );
+		if ( model.mm.getRawChannelImgs().size() > 1 ) {
+			cbWhichImgToShow.addItem( itemChannel1 );
+		}
+		if ( model.mm.getRawChannelImgs().size() > 2 ) {
+			cbWhichImgToShow.addItem( itemChannel2 );
+		}
+//		cbWhichImgToShow.addItem( itemPMFRF );
+//		cbWhichImgToShow.addItem( itemClassified );
+//		cbWhichImgToShow.addItem( itemSegmented );
+		cbWhichImgToShow.addActionListener( new ActionListener() {
 
 			@Override
 			public void actionPerformed( final ActionEvent e ) {
-				final GrowthLineFrame glf = model.getCurrentGLF();
-				if ( !glf.isParaMaxFlowComponentTree() ) {
-					glf.generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
-				} else {
-					glf.generateSimpleSegmentationHypotheses( model.mm.getImgTemp() );
-				}
 				dataToDisplayChanged();
 			}
 		} );
-		lActiveHyps = new JLabel( "CT" );
-		lActiveHyps.setHorizontalAlignment( SwingConstants.CENTER );
-		lActiveHyps.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder( 2, 5, 2, 5 ) ) );
-		lActiveHyps.setPreferredSize( new Dimension( 65, lActiveHyps.getPreferredSize().height ) );
 
-		panelOptions.add( Box.createHorizontalGlue() );
-		panelOptions.add( cbWhichImgToShow );
-		panelOptions.add( Box.createHorizontalGlue() );
-		panelOptions.add( labelNumCells1 );
-		panelOptions.add( txtNumCells );
-		panelOptions.add( labelNumCells2 );
-		panelOptions.add( Box.createHorizontalGlue() );
-		panelOptions.add( btnExchangeSegHyps );
-		panelOptions.add( lActiveHyps );
-		panelOptions.add( Box.createHorizontalGlue() );
+		panelDropdown.add( Box.createHorizontalGlue() );
+		panelDropdown.add( cbWhichImgToShow );
+		panelDropdown.add( Box.createHorizontalGlue() );
+
+//		btnExchangeSegHyps = new JButton( "switch" );
+//		btnExchangeSegHyps.addActionListener( new ActionListener() {
+//
+//			@Override
+//			public void actionPerformed( final ActionEvent e ) {
+//				final GrowthLineFrame glf = model.getCurrentGLF();
+//				if ( !glf.isParaMaxFlowComponentTree() ) {
+//					glf.generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
+//				} else {
+//					glf.generateSimpleSegmentationHypotheses( model.mm.getImgTemp() );
+//				}
+//				dataToDisplayChanged();
+//			}
+//		} );
+//		lActiveHyps = new JLabel( "CT" );
+//		lActiveHyps.setHorizontalAlignment( SwingConstants.CENTER );
+//		lActiveHyps.setBorder( BorderFactory.createCompoundBorder( BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder( 2, 5, 2, 5 ) ) );
+//		lActiveHyps.setPreferredSize( new Dimension( 65, lActiveHyps.getPreferredSize().height ) );
+
+//		panelOptions.add( btnExchangeSegHyps );
+//		panelOptions.add( lActiveHyps );
+//		panelOptions.add( Box.createHorizontalGlue() );
 
 		// =============== panelView-part ===================
 
@@ -538,7 +547,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelView.add( panelVerticalHelper );
 
 		panelContent.add( panelView, BorderLayout.CENTER );
-		panelContent.add( panelOptions, BorderLayout.SOUTH );
+
+		final JPanel panelHelper = new JPanel( new BorderLayout( 0, 0 ) );
+		panelHelper.add( panelIsee, BorderLayout.CENTER );
+		panelHelper.add( panelDropdown, BorderLayout.SOUTH );
+		panelContent.add( panelHelper, BorderLayout.SOUTH );
 
 		return panelContent;
 	}
@@ -571,11 +584,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		final float[] yMidline = model.getCurrentGLF().getMirroredCenterLineValues( model.mm.getImgTemp() );
 		float[] ySegmentationData;
-		if ( cbWhichImgToShow.getSelectedItem().equals( itemPMFRF ) ) {
-			ySegmentationData = model.getCurrentGLF().getAwesomeGapSeparationValues( model.mm.getImgTemp() );
-		} else {
+//		if ( cbWhichImgToShow.getSelectedItem().equals( itemPMFRF ) ) {
+//			ySegmentationData = model.getCurrentGLF().getAwesomeGapSeparationValues( model.mm.getImgTemp() );
+//		} else {
 			ySegmentationData = model.getCurrentGLF().getSimpleGapSeparationValues( model.mm.getImgTemp() );
-		}
+//		}
 		final float[] yAvg = new float[ yMidline.length ];
 		final float constY = SimpleFunctionAnalysis.getSum( ySegmentationData ) / ySegmentationData.length;
 		for ( int i = 0; i < yAvg.length; i++ ) {
@@ -609,11 +622,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			while ( ctnLevel.size() > 0 ) {
 				for ( final Component< ?, ? > ctn : ctnLevel ) {
 					addBoxAtIndex( i, ctn, xydxdyCTNBorders, ySegmentationData, level );
-					if ( cbWhichImgToShow.getSelectedItem().equals( itemPMFRF ) ) {
+//					if ( cbWhichImgToShow.getSelectedItem().equals( itemPMFRF ) ) {
 						System.out.print( String.format( "%.4f;\t", ilp.localParamaxflowBasedCost( t, ctn ) ) );
-					} else {
-						System.out.print( String.format( "%.4f;\t", ilp.localIntensityBasedCost( t, ctn ) ) );
-					}
+//					} else {
+//						System.out.print( String.format( "%.4f;\t", ilp.localIntensityBasedCost( t, ctn ) ) );
+//					}
 					i++;
 				}
 				ctnLevel = ComponentTreeUtils.getAllChildren( ctnLevel );
@@ -718,9 +731,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			final FloatType min = new FloatType();
 			final FloatType max = new FloatType();
 
-			if ( paramaxflowSumImageFloatTyped != null && cbWhichImgToShow.getSelectedItem().equals( itemPMFRF ) ) {
-				imgCanvasActiveCenter.setScreenImage( glf, paramaxflowSumImageFloatTyped );
-			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemChannel0 ) ) {
+//			if ( paramaxflowSumImageFloatTyped != null && cbWhichImgToShow.getSelectedItem().equals( itemPMFRF ) ) {
+//				imgCanvasActiveCenter.setScreenImage( glf, paramaxflowSumImageFloatTyped );
+//			} else
+			if ( cbWhichImgToShow.getSelectedItem().equals( itemChannel0 ) ) {
 				viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
 			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemChannel1 ) ) {
@@ -733,38 +747,38 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				Util.computeMinMax( Views.iterable( viewToShow ), min, max );
 				viewImgCenterActive = Views.offset( Converters.convert( viewToShow, new RealFloatNormalizeConverter( max.get() ), new FloatType() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
-			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemClassified ) ) {
-				final Thread t = new Thread() {
-
-					@Override
-					public void run() {
-						final IntervalView< FloatType > sizeEstimationImageFloatTyped = Views.offset( Views.hyperSlice( model.mm.getCellClassificationImgs(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
-						imgCanvasActiveCenter.setScreenImage( glf, sizeEstimationImageFloatTyped );
-					}
-				};
-				t.start();
-			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemSegmented ) ) {
-				final Thread t = new Thread() {
-
-					@Override
-					public void run() {
-						final IntervalView< FloatType > sizeEstimationImageFloatTyped = Views.offset( Converters.convert( Views.hyperSlice( model.mm.getCellSegmentedChannelImgs(), 2, glf.getOffsetF() ), new RealFloatNormalizeConverter( 1.0f ), new FloatType() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
-						imgCanvasActiveCenter.setScreenImage( glf, sizeEstimationImageFloatTyped );
-					}
-				};
-				t.start();
+//			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemClassified ) ) {
+//				final Thread t = new Thread() {
+//
+//					@Override
+//					public void run() {
+//						final IntervalView< FloatType > sizeEstimationImageFloatTyped = Views.offset( Views.hyperSlice( model.mm.getCellClassificationImgs(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+//						imgCanvasActiveCenter.setScreenImage( glf, sizeEstimationImageFloatTyped );
+//					}
+//				};
+//				t.start();
+//			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemSegmented ) ) {
+//				final Thread t = new Thread() {
+//
+//					@Override
+//					public void run() {
+//						final IntervalView< FloatType > sizeEstimationImageFloatTyped = Views.offset( Converters.convert( Views.hyperSlice( model.mm.getCellSegmentedChannelImgs(), 2, glf.getOffsetF() ), new RealFloatNormalizeConverter( 1.0f ), new FloatType() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+//						imgCanvasActiveCenter.setScreenImage( glf, sizeEstimationImageFloatTyped );
+//					}
+//				};
+//				t.start();
 			} else { // BG-subtracted Channel 0 selected or PMFRF not available
 				viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgTemp(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
 			}
 
-			if ( glf.isParaMaxFlowComponentTree() ) {
-				lActiveHyps.setText( "PMFRF" );
-				lActiveHyps.setForeground( Color.red );
-			} else {
-				lActiveHyps.setText( "CT " );
-				lActiveHyps.setForeground( Color.black );
-			}
+//			if ( glf.isParaMaxFlowComponentTree() ) {
+//				lActiveHyps.setText( "PMFRF" );
+//				lActiveHyps.setForeground( Color.red );
+//			} else {
+//				lActiveHyps.setText( "CT " );
+//				lActiveHyps.setForeground( Color.black );
+//			}
 
 			// - -  assignment-views  - - - - - -
 

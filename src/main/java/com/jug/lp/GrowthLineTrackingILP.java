@@ -39,6 +39,7 @@ import com.jug.util.ComponentTreeUtils;
 /**
  * @author jug
  */
+@SuppressWarnings( "restriction" )
 public class GrowthLineTrackingILP {
 
 	// < H extends Hypothesis< Component< FloatType, ? > >, A extends AbstractAssignment< H > >
@@ -68,7 +69,7 @@ public class GrowthLineTrackingILP {
 	private final GrowthLine gl;
 
 	public GRBModel model;
-	private int status;
+	private int status = OPTIMIZATION_NEVER_PERFORMED;
 
 	public final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< FloatType, ? > > >, Hypothesis< Component< FloatType, ? > > > nodes = new AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< FloatType, ? > > >, Hypothesis< Component< FloatType, ? > > >();
 	public final HypothesisNeighborhoods< Hypothesis< Component< FloatType, ? > >, AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > edgeSets = new HypothesisNeighborhoods< Hypothesis< Component< FloatType, ? > >, AbstractAssignment< Hypothesis< Component< FloatType, ? > > > >();
