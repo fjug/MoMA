@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.jug.export;
 
@@ -36,7 +36,7 @@ import com.jug.GrowthLineFrame;
 import com.jug.MotherMachine;
 import com.jug.gui.DialogCellStatsExportSetup;
 import com.jug.gui.MotherMachineGui;
-import com.jug.gui.OsDependentFolderChooser;
+import com.jug.gui.OsDependentFileChooser;
 import com.jug.gui.progress.DialogProgress;
 import com.jug.lp.AbstractAssignment;
 import com.jug.lp.DivisionAssignment;
@@ -249,7 +249,14 @@ public class CellStatsExporter {
 	public void export() {
 		if ( !MotherMachine.HEADLESS ) {
 			if ( showConfigDialog() ) {
-				final File folderToUse = OsDependentFolderChooser.showFolderChooser( gui, MotherMachine.STATS_OUTPUT_PATH, "Choose export folder..." );
+				final File folderToUse = OsDependentFileChooser.showSaveFolderChooser( gui, MotherMachine.STATS_OUTPUT_PATH, "Choose export folder..." );
+				if ( folderToUse == null ) {
+					JOptionPane.showMessageDialog(
+							gui,
+							"Illegal save location choosen!",
+							"Error",
+							JOptionPane.ERROR_MESSAGE );
+				}
 				if ( doTrackExport ) {
 					exportTracks( new File( folderToUse, "ExportedTracks.csv" ) );
 				}
