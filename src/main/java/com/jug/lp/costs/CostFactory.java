@@ -3,6 +3,8 @@
  */
 package com.jug.lp.costs;
 
+import java.util.List;
+
 import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.FloatType;
@@ -170,7 +172,22 @@ public class CostFactory {
 	 * @return
 	 */
 	public static float getDivisionLikelihoodCost( final Hypothesis< Component< FloatType, ? >> from ) {
-		if ( from.getWrappedHypothesis().getChildren().size() != 2 ) { return 0.25f; }
-		return 0f;
+		if ( from.getWrappedHypothesis().getChildren().size() > 2 ) { return 1.5f; }
+		if ( from.getWrappedHypothesis().getChildren().size() <= 1 ) { return 1.5f; }
+
+		// if two children, eveluate likelihood of being pre-division
+		final List< Component< FloatType, ? > > children = ( List< Component< FloatType, ? >> ) from.getWrappedHypothesis().getChildren();
+//		final float valA = children.get( 0 ).value().get();
+//		final float valB = children.get( 1 ).value().get();
+		final long sizeA = children.get( 0 ).size();
+		final long sizeB = children.get( 1 ).size();
+
+//		final float valParent = from.getWrappedHypothesis().value().get();
+		final long sizeParent = from.getWrappedHypothesis().size();
+
+		final long deltaSizeAtoB = Math.abs( sizeA - sizeB ) / Math.min( sizeA, sizeB ); // in multiples of smaller one
+		final long deltaSizeABtoP = Math.abs( sizeA + sizeB - sizeParent ) / ( sizeA + sizeB ); // in multiples of A+B
+
+		return 0.1f * deltaSizeAtoB + 0.1f * deltaSizeABtoP;
 	}
 }

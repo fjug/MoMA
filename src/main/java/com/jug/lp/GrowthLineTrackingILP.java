@@ -625,9 +625,9 @@ public class GrowthLineTrackingILP {
 		final float costDeltaL_ifAtTop = CostFactory.getGrowthCost( sizeFrom, sizeToL * 2, glLength );
 		final float costDeltaV = CostFactory.getIntensityMismatchCost( valueFrom, valueTo );
 		final float costDeltaS = CostFactory.getUnevenDivisionCost( sizeToU, sizeToL );
-		final float costDivisionLikelyhood = CostFactory.getDivisionLikelihoodCost( from );
+		final float costDivisionLikelihood = CostFactory.getDivisionLikelihoodCost( from );
 
-		float cost = costDeltaL + costDeltaV + costDeltaH + costDeltaS + costDivisionLikelyhood;
+		float cost = costDeltaL + costDeltaV + costDeltaH + costDeltaS + costDivisionLikelihood;
 
 		// Border case bullshit
 		// if the upper cell touches the upper border (then don't count shrinking and be nicer to uneven)
@@ -635,10 +635,11 @@ public class GrowthLineTrackingILP {
 			// In case the upper cell is still at least like 1/2 in
 			if ( ( 1.0 * sizeToU ) / ( 1.0 * sizeToL ) > 0.5 ) {
 				// don't count uneven div cost (but pay a bit to avoid exit+division instead of two mappings)
-				cost = costDeltaL_ifAtTop + costDeltaH + costDeltaV + 0.1f;
+				cost = costDeltaL_ifAtTop + costDeltaH + costDeltaV + 0.1f + costDivisionLikelihood;
 			} else {
 				// otherwise do just leave out shrinking cost alone - yeah!
-				cost = costDeltaL_ifAtTop + costDeltaH + costDeltaV + costDeltaS + 0.03f;
+				cost =
+						costDeltaL_ifAtTop + costDeltaH + costDeltaV + costDeltaS + 0.03f + costDivisionLikelihood;
 			}
 		}
 
