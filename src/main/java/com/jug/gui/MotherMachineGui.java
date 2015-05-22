@@ -506,7 +506,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		// - - - - - -
 		rightAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ), this );
 		if ( timmFg != null )
-			leftAssignmentViewer.display(
+			rightAssignmentViewer.display(
 					timmFg.getActiveRightNeighborsAt( model.getCurrentTime() ),
 					timmFg.getAllRightNeighborsAt( model.getCurrentTime() ) );
 		panelVerticalHelper.add( rightAssignmentViewer, BorderLayout.CENTER );
@@ -801,7 +801,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				if ( t == sliderTime.getMaximum() ) {
 					rightAssignmentViewer.display( null, null );
 				} else {
-					leftAssignmentViewer.display(
+					rightAssignmentViewer.display(
 							timmFg.getActiveRightNeighborsAt( t ),
 							timmFg.getAllRightNeighborsAt( t ) );
 				}

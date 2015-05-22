@@ -651,6 +651,8 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 			final int filter ) {
 		this.filter = filter;
 		this.data = activeRightNeighborhood;
+
+		this.repaint();
 	}
 
 	/**

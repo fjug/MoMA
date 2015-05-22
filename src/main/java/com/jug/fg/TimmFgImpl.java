@@ -110,6 +110,12 @@ public class TimmFgImpl {
 			addExits( glfT );
 		}
 
+		for ( final GrowthLineFrame glf : gl.getFrames() ) {
+			if ( glf.getTime() != 0 && glf.getTime() != gl.getFrames().size() - 1 ) {
+				addTrackContinuationConstraints( glf.getComponentTree().roots() );
+			}
+		}
+
 //		show();
 	}
 
@@ -127,7 +133,7 @@ public class TimmFgImpl {
 		newVar.setAnnotatedCost( CostFactory.getIntensitySegmentationCost( ctNode, gapSepFkt ) );
 
 		varSegHyps.put( ctNode, newVar );
-		addUnaryTo( ctNode, newVar );
+		addUnaryTo( ctNode, newVar, newVar.getAnnotatedCost() );
 
 		for ( final FilteredComponent< FloatType > child : ctNode.getChildren() ) {
 			addSegmentBranch( child, gapSepFkt );
@@ -195,9 +201,10 @@ public class TimmFgImpl {
 	 */
 	private void addUnaryTo(
 			final FilteredComponent< FloatType > ctNode,
-			final ComponentVariable< FilteredComponent< FloatType >> newVar ) {
+			final ComponentVariable< FilteredComponent< FloatType >> newVar,
+			final float cost ) {
 		final double[] entries =
-				new double[] { 0.0, newVar.getAnnotatedCost() };
+				new double[] { 0.0, 0.0 }; //cost };  // TODO unary fuckup
 		final BooleanTensorTable btt = new BooleanTensorTable( unaryDomain, entries, functionId++ );
 		final BooleanFactor factor = new BooleanFactor( unaryDomain, factorId++ );
 		factor.setFunction( btt );
@@ -583,6 +590,77 @@ public class TimmFgImpl {
 	}
 
 	/**
+	 * @param roots
+	 */
+	private void addTrackContinuationConstraints( final Set< FilteredComponent< FloatType >> roots ) {
+		for ( final FilteredComponent< FloatType > root : roots ) {
+			final LinkedList< FilteredComponent< FloatType >> queue = new LinkedList<>();
+			queue.add( root );
+			while ( !queue.isEmpty() ) {
+				final FilteredComponent< FloatType > node = queue.removeFirst();
+
+				// add constraint: sum left neighborhood vars == sum right neighborhood vars
+				final ComponentVariable< FilteredComponent< FloatType >> varSeg =
+						varSegHyps.get( node );
+				final HashMap< AssignmentVariable< FilteredComponent< FloatType >>, List< FilteredComponent< FloatType >>> ln =
+						leftNeighbors.get( varSeg );
+				final HashMap< AssignmentVariable< FilteredComponent< FloatType >>, List< FilteredComponent< FloatType >>> rn =
+						rightNeighbors.get( varSeg );
+				addPathContinuationConstraint( ln, rn );
+
+				for ( final FilteredComponent< FloatType > child : node.getChildren() ) {
+					queue.push( child );
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param ln
+	 * @param rn
+	 */
+	private void addPathContinuationConstraint(
+			final HashMap< AssignmentVariable< FilteredComponent< FloatType >>, List< FilteredComponent< FloatType >>> ln,
+			final HashMap< AssignmentVariable< FilteredComponent< FloatType >>, List< FilteredComponent< FloatType >>> rn ) {
+
+		if ( ln == null && rn == null ) {
+//			System.out.println( "Warning: isolated variable - no PathContinuationConstraint added!" );
+			return;
+		}
+		if ( ln == null || rn == null ) {
+//			System.out.println( "Variable at first or last time point not added PathContinuationConstraint for!" );
+			return;
+		}
+
+		System.out.println( "PathContinuationConstraint added!" );
+		final int dims = ln.keySet().size() + rn.keySet().size();
+
+		final int[] coeffs = new int[ dims ];
+		for ( int i = 0; i < ln.keySet().size(); i++ ) {
+			coeffs[ i ] = 1;
+		}
+		for ( int i = 0; i < rn.keySet().size(); i++ ) {
+			coeffs[ ln.keySet().size() + i ] = -1;
+		}
+		final BooleanFactor factor =
+				new BooleanFactor( new BooleanFunctionDomain( dims ), factorId++ );
+		final BooleanWeightedIndexSumConstraint bwisc =
+				new BooleanWeightedIndexSumConstraint( coeffs, Relation.EQ, 0 );
+		factor.setFunction( bwisc );
+		int i = 0;
+		for ( final AssignmentVariable< FilteredComponent< FloatType >> var : ln.keySet() ) {
+			factor.setVariable( i, var );
+			i++;
+		}
+		for ( final AssignmentVariable< FilteredComponent< FloatType >> var : rn.keySet() ) {
+			factor.setVariable( i, var );
+			i++;
+		}
+		functions.add( bwisc );
+		factors.add( factor );
+	}
+
+	/**
 	 *
 	 */
 	public void show() {
@@ -624,6 +702,15 @@ public class TimmFgImpl {
 		try {
 			final SolveBooleanFGGurobi solver = new SolveBooleanFGGurobi();
 			solution = solver.solve( fg );
+
+			for ( final FilteredComponent< FloatType > seg : varSegHyps.keySet() ) {
+				final ComponentVariable< FilteredComponent< FloatType >> var = varSegHyps.get( seg );
+				if ( solution.getAssignment( var ).get() ) {
+					System.out.println( "\n>>> Cost: " + var.getAnnotatedCost() );
+				} else {
+					System.out.print( "." );
+				}
+			}
 		} catch ( @SuppressWarnings( "restriction" ) final GRBException e ) {
 			System.err.println( "Gurobi trouble... Boolean FactorGraph could not be solved!" );
 			e.printStackTrace();
@@ -688,7 +775,7 @@ public class TimmFgImpl {
 			while ( !queue.isEmpty() ) {
 				final FilteredComponent< FloatType > node = queue.removeFirst();
 
-				if ( solution.getAssignment( varSegHyps.get( node ) ).get() ) {
+				if ( solution.getAssignment( varSegHyps.get( node ) ).get() == true ) {
 					ret.add( node );
 				}
 
@@ -730,6 +817,46 @@ public class TimmFgImpl {
 	}
 
 	/**
+	 * @param segments
+	 *            segments for which leaving active assignments should be
+	 *            returned.
+	 * @return
+	 * @return
+	 */
+	public HashMap< FilteredComponent< FloatType >, HashMap< AssignmentVariable< FilteredComponent< FloatType >>, List< FilteredComponent< FloatType >>> > getActiveRightNeighborsOf(
+			final Collection< FilteredComponent< FloatType >> segments ) {
+		final HashMap< FilteredComponent< FloatType >, HashMap< AssignmentVariable< FilteredComponent< FloatType >>, List< FilteredComponent< FloatType >>> > ret =
+				new HashMap<>();
+
+		// Collect variables leaving segments at time t
+		for ( final FilteredComponent< FloatType > segment : segments ) {
+			ret.put( segment, getActiveRightNeighborsOf( segment ) );
+		}
+		return ret;
+	}
+
+	/**
+	 * @param segment
+	 *            segment for which active leaving assignments should be
+	 *            returned.
+	 */
+	private HashMap< AssignmentVariable< FilteredComponent< FloatType >>, List< FilteredComponent< FloatType >>> getActiveRightNeighborsOf(
+			final FilteredComponent< FloatType > segment ) {
+		final HashMap< AssignmentVariable< FilteredComponent< FloatType >>, List< FilteredComponent< FloatType >>> ret =
+				new HashMap<>();
+
+		if ( solution == null ) { return ret; }
+
+		for ( final AssignmentVariable< FilteredComponent< FloatType >> var : rightNeighbors.get(
+				segment ).keySet() ) {
+			if ( solution.getAssignment( var ).get() == true ) {
+				ret.put( var, rightNeighbors.get( segment ).get( var ) );
+			}
+		}
+		return ret;
+	}
+
+	/**
 	 * @param t
 	 *            the time point for which all right neighbors of aktivated
 	 *            (contained in solution) segments should be returned. Returns
@@ -738,7 +865,7 @@ public class TimmFgImpl {
 	 */
 	public HashMap< FilteredComponent< FloatType >, HashMap< AssignmentVariable< FilteredComponent< FloatType >>, List< FilteredComponent< FloatType >>> > getActiveRightNeighborsAt(
 			final int t ) {
-		return getRightNeighborsOf( getActiveSegmentsAt( t ) );
+		return getActiveRightNeighborsOf( getActiveSegmentsAt( t ) );
 	}
 
 	/**
