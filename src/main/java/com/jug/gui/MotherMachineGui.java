@@ -26,6 +26,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -48,6 +49,7 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
+import net.miginfocom.swing.MigLayout;
 
 import org.math.plot.Plot2DPanel;
 
@@ -149,6 +151,17 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 //	private JLabel lActiveHyps;
 
 	private JTextField txtNumCells;
+
+	// Batch interaction panels
+	private JCheckBox cbSegmentationOkLeft;
+	private JCheckBox cbSegmentationOkCenter;
+	private JCheckBox cbSegmentationOkRight;
+
+	private JCheckBox cbAssignmentsOkLeft;
+	private JCheckBox cbAssignmentsOkRight;
+
+	// Interactive batch interaction
+	// TODO Batch interactions NOT YET IMPLEMENTED - do it!
 
 	// Menu-items
 	private MenuItem menuViewShowConsole;
@@ -377,7 +390,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private JPanel buildSegmentationAndAssignmentView() {
 		final JPanel panelContent = new JPanel( new BorderLayout() );
 
-		final JPanel panelView = new JPanel( new FlowLayout( FlowLayout.CENTER, 0, 10 ) );
+		final JPanel panelViewCenterHelper =
+				new JPanel( new FlowLayout( FlowLayout.CENTER, 0, 10 ) );
+		final JPanel panelView =
+				new JPanel( new MigLayout( "wrap 7", "[]0[]0[]0[]0[]0[]0[]", "[]0[]" ) );
 
 		// =============== panelIsee-part ===================
 		final JPanel panelIsee = new JPanel();
@@ -489,6 +505,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		// --- Left data viewer (t-1) -------------
 
+		panelView.add( new JPanel() );
+
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
 		labelHelper = new JLabel( "t-1" );
@@ -507,6 +525,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		leftAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ), this );
 		if ( ilp != null )
 			leftAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( model.getCurrentTime() - 1 ) );
+		// - - - - - -
 		panelVerticalHelper.add( leftAssignmentViewer, BorderLayout.CENTER );
 		panelView.add( panelVerticalHelper );
 
@@ -547,12 +566,39 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelVerticalHelper.setBackground( Color.BLACK );
 		panelView.add( panelVerticalHelper );
 
-		panelContent.add( panelView, BorderLayout.CENTER );
+		panelView.add( new JPanel() );
 
-		final JPanel panelHelper = new JPanel( new BorderLayout( 0, 0 ) );
-		panelHelper.add( panelIsee, BorderLayout.CENTER );
-		panelHelper.add( panelDropdown, BorderLayout.SOUTH );
-		panelContent.add( panelHelper, BorderLayout.SOUTH );
+
+		// ---  ROW OF CHECKBOXES -------------
+
+		final JLabel lblCheckBoxLine = new JLabel( "Correct are:" );
+		panelView.add( lblCheckBoxLine, "align center" );
+		// - - - - - -
+		cbSegmentationOkLeft = new JCheckBox();
+		panelView.add( cbSegmentationOkLeft, "align center" );
+		// - - - - - -
+		cbAssignmentsOkLeft = new JCheckBox();
+		panelView.add( cbAssignmentsOkLeft, "align center" );
+		// - - - - - -
+		cbSegmentationOkCenter = new JCheckBox();
+		panelView.add( cbSegmentationOkCenter, "align center" );
+		// - - - - - -
+		cbAssignmentsOkRight = new JCheckBox();
+		panelView.add( cbAssignmentsOkRight, "align center" );
+		// - - - - - -
+		cbSegmentationOkRight = new JCheckBox();
+		panelView.add( cbSegmentationOkRight, "align center" );
+		// - - - - - -
+		final JButton bCheckBoxLine = new JButton( "set" );
+		panelView.add( bCheckBoxLine, "align center" );
+
+		// - - - - - -
+
+		panelView.add( panelIsee, "cell 1 2 5 1, align center, wrap" );
+		panelView.add( panelDropdown, "cell 1 3 5 1, align center, wrap" );
+
+		panelViewCenterHelper.add( panelView );
+		panelContent.add( panelViewCenterHelper, BorderLayout.CENTER );
 
 		return panelContent;
 	}
