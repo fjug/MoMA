@@ -131,9 +131,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	public AssignmentViewer leftAssignmentViewer;
 	public AssignmentViewer rightAssignmentViewer;
 
-	private JButton btnRedoAllHypotheses;
-	private JButton btnExchangeSegHyps;
+//	private JButton btnRedoAllHypotheses;
+//	private JButton btnExchangeSegHyps;
 	private JButton btnOptimize;
+	private JButton btnOptimizeMore;
 	private JButton btnExportHtml;
 	private JButton btnExportData;
 //	private JButton btnSaveFG;
@@ -160,8 +161,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private JCheckBox cbAssignmentsOkLeft;
 	private JCheckBox cbAssignmentsOkRight;
 
-	// Interactive batch interaction
-	// TODO Batch interactions NOT YET IMPLEMENTED - do it!
+	private JButton bCheckBoxLineFixHistory;
+	private JButton bCheckBoxLineSet;
+	private JButton bCheckBoxLineReset;
 
 	// Menu-items
 	private MenuItem menuViewShowConsole;
@@ -279,10 +281,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		tabsViews.setSelectedComponent( panelSegmentationAndAssignmentView );
 
 		// --- Controls ----------------------------------
-		btnRedoAllHypotheses = new JButton( "Resegment" );
-		btnRedoAllHypotheses.addActionListener( this );
-		btnOptimize = new JButton( "(re)Optimize" );
+//		btnRedoAllHypotheses = new JButton( "Resegment" );
+//		btnRedoAllHypotheses.addActionListener( this );
+		btnOptimize = new JButton( "Restart" );
 		btnOptimize.addActionListener( this );
+		btnOptimizeMore = new JButton( "Optimize" );
+		btnOptimizeMore.addActionListener( this );
 		btnExportHtml = new JButton( "Export HTML" );
 		btnExportHtml.addActionListener( this );
 		btnExportData = new JButton( "Export Data" );
@@ -290,8 +294,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 //		btnSaveFG = new JButton( "Save FG" );
 //		btnSaveFG.addActionListener( this );
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.RIGHT, 5, 0 ) );
-		panelHorizontalHelper.add( btnRedoAllHypotheses );
+//		panelHorizontalHelper.add( btnRedoAllHypotheses );
 		panelHorizontalHelper.add( btnOptimize );
+		panelHorizontalHelper.add( btnOptimizeMore );
 		panelHorizontalHelper.add( btnExportHtml );
 		panelHorizontalHelper.add( btnExportData );
 //		panelHorizontalHelper.add( btnSaveFG );
@@ -358,16 +363,16 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					}
 					dataToDisplayChanged();
 				}
-				if ( e.getActionCommand().equals( "o" ) ) {
-					btnOptimize.doClick();
-				}
 				if ( e.getActionCommand().equals( "e" ) ) {
 					btnExportData.doClick();
 				}
 				if ( e.getActionCommand().equals( "r" ) ) {
-					btnRedoAllHypotheses.doClick();
+					btnOptimize.doClick();
 				}
-				if ( e.getActionCommand().equals( " " ) ) {
+				if ( e.getActionCommand().equals( "o" ) ) {
+					btnOptimizeMore.doClick();
+				}
+				if ( e.getActionCommand().equals( "v" ) ) {
 					int selIdx = cbWhichImgToShow.getSelectedIndex();
 					selIdx++;
 					if ( selIdx == cbWhichImgToShow.getItemCount() ) {
@@ -589,12 +594,21 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		cbSegmentationOkRight = new JCheckBox();
 		panelView.add( cbSegmentationOkRight, "align center" );
 		// - - - - - -
-		final JButton bCheckBoxLine = new JButton( "set" );
-		panelView.add( bCheckBoxLine, "align center" );
+		bCheckBoxLineFixHistory = new JButton( "<-all" );
+		bCheckBoxLineFixHistory.addActionListener( this );
+		bCheckBoxLineSet = new JButton( "set" );
+		bCheckBoxLineSet.addActionListener( this );
+		panelView.add( bCheckBoxLineSet, "align center" );
+		bCheckBoxLineReset = new JButton( "reset" );
+		bCheckBoxLineReset.addActionListener( this );
 
 		// - - - - - -
 
-		panelView.add( panelIsee, "cell 1 2 5 1, align center, wrap" );
+		panelView.add( bCheckBoxLineFixHistory, "align center" );
+		panelView.add( panelIsee, "cell 1 2 5 1, align center" );
+		panelView.add( bCheckBoxLineReset, "align center, wrap" );
+
+		panelDropdown.setBorder( BorderFactory.createEmptyBorder( 15, 0, 0, 0 ) );
 		panelView.add( panelDropdown, "cell 1 3 5 1, align center, wrap" );
 
 		panelViewCenterHelper.add( panelView );
@@ -994,40 +1008,89 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 //			} );
 //			t.start();
 //		}
-		if ( e.getSource().equals( btnRedoAllHypotheses ) ) {
+//		if ( e.getSource().equals( btnRedoAllHypotheses ) ) {
+//
+////			final int choiceAwesome = JOptionPane.showOptionDialog( this, "Do you want to reset to PMFRF segmentations?\n(Otherwise fast CT segments will be built.)", "PMFRF or CT?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null );
+//			final DialogResegmentSetup dSetup = new DialogResegmentSetup( this, true, true );
+//			dSetup.ask();
+//			if ( !dSetup.wasCanceled() ) {
+//				final JSlider sliderGL = this.sliderGL;
+//
+//				final Thread t = new Thread( new Runnable() {
+//
+//					@Override
+//					public void run() {
+//						if ( dSetup.allFrames() ) {
+//							for ( int i = sliderGL.getMinimum(); i <= sliderGL.getMaximum(); i++ ) {
+//								sliderGL.setValue( i );
+//								dataToDisplayChanged();
+//								if ( dSetup.doPMFRF() ) {
+//									activateAwesomeHypothesesForCurrentGL();
+//								} else {
+//									activateSimpleHypotheses();
+//								}
+//							}
+//						} else {
+//							if ( dSetup.doPMFRF() ) {
+//								activateAwesomeHypothesesForCurrentGL();
+//							} else {
+//								activateSimpleHypotheses();
+//							}
+//						}
+//						dataToDisplayChanged();
+//					}
+//				} );
+//				t.start();
+//			}
+//		}
+		if ( e.getSource().equals( bCheckBoxLineSet ) ) {
+			final Thread t = new Thread( new Runnable() {
 
-//			final int choiceAwesome = JOptionPane.showOptionDialog( this, "Do you want to reset to PMFRF segmentations?\n(Otherwise fast CT segments will be built.)", "PMFRF or CT?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null );
-			final DialogResegmentSetup dSetup = new DialogResegmentSetup( this, true, true );
-			dSetup.ask();
-			if ( !dSetup.wasCanceled() ) {
-				final JSlider sliderGL = this.sliderGL;
+				@Override
+				public void run() {
+					setAllVariablesFixedWhereChecked();
 
-				final Thread t = new Thread( new Runnable() {
+					System.out.println( "Finding optimal result..." );
+					model.getCurrentGL().runILP();
+					System.out.println( "...done!" );
+					dataToDisplayChanged();
+				}
 
-					@Override
-					public void run() {
-						if ( dSetup.allFrames() ) {
-							for ( int i = sliderGL.getMinimum(); i <= sliderGL.getMaximum(); i++ ) {
-								sliderGL.setValue( i );
-								dataToDisplayChanged();
-								if ( dSetup.doPMFRF() ) {
-									activateAwesomeHypothesesForCurrentGL();
-								} else {
-									activateSimpleHypotheses();
-								}
-							}
-						} else {
-							if ( dSetup.doPMFRF() ) {
-								activateAwesomeHypothesesForCurrentGL();
-							} else {
-								activateSimpleHypotheses();
-							}
-						}
-						dataToDisplayChanged();
-					}
-				} );
-				t.start();
-			}
+			} );
+			t.start();
+		}
+		if ( e.getSource().equals( bCheckBoxLineReset ) ) {
+			final Thread t = new Thread( new Runnable() {
+
+				@Override
+				public void run() {
+					setAllVariablesFreeWhereUnchecked();
+
+					System.out.println( "Finding optimal result..." );
+					model.getCurrentGL().runILP();
+					System.out.println( "...done!" );
+					dataToDisplayChanged();
+				}
+
+			} );
+			t.start();
+		}
+		if ( e.getSource().equals( bCheckBoxLineFixHistory ) ) {
+			final Thread t = new Thread( new Runnable() {
+
+				@Override
+				public void run() {
+					final int t = sliderTime.getValue();
+					setAllVariablesFixedUpTo( t );
+
+					System.out.println( "Finding optimal result..." );
+					model.getCurrentGL().runILP();
+					System.out.println( "...done!" );
+					dataToDisplayChanged();
+				}
+
+			} );
+			t.start();
 		}
 		if ( e.getSource().equals( btnOptimize ) ) {
 			final Thread t = new Thread( new Runnable() {
@@ -1035,6 +1098,24 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				@Override
 				public void run() {
 					prepareOptimization();
+
+					System.out.println( "Finding optimal result..." );
+					model.getCurrentGL().runILP();
+					System.out.println( "...done!" );
+					dataToDisplayChanged();
+				}
+
+			} );
+			t.start();
+		}
+		if ( e.getSource().equals( btnOptimizeMore ) ) {
+			final Thread t = new Thread( new Runnable() {
+
+				@Override
+				public void run() {
+					if ( model.getCurrentGL().getIlp() == null ) {
+						prepareOptimization();
+					}
 
 					System.out.println( "Finding optimal result..." );
 					model.getCurrentGL().runILP();
@@ -1085,6 +1166,74 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		} else {
 			model.getCurrentGL().generateILP(
 					new DialogProgress( this, "Building tracking model...", ( model.getCurrentGL().size() - 1 ) * 2 ) );
+		}
+	}
+
+	/**
+	 * Depending on which checkboxes are checked, fix ALL respective
+	 * segmentations and assignments to current ILP state.
+	 */
+	protected void setAllVariablesFixedWhereChecked() {
+		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+		final int t = sliderTime.getValue();
+		if ( ilp != null ) {
+			if ( cbSegmentationOkLeft.isSelected() ) {
+				ilp.fixSegmentationAsIs( t - 1 );
+			}
+			if ( cbAssignmentsOkLeft.isSelected() ) {
+				ilp.fixAssignmentsAsAre( t - 1 );
+			}
+			if ( cbSegmentationOkCenter.isSelected() ) {
+				ilp.fixSegmentationAsIs( t );
+			}
+			if ( cbAssignmentsOkRight.isSelected() ) {
+				ilp.fixAssignmentsAsAre( t );
+			}
+			if ( cbSegmentationOkRight.isSelected() ) {
+				ilp.fixSegmentationAsIs( t + 1 );
+			}
+		}
+	}
+
+	/**
+	 * Depending on which checkboxes are checked, fix ALL respective
+	 * segmentations and assignments to current ILP state.
+	 */
+	protected void setAllVariablesFixedUpTo( final int t ) {
+		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+		if ( ilp != null ) {
+			ilp.fixSegmentationAsIs( 0 );
+			for ( int i = 1; i <= t; i++ ) {
+				ilp.fixAssignmentsAsAre( i - 1 );
+				ilp.fixSegmentationAsIs( i );
+			}
+		}
+	}
+
+	/**
+	 * Depending on which checkboxes are UNchecked, free ALL respective
+	 * segmentations and assignments if they are clamped to any value in the
+	 * ILP.
+	 */
+	protected void setAllVariablesFreeWhereUnchecked() {
+		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+		final int t = sliderTime.getValue();
+		if ( ilp != null ) {
+			if ( cbSegmentationOkLeft.isSelected() ) {
+				ilp.removeAllSegmentConstraints( t - 1 );
+			}
+			if ( cbAssignmentsOkLeft.isSelected() ) {
+				ilp.removeAllAssignmentConstraints( t - 1 );
+			}
+			if ( cbSegmentationOkCenter.isSelected() ) {
+				ilp.removeAllSegmentConstraints( t );
+			}
+			if ( cbAssignmentsOkRight.isSelected() ) {
+				ilp.removeAllAssignmentConstraints( t );
+			}
+			if ( cbSegmentationOkRight.isSelected() ) {
+				ilp.removeAllSegmentConstraints( t + 1 );
+			}
 		}
 	}
 

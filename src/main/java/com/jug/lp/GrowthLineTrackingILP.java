@@ -882,14 +882,15 @@ public class GrowthLineTrackingILP {
 	 *         procedure).
 	 */
 	public List< Hypothesis< Component< FloatType, ? >>> getOptimalSegmentation( final int t ) {
-		final ArrayList< Hypothesis< Component< FloatType, ? >>> ret = new ArrayList< Hypothesis< Component< FloatType, ? >>>();
-
-		final List< Hypothesis< Component< FloatType, ? >>> hyps = getOptimalHypotheses( t );
-		for ( final Hypothesis< Component< FloatType, ? >> h : hyps ) {
-			ret.add( h );
-		}
-
-		return ret;
+//		final ArrayList< Hypothesis< Component< FloatType, ? >>> ret = new ArrayList< Hypothesis< Component< FloatType, ? >>>();
+//
+//		final List< Hypothesis< Component< FloatType, ? >>> hyps = getOptimalHypotheses( t );
+//		for ( final Hypothesis< Component< FloatType, ? >> h : hyps ) {
+//			ret.add( h );
+//		}
+//
+//		return ret;
+		return getOptimalHypotheses( t );
 	}
 
 	/**
@@ -1719,5 +1720,104 @@ public class GrowthLineTrackingILP {
 			e.printStackTrace();
 		}
 		MotherMachine.getGui().dataToDisplayChanged();
+	}
+
+	/**
+	 * @param t
+	 */
+	public void fixSegmentationAsIs( final int t ) {
+		final List< Hypothesis< Component< FloatType, ? >>> hyps =
+				nodes.getHypothesesAt( t );
+		for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
+			// only if hypothesis is not already clamped
+			if ( hyp.getSegmentSpecificConstraint() == null ) {
+				Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > nh;
+				if ( t > 0 ) {
+					nh = edgeSets.getLeftNeighborhood( hyp );
+				} else {
+					nh = edgeSets.getRightNeighborhood( hyp );
+				}
+
+				try {
+					final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> aa =
+							findActiveAssignment( nh );
+					if ( aa != null ) {
+						// fix this segment
+						addSegmentInSolutionConstraint( hyp, null );
+					} else {
+						// avoid this segment
+						addSegmentNotInSolutionConstraint( hyp );
+					}
+				} catch ( final GRBException e ) {
+					//				e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param t
+	 */
+	public void fixAssignmentsAsAre( final int t ) {
+		// TODO: don't forget that assignment constraints removal kills also fixed segmentation
+		final List< Hypothesis< Component< FloatType, ? >>> hyps =
+				nodes.getHypothesesAt( t );
+		for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
+			Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > nh;
+			nh = edgeSets.getRightNeighborhood( hyp );
+			if ( nh == null ) continue;
+			for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assmnt : nh ) {
+				if ( assmnt.getGroundTroothConstraint() == null ) {
+					try {
+						if ( assmnt.isChoosen() ) {
+							assmnt.setGroundTruth( true );
+						} else {
+							assmnt.setGroundUntruth( true );
+						}
+					} catch ( final GRBException e ) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param t
+	 */
+	public void removeAllSegmentConstraints( final int t ) {
+		final List< Hypothesis< Component< FloatType, ? >>> hyps =
+				nodes.getHypothesesAt( t );
+		for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
+			final GRBConstr oldConstr = hyp.getSegmentSpecificConstraint();
+			// remove all existing
+			if ( oldConstr != null ) {
+				try {
+					model.remove( oldConstr );
+					hyp.setSegmentSpecificConstraint( null );
+				} catch ( final GRBException e ) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param t
+	 */
+	public void removeAllAssignmentConstraints( final int t ) {
+		// TODO: don't forget that assignment constraints removal kills also fixed segmentation
+		final List< Hypothesis< Component< FloatType, ? >>> hyps =
+				nodes.getHypothesesAt( t );
+		for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
+			Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > nh;
+			nh = edgeSets.getRightNeighborhood( hyp );
+			if ( nh == null ) continue;
+			for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assmnt : nh ) {
+				if ( assmnt.getGroundTroothConstraint() != null ) {
+					assmnt.setGroundTruth( false );
+				}
+			}
+		}
 	}
 }
