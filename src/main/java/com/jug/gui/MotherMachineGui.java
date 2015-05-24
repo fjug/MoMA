@@ -120,6 +120,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 	public JSlider sliderGL;
 	public JSlider sliderTime;
+	public JSlider sliderIgnoreBeyond;
 	private JLabel lblCurrentTime;
 
 	private JTabbedPane tabsViews;
@@ -251,7 +252,23 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		lblCurrentTime = new JLabel( String.format( " t = %4d", sliderTime.getValue() ) );
 		panelHorizontalHelper.add( lblCurrentTime, BorderLayout.WEST );
 		panelHorizontalHelper.add( sliderTime, BorderLayout.CENTER );
-		panelContent.add( panelHorizontalHelper, BorderLayout.SOUTH );
+		panelVerticalHelper = new JPanel( new BorderLayout() );
+		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.CENTER );
+
+		// --- Slider for 'IgnoreBeyond' ----------
+		sliderIgnoreBeyond =
+				new JSlider( JSlider.HORIZONTAL, 0, model.getCurrentGL().size() - 2, 0 );
+		sliderIgnoreBeyond.setValue( model.getCurrentGL().size() - 2 );
+		sliderIgnoreBeyond.addChangeListener( this );
+		panelHorizontalHelper = new JPanel( new BorderLayout() );
+		panelHorizontalHelper.setBorder( BorderFactory.createEmptyBorder( 0, 10, 15, 5 ) );
+		final JLabel lblIgnoreBeyond =
+				new JLabel( String.format( "opt. to:", sliderIgnoreBeyond.getValue() ) );
+		panelHorizontalHelper.add( lblIgnoreBeyond, BorderLayout.WEST );
+		panelHorizontalHelper.add( sliderIgnoreBeyond, BorderLayout.CENTER );
+		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.SOUTH );
+
+		panelContent.add( panelVerticalHelper, BorderLayout.SOUTH );
 
 		sliderGL = new JSlider( JSlider.VERTICAL, 0, model.mm.getGrowthLines().size() - 1, 0 );
 		sliderGL.setValue( 0 );
@@ -892,6 +909,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			updateNumCellsField();
 		}
 
+		if ( e.getSource().equals( sliderIgnoreBeyond ) ) {
+			if ( model.getCurrentGL().getIlp() != null ) {
+				model.getCurrentGL().getIlp().ignoreBeyond( sliderIgnoreBeyond.getValue() );
+			}
+		}
+
 		dataToDisplayChanged();
 		this.repaint();
 	}
@@ -1109,6 +1132,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				public void run() {
 					prepareOptimization();
 
+					model.getCurrentGL().getIlp().ignoreBeyond( sliderIgnoreBeyond.getValue() );
+
 					System.out.println( "Finding optimal result..." );
 					model.getCurrentGL().runILP();
 					System.out.println( "...done!" );
@@ -1126,6 +1151,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					if ( model.getCurrentGL().getIlp() == null ) {
 						prepareOptimization();
 					}
+
+					model.getCurrentGL().getIlp().ignoreBeyond( sliderIgnoreBeyond.getValue() );
 
 					System.out.println( "Finding optimal result..." );
 					model.getCurrentGL().runILP();

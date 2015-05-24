@@ -80,6 +80,9 @@ public class GrowthLineTrackingILP {
 	public final HypothesisNeighborhoods< Hypothesis< Component< FloatType, ? > >, AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > edgeSets =
 			new HypothesisNeighborhoods< Hypothesis< Component< FloatType, ? > >, AbstractAssignment< Hypothesis< Component< FloatType, ? > > > >();
 
+	private final HashMap< Hypothesis< Component< FloatType, ? > >, GRBConstr > ignoreSegmentConstraints =
+			new HashMap< Hypothesis< Component< FloatType, ? > >, GRBConstr >();
+
 	private int pbcId = 0;
 
 	private final GRBConstr[] segmentInFrameCountConstraint;
@@ -1732,11 +1735,7 @@ public class GrowthLineTrackingILP {
 			// only if hypothesis is not already clamped
 			if ( hyp.getSegmentSpecificConstraint() == null ) {
 				Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > nh;
-				if ( t > 0 ) {
-					nh = edgeSets.getLeftNeighborhood( hyp );
-				} else {
-					nh = edgeSets.getRightNeighborhood( hyp );
-				}
+				nh = edgeSets.getRightNeighborhood( hyp );
 
 				try {
 					final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> aa =
@@ -1816,6 +1815,73 @@ public class GrowthLineTrackingILP {
 			for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assmnt : nh ) {
 				if ( assmnt.getGroundTroothConstraint() != null ) {
 					assmnt.setGroundTruth( false );
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param value
+	 */
+	public void ignoreBeyond( final int t ) {
+		if ( t + 1 >= gl.size() ) {
+			// remove ignore-constraints altogether
+			for ( int i = 0; i < gl.size(); i++ ) {
+				unignoreSegmentsAt( i );
+			}
+		} else {
+			// remove ignore-constraints at [0,t]
+			for ( int i = 0; i <= t; i++ ) {
+				unignoreSegmentsAt( i );
+			}
+			// add ignore-constraints at [t+1,T]
+			for ( int i = t + 1; i < gl.size(); i++ ) {
+				ignoreSegmentsAt( i );
+			}
+		}
+	}
+
+	/**
+	 * @param t
+	 */
+	private void unignoreSegmentsAt( final int t ) {
+		final List< Hypothesis< Component< FloatType, ? >>> hyps =
+				nodes.getHypothesesAt( t );
+		for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
+			final GRBConstr constr = ignoreSegmentConstraints.get( hyp );
+			if ( constr != null ) {
+				try {
+					model.remove( constr );
+					ignoreSegmentConstraints.remove( hyp );
+				} catch ( final GRBException e ) {
+//					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param t
+	 */
+	private void ignoreSegmentsAt( final int t ) {
+		final List< Hypothesis< Component< FloatType, ? >>> hyps =
+				nodes.getHypothesesAt( t );
+		for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
+			if ( ignoreSegmentConstraints.get( hyp ) == null ) {
+				try {
+					final Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > rightNeighbors =
+							edgeSets.getRightNeighborhood( hyp );
+					final GRBLinExpr expr = new GRBLinExpr();
+					if ( rightNeighbors != null ) {
+						for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assmnt : rightNeighbors ) {
+							expr.addTerm( 1.0, assmnt.getGRBVar() );
+						}
+						final GRBConstr constr =
+								model.addConstr( expr, GRB.EQUAL, 0.0, "ignore_" + hyp.hashCode() );
+						ignoreSegmentConstraints.put( hyp, constr );
+					}
+				} catch ( final GRBException e ) {
+//					e.printStackTrace();
 				}
 			}
 		}
