@@ -10,23 +10,22 @@ import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Properties;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
-import com.l2fprod.common.beans.editor.DoublePropertyEditor;
-import com.l2fprod.common.beans.editor.FloatPropertyEditor;
-import com.l2fprod.common.beans.editor.IntegerPropertyEditor;
-import com.l2fprod.common.beans.editor.StringPropertyEditor;
+import com.jug.MotherMachine;
 import com.l2fprod.common.propertysheet.DefaultProperty;
 import com.l2fprod.common.propertysheet.Property;
-import com.l2fprod.common.propertysheet.PropertyEditorRegistry;
 import com.l2fprod.common.propertysheet.PropertySheet;
 import com.l2fprod.common.propertysheet.PropertySheetPanel;
 
@@ -34,6 +33,39 @@ import com.l2fprod.common.propertysheet.PropertySheetPanel;
  * @author jug
  */
 public class DialogPropertiesEditor extends JDialog implements ActionListener {
+
+	protected static final PropEditedListener propEditListener = new PropEditedListener();
+
+	protected static class PropEditedListener implements PropertyChangeListener {
+
+		@Override
+		public void propertyChange( final PropertyChangeEvent evt ) {
+			final String sourceName = ( ( Property ) evt.getSource() ).getName();
+
+			try {
+			if ( sourceName.equals( "GUROBI_TIME_LIMIT" ) ) {
+				MotherMachine.GUROBI_TIME_LIMIT =
+						Double.parseDouble( evt.getNewValue().toString() );
+			} else if ( sourceName.equals( "GUROBI_MAX_OPTIMALITY_GAP" ) ) {
+				MotherMachine.GUROBI_MAX_OPTIMALITY_GAP =
+						Double.parseDouble( evt.getNewValue().toString() );
+			} else {
+				JOptionPane.showMessageDialog(
+						MotherMachine.getGui(),
+						"Value not changed - NOT YET IMPLEMENTED!",
+							"Warning",
+						JOptionPane.WARNING_MESSAGE );
+			}
+			} catch ( final NumberFormatException e ) {
+				JOptionPane.showMessageDialog(
+						MotherMachine.getGui(),
+						"Illegal value entered -- value not changed!",
+						"Error",
+						JOptionPane.ERROR_MESSAGE );
+			}
+		}
+
+	}
 
 	private static class PropFactory {
 
@@ -46,169 +78,102 @@ public class DialogPropertiesEditor extends JDialog implements ActionListener {
 		public static Property buildFor(final String key, final Object value) {
 			final DefaultProperty property = new DefaultProperty();
 			property.setDisplayName( key );
+			property.setName( key );
 			property.setValue( value.toString() );
+			property.setType( String.class );
+			property.addPropertyChangeListener( propEditListener );
 
 			if (key.equals( "BGREM_TEMPLATE_XMIN" )) {
 				property.setCategory( BGREM );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new IntegerPropertyEditor() );
 				property.setShortDescription( key );
 			} else
 			if (key.equals( "BGREM_TEMPLATE_XMAX" )) {
 				property.setCategory( BGREM );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new IntegerPropertyEditor() );
 				property.setShortDescription( key );
 			} else
 			if (key.equals( "BGREM_X_OFFSET" )) {
 				property.setCategory( BGREM );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new IntegerPropertyEditor() );
 				property.setShortDescription( key );
 			} else
 			if (key.equals( "GL_WIDTH_IN_PIXELS" )) {
 				property.setCategory( GL );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new IntegerPropertyEditor() );
 				property.setShortDescription( key );
 			} else
 			if (key.equals( "GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS" )) {
 				property.setCategory( GL );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new IntegerPropertyEditor() );
 				property.setShortDescription( key );
-
 			} else
 			if (key.equals( "GL_OFFSET_BOTTOM" )) {
 				property.setCategory( GL );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new IntegerPropertyEditor() );
 				property.setShortDescription( key );
-
 			} else
 			if (key.equals( "GL_OFFSET_TOP" )) {
 				property.setCategory( GL );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new IntegerPropertyEditor() );
 				property.setShortDescription( key );
 			} else
 			if (key.equals( "GL_OFFSET_LATERAL" )) {
 				property.setCategory( GL );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new IntegerPropertyEditor() );
 				property.setShortDescription( key );
 			} else
 			if (key.equals( "MOTHER_CELL_BOTTOM_TRICK_MAX_PIXELS" )) {
 				property.setCategory( GL );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new IntegerPropertyEditor() );
 				property.setShortDescription( key );
 			} else
 			if (key.equals( "GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS" )) {
 				property.setCategory( GL );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new IntegerPropertyEditor() );
 				property.setShortDescription( key );
 			} else
 			if (key.equals( "MIN_CELL_LENGTH" )) {
 				property.setCategory( TRA );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new IntegerPropertyEditor() );
 				property.setShortDescription( key );
 			} else
 			if (key.equals( "MIN_GAP_CONTRAST" )) {
 				property.setCategory( GL );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new FloatPropertyEditor() );
 				property.setShortDescription( key );
 			} else
 			if (key.equals( "SIGMA_PRE_SEGMENTATION_X" )) {
 				property.setCategory( SEG );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new FloatPropertyEditor() );
 				property.setShortDescription( key );
 			} else
 			if (key.equals( "SIGMA_PRE_SEGMENTATION_Y" )) {
 				property.setCategory( SEG );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new FloatPropertyEditor() );
 				property.setShortDescription( key );
 			} else
 			if (key.equals( "SIGMA_GL_DETECTION_X" )) {
 				property.setCategory( SEG );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new FloatPropertyEditor() );
 				property.setShortDescription( key );
 			} else
 			if (key.equals( "SIGMA_GL_DETECTION_Y" )) {
 				property.setCategory( SEG );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new FloatPropertyEditor() );
 				property.setShortDescription( key );
 			} else
 			if (key.equals( "SEGMENTATION_MIX_CT_INTO_PMFRF" )) {
 				property.setCategory( SEG );
-//				PropertyEditorRegistry.Instance.registerEditor(
-//						property,
-//						new FloatPropertyEditor() );
-//				property.setShortDescription( key );
+				property.setShortDescription( key );
 				property.setEditable( false );
 			} else
 			if (key.equals( "SEGMENTATION_CLASSIFIER_MODEL_FILE" )) {
-//				property.setCategory( SEG );
-//				PropertyEditorRegistry.Instance.registerEditor(
-//						property,
-//						new StringPropertyEditor() );
-//				property.setShortDescription( key );
+				property.setCategory( SEG );
+				property.setShortDescription( key );
 				property.setEditable( false );
 			} else
-			if (key.equals( "SEGMENTATION_CLASSIFIER_MODEL_FILE" )) {
-//				property.setCategory( SEG );
-//				PropertyEditorRegistry.Instance.registerEditor(
-//						property,
-//						new StringPropertyEditor() );
-//				property.setShortDescription( key );
+			if (key.equals( "CELLSIZE_CLASSIFIER_MODEL_FILE" )) {
+				property.setCategory( SEG );
+				property.setShortDescription( key );
 				property.setEditable( false );
 			} else
 			if (key.equals( "DEFAULT_PATH" )) {
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new StringPropertyEditor() );
 				property.setShortDescription( key );
 			} else
 			if (key.equals( "GUROBI_TIME_LIMIT" )) {
 				property.setCategory( GRB );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new DoublePropertyEditor() );
 				property.setShortDescription( key );
 			} else
 			if (key.equals( "GUROBI_MAX_OPTIMALITY_GAP" )) {
 				property.setCategory( GRB );
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new DoublePropertyEditor() );
 				property.setShortDescription( key );
 			} else {
-				PropertyEditorRegistry.Instance.registerEditor(
-						property,
-						new StringPropertyEditor() );
+				// ALL OTHERS ARE ADDED HERE
 				property.setShortDescription( key );
 				property.setEditable( false );
 			}
@@ -216,7 +181,8 @@ public class DialogPropertiesEditor extends JDialog implements ActionListener {
 		}
 	}
 
-	private JButton bOk;
+
+	private JButton bClose;
 	private JButton bCancel;
 	private final Properties props;
 
@@ -248,22 +214,17 @@ public class DialogPropertiesEditor extends JDialog implements ActionListener {
 		sheet.setSortingCategories( false );
 		sheet.setSortingProperties( false );
 		sheet.setRestoreToggleStates( false );
-		sheet.setEditorFactory( PropertyEditorRegistry.Instance );
-
 		for ( final Object propKey : this.props.keySet() ) {
-
 			final String key = propKey.toString();
 			sheet.addProperty( PropFactory.buildFor( key, props.getProperty( key ) ) );
 		}
+//		sheet.setEditorFactory( PropertyEditorRegistry.Instance );
 
-		bOk = new JButton( "OK" );
-		bOk.addActionListener( this );
-		this.rootPane.setDefaultButton( bOk );
-		bCancel = new JButton( "Cancel" );
-		bCancel.addActionListener( this );
+		bClose = new JButton( "Close" );
+		bClose.addActionListener( this );
+		this.rootPane.setDefaultButton( bClose );
 		final JPanel horizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
-		horizontalHelper.add( bCancel );
-		horizontalHelper.add( bOk );
+		horizontalHelper.add( bClose );
 
 		this.rootPane.add( sheet, BorderLayout.CENTER );
 		this.rootPane.add( horizontalHelper, BorderLayout.SOUTH );
@@ -290,7 +251,7 @@ public class DialogPropertiesEditor extends JDialog implements ActionListener {
 	 */
 	@Override
 	public void actionPerformed( final ActionEvent e ) {
-		if ( e.getSource().equals( bOk ) ) {
+		if ( e.getSource().equals( bClose ) ) {
 			this.setVisible( false );
 			this.dispose();
 		}
