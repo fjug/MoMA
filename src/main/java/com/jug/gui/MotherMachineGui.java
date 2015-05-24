@@ -170,6 +170,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private MenuItem menuShowImgRaw;
 	private MenuItem menuShowImgTemp;
 
+	private MenuItem menuProps;
 	private MenuItem menuLoad;
 	private MenuItem menuSave;
 
@@ -198,10 +199,14 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		final MenuBar menuBar = new MenuBar();
 		final Menu menuFile = new Menu( "File" );
+		menuProps = new MenuItem( "Preferences..." );
+		menuProps.addActionListener( this );
 		menuLoad = new MenuItem( "Load tracking..." );
 		menuLoad.addActionListener( this );
 		menuSave = new MenuItem( "Save tracking..." );
 		menuSave.addActionListener( this );
+		menuFile.add( menuProps );
+		menuFile.addSeparator();
 		menuFile.add( menuLoad );
 		menuFile.add( menuSave );
 		menuBar.add( menuFile );
@@ -915,6 +920,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	@Override
 	public void actionPerformed( final ActionEvent e ) {
 
+		if ( e.getSource().equals( menuProps ) ) {
+			final DialogPropertiesEditor propsEditor =
+					new DialogPropertiesEditor( this, MotherMachine.props );
+			propsEditor.setVisible( true );
+		}
 		if ( e.getSource().equals( menuLoad ) ) {
 
 			final MotherMachineGui self = this;
