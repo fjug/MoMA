@@ -1102,7 +1102,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 				@Override
 				public void run() {
-					setAllVariablesFreeWhereUnchecked();
+					setAllVariablesFreeWhereChecked();
 
 					System.out.println( "Finding optimal result..." );
 					model.getCurrentGL().runILP();
@@ -1123,13 +1123,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					final int t = sliderTime.getValue();
 					final int extent =
 							sliderTrackingRange.getUpperValue() - sliderTrackingRange.getValue();
+					sliderTrackingRange.setUpperValue( t + extent );
 					sliderTrackingRange.setValue( t );
-					sliderTrackingRange.setExtent( extent );
-					setAllVariablesFixedUpTo( t );
-
-					System.out.println( "Finding optimal result..." );
-					model.getCurrentGL().runILP();
-					System.out.println( "...done!" );
 
 					sliderTime.requestFocus();
 					dataToDisplayChanged();
@@ -1145,7 +1140,14 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				public void run() {
 					prepareOptimization();
 
+					if ( !( sliderTrackingRange.getUpperValue() == sliderTrackingRange.getMaximum() ) ) {
+						final int extent =
+								sliderTrackingRange.getUpperValue() - sliderTrackingRange.getValue();
+						sliderTrackingRange.setUpperValue( 0 + extent );
+					}
 					sliderTrackingRange.setValue( 0 );
+
+					model.getCurrentGL().getIlp().freezeBefore( sliderTrackingRange.getValue() );
 					model.getCurrentGL().getIlp().ignoreBeyond( sliderTrackingRange.getUpperValue() );
 
 					System.out.println( "Finding optimal result..." );
@@ -1168,6 +1170,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 						prepareOptimization();
 					}
 
+					model.getCurrentGL().getIlp().freezeBefore( sliderTrackingRange.getValue() );
 					model.getCurrentGL().getIlp().ignoreBeyond( sliderTrackingRange.getUpperValue() );
 
 					System.out.println( "Finding optimal result..." );
@@ -1251,26 +1254,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	}
 
 	/**
-	 * Depending on which checkboxes are checked, fix ALL respective
-	 * segmentations and assignments to current ILP state.
-	 */
-	protected void setAllVariablesFixedUpTo( final int t ) {
-		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
-		if ( ilp != null ) {
-			ilp.fixSegmentationAsIs( 0 );
-			for ( int i = 1; i <= t; i++ ) {
-				ilp.fixAssignmentsAsAre( i - 1 );
-				ilp.fixSegmentationAsIs( i );
-			}
-		}
-	}
-
-	/**
 	 * Depending on which checkboxes are UNchecked, free ALL respective
 	 * segmentations and assignments if they are clamped to any value in the
 	 * ILP.
 	 */
-	protected void setAllVariablesFreeWhereUnchecked() {
+	protected void setAllVariablesFreeWhereChecked() {
 		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
 		final int t = sliderTime.getValue();
 		if ( ilp != null ) {
@@ -1288,6 +1276,19 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			}
 			if ( cbSegmentationOkRight.isSelected() ) {
 				ilp.removeAllSegmentConstraints( t + 1 );
+			}
+		}
+	}
+
+	/**
+	 * Depending on which checkboxes are checked, fix ALL respective
+	 * segmentations and assignments to current ILP state.
+	 */
+	protected void setAllVariablesFixedUpTo( final int t ) {
+		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+		if ( ilp != null ) {
+			for ( int i = 0; i < t; i++ ) {
+				ilp.freezeAssignmentsAsAre( i - 1 );
 			}
 		}
 	}

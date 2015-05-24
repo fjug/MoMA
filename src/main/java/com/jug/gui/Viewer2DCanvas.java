@@ -80,7 +80,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 
 	/**
 	 * Sets the image data to be displayed when paintComponent is called.
-	 * 
+	 *
 	 * @param glf
 	 *            the GrowthLineFrameto be displayed
 	 * @param viewImg
@@ -97,7 +97,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 
 	/**
 	 * Exports the part of the original image that is seen in this canvas.
-	 * 
+	 *
 	 * @param path
 	 *            note that the extension you give determines the file format!
 	 */
@@ -108,7 +108,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 
 	/**
 	 * Exports the part of the original image that is seen in this canvas.
-	 * 
+	 *
 	 * @param path
 	 *            note that the extension you give determines the file format!
 	 */
@@ -245,6 +245,8 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 
 			@Override
 			public void run() {
+				ilp.freezeBefore( sliderTrackingRange.getValue() );
+				ilp.ignoreBeyond( sliderTrackingRange.getUpperValue() );
 				ilp.run();
 			}
 		}

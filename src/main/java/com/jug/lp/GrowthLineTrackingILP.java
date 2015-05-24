@@ -82,6 +82,8 @@ public class GrowthLineTrackingILP {
 
 	private final HashMap< Hypothesis< Component< FloatType, ? > >, GRBConstr > ignoreSegmentConstraints =
 			new HashMap< Hypothesis< Component< FloatType, ? > >, GRBConstr >();
+	private final HashMap< Hypothesis< Component< FloatType, ? > >, GRBConstr > freezeSegmentConstraints =
+			new HashMap< Hypothesis< Component< FloatType, ? > >, GRBConstr >();
 
 	private int pbcId = 0;
 
@@ -1805,7 +1807,6 @@ public class GrowthLineTrackingILP {
 	 * @param t
 	 */
 	public void removeAllAssignmentConstraints( final int t ) {
-		// TODO: don't forget that assignment constraints removal kills also fixed segmentation
 		final List< Hypothesis< Component< FloatType, ? >>> hyps =
 				nodes.getHypothesesAt( t );
 		for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
@@ -1886,4 +1887,69 @@ public class GrowthLineTrackingILP {
 			}
 		}
 	}
+
+	/**
+	 * @param value
+	 */
+	public void freezeBefore( final int t ) {
+		for ( int i = 0; i <= t; i++ ) {
+			freezeAssignmentsAsAre( i );
+		}
+		for ( int i = t + 1; i < gl.size(); i++ ) {
+			unfreezeSegmentsAt( i );
+		}
+	}
+
+	/**
+	 * @param i
+	 */
+	public void freezeAssignmentsAsAre( final int t ) {
+		final List< Hypothesis< Component< FloatType, ? >>> hyps =
+				nodes.getHypothesesAt( t );
+		for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
+			if ( freezeSegmentConstraints.get( hyp ) == null ) {
+				try {
+					final Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > rightNeighbors =
+							edgeSets.getRightNeighborhood( hyp );
+					final GRBLinExpr expr = new GRBLinExpr();
+					if ( rightNeighbors != null ) {
+						double rhs = 0.0;
+						for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assmnt : rightNeighbors ) {
+							if ( assmnt.isChoosen() ) {
+								expr.addTerm( 1.0, assmnt.getGRBVar() );
+								rhs = 1.0;
+							} else {
+								expr.addTerm( 2.0, assmnt.getGRBVar() );
+							}
+						}
+						final GRBConstr constr =
+								model.addConstr( expr, GRB.EQUAL, rhs, "freeze_" + hyp.hashCode() );
+						freezeSegmentConstraints.put( hyp, constr );
+					}
+				} catch ( final GRBException e ) {
+//					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param t
+	 */
+	private void unfreezeSegmentsAt( final int t ) {
+		final List< Hypothesis< Component< FloatType, ? >>> hyps =
+				nodes.getHypothesesAt( t );
+		for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
+			final GRBConstr constr = freezeSegmentConstraints.get( hyp );
+			if ( constr != null ) {
+				try {
+					model.remove( constr );
+					freezeSegmentConstraints.remove( hyp );
+				} catch ( final GRBException e ) {
+//					e.printStackTrace();
+				}
+			}
+		}
+	}
+
 }

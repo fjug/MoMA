@@ -413,7 +413,7 @@ class RangeSliderUI extends BasicSliderUI {
             }
 
             // Handle lower thumb pressed.
-			if ( false && lowerPressed ) {
+			if ( lowerPressed ) {
                 switch (slider.getOrientation()) {
                 case JSlider.VERTICAL:
                     offset = currentMouseY - thumbRect.y;
