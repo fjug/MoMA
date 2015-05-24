@@ -59,6 +59,7 @@ import com.jug.MotherMachine;
 import com.jug.export.CellStatsExporter;
 import com.jug.export.HtmlOverviewExporter;
 import com.jug.gui.progress.DialogProgress;
+import com.jug.gui.slider.RangeSlider;
 import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.Hypothesis;
 import com.jug.util.ComponentTreeUtils;
@@ -120,7 +121,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 	public JSlider sliderGL;
 	public JSlider sliderTime;
-	public JSlider sliderIgnoreBeyond;
+	public RangeSlider sliderTrackingRange;
 	private JLabel lblCurrentTime;
 
 	private JTabbedPane tabsViews;
@@ -134,7 +135,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 //	private JButton btnRedoAllHypotheses;
 //	private JButton btnExchangeSegHyps;
-	private JButton btnOptimize;
+	private JButton btnReoptimize;
 	private JButton btnOptimizeMore;
 	private JButton btnExportHtml;
 	private JButton btnExportData;
@@ -255,17 +256,19 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.CENTER );
 
-		// --- Slider for 'IgnoreBeyond' ----------
-		sliderIgnoreBeyond =
-				new JSlider( JSlider.HORIZONTAL, 0, model.getCurrentGL().size() - 2, 0 );
-		sliderIgnoreBeyond.setValue( model.getCurrentGL().size() - 2 );
-		sliderIgnoreBeyond.addChangeListener( this );
+		// --- Slider for TrackingRage ----------
+		sliderTrackingRange =
+				new RangeSlider( 0, model.getCurrentGL().size() - 2 );
+		sliderTrackingRange.setValue( 0 );
+		sliderTrackingRange.setUpperValue( model.getCurrentGL().size() - 2 );
+		sliderTrackingRange.addChangeListener( this );
 		panelHorizontalHelper = new JPanel( new BorderLayout() );
 		panelHorizontalHelper.setBorder( BorderFactory.createEmptyBorder( 0, 10, 15, 5 ) );
 		final JLabel lblIgnoreBeyond =
-				new JLabel( String.format( "opt. to:", sliderIgnoreBeyond.getValue() ) );
+				new JLabel( String.format( "opt. range:", sliderTrackingRange.getValue() ) );
+		lblIgnoreBeyond.setToolTipText( "correct up to left slider / ignore data beyond right slider" );
 		panelHorizontalHelper.add( lblIgnoreBeyond, BorderLayout.WEST );
-		panelHorizontalHelper.add( sliderIgnoreBeyond, BorderLayout.CENTER );
+		panelHorizontalHelper.add( sliderTrackingRange, BorderLayout.CENTER );
 		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.SOUTH );
 
 		panelContent.add( panelVerticalHelper, BorderLayout.SOUTH );
@@ -305,8 +308,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		// --- Controls ----------------------------------
 //		btnRedoAllHypotheses = new JButton( "Resegment" );
 //		btnRedoAllHypotheses.addActionListener( this );
-		btnOptimize = new JButton( "Restart" );
-		btnOptimize.addActionListener( this );
+		btnReoptimize = new JButton( "Restart" );
+		btnReoptimize.addActionListener( this );
 		btnOptimizeMore = new JButton( "Optimize" );
 		btnOptimizeMore.addActionListener( this );
 		btnExportHtml = new JButton( "Export HTML" );
@@ -317,7 +320,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 //		btnSaveFG.addActionListener( this );
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.RIGHT, 5, 0 ) );
 //		panelHorizontalHelper.add( btnRedoAllHypotheses );
-		panelHorizontalHelper.add( btnOptimize );
+		panelHorizontalHelper.add( btnReoptimize );
 		panelHorizontalHelper.add( btnOptimizeMore );
 		panelHorizontalHelper.add( btnExportHtml );
 		panelHorizontalHelper.add( btnExportData );
@@ -389,7 +392,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					btnExportData.doClick();
 				}
 				if ( e.getActionCommand().equals( "r" ) ) {
-					btnOptimize.doClick();
+					btnReoptimize.doClick();
 				}
 				if ( e.getActionCommand().equals( "o" ) ) {
 					btnOptimizeMore.doClick();
@@ -909,9 +912,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			updateNumCellsField();
 		}
 
-		if ( e.getSource().equals( sliderIgnoreBeyond ) ) {
+		if ( e.getSource().equals( sliderTrackingRange ) ) {
 			if ( model.getCurrentGL().getIlp() != null ) {
-				model.getCurrentGL().getIlp().ignoreBeyond( sliderIgnoreBeyond.getValue() );
+				model.getCurrentGL().getIlp().ignoreBeyond( sliderTrackingRange.getUpperValue() );
 			}
 		}
 
@@ -1086,6 +1089,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					System.out.println( "Finding optimal result..." );
 					model.getCurrentGL().runILP();
 					System.out.println( "...done!" );
+
+					sliderTime.requestFocus();
 					dataToDisplayChanged();
 				}
 
@@ -1102,6 +1107,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					System.out.println( "Finding optimal result..." );
 					model.getCurrentGL().runILP();
 					System.out.println( "...done!" );
+
+					sliderTime.requestFocus();
 					dataToDisplayChanged();
 				}
 
@@ -1114,29 +1121,38 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				@Override
 				public void run() {
 					final int t = sliderTime.getValue();
+					final int extent =
+							sliderTrackingRange.getUpperValue() - sliderTrackingRange.getValue();
+					sliderTrackingRange.setValue( t );
+					sliderTrackingRange.setExtent( extent );
 					setAllVariablesFixedUpTo( t );
 
 					System.out.println( "Finding optimal result..." );
 					model.getCurrentGL().runILP();
 					System.out.println( "...done!" );
+
+					sliderTime.requestFocus();
 					dataToDisplayChanged();
 				}
 
 			} );
 			t.start();
 		}
-		if ( e.getSource().equals( btnOptimize ) ) {
+		if ( e.getSource().equals( btnReoptimize ) ) {
 			final Thread t = new Thread( new Runnable() {
 
 				@Override
 				public void run() {
 					prepareOptimization();
 
-					model.getCurrentGL().getIlp().ignoreBeyond( sliderIgnoreBeyond.getValue() );
+					sliderTrackingRange.setValue( 0 );
+					model.getCurrentGL().getIlp().ignoreBeyond( sliderTrackingRange.getUpperValue() );
 
 					System.out.println( "Finding optimal result..." );
 					model.getCurrentGL().runILP();
 					System.out.println( "...done!" );
+
+					sliderTime.requestFocus();
 					dataToDisplayChanged();
 				}
 
@@ -1152,11 +1168,13 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 						prepareOptimization();
 					}
 
-					model.getCurrentGL().getIlp().ignoreBeyond( sliderIgnoreBeyond.getValue() );
+					model.getCurrentGL().getIlp().ignoreBeyond( sliderTrackingRange.getUpperValue() );
 
 					System.out.println( "Finding optimal result..." );
 					model.getCurrentGL().runILP();
 					System.out.println( "...done!" );
+
+					sliderTime.requestFocus();
 					dataToDisplayChanged();
 				}
 
