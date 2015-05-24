@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.jug.export;
 
@@ -61,25 +61,25 @@ public class HtmlOverviewExporter {
 			String row1 = "";
 			final String nextrow = "		</tr>\n			<tr>\n";
 			String row2 = "";
-			String row3 = "";
+			final String row3 = "";
 
 			for ( int i = startFrame; i <= endFrame; i++ ) {
 				gui.sliderTime.setValue( i );
 				try {
 					String fn1 = String.format( "/" + basename + "_gl_%02d_glf_%03d.png", gui.sliderGL.getValue(), i );
 					gui.imgCanvasActiveCenter.exportScreenImage( imgpath + fn1 );
-					final String fn2 = String.format( "/" + basename + "_gl_%02d_glf_%03d_segmentation.png", gui.sliderGL.getValue(), i );
-					gui.imgCanvasActiveCenter.exportSegmentationImage( imgpath + fn2 );
+//					final String fn2 = String.format( "/" + basename + "_gl_%02d_glf_%03d_segmentation.png", gui.sliderGL.getValue(), i );
+//					gui.imgCanvasActiveCenter.exportSegmentationImage( imgpath + fn2 );
 					row1 += "			<th><font size='+2'>t=" + i + "</font></th>\n";
 					row2 += "			<td><img src='./imgs" + fn1 + "'></td>\n";
-					row3 += "			<td><img src='./imgs" + fn2 + "'></td>\n";
+//					row3 += "			<td><img src='./imgs" + fn2 + "'></td>\n";
 
 					if ( i < endFrame ) {
 						fn1 = String.format( "/" + basename + "_gl_%02d_assmnts_%03d.png", gui.sliderGL.getValue(), i );
 						Util.saveImage( Util.getImageOf( gui.rightAssignmentViewer.getActiveAssignments(), gui.imgCanvasActiveCenter.getWidth(), gui.imgCanvasActiveCenter.getHeight() ), imgpath + fn1 );
 						row1 += "			<th></th>\n";
-						row2 += "			<td><img src='./imgs" + fn1 + "'></td>\n"; // + "' width='10' height='" + this.imgCanvasActiveCenter.getHeight() 
-						row3 += "			<td><img src='./imgs" + fn1 + "'></td>\n"; // + "' width='10' height='" + this.imgCanvasActiveCenter.getHeight() 
+						row2 += "			<td><img src='./imgs" + fn1 + "'></td>\n"; // + "' width='10' height='" + this.imgCanvasActiveCenter.getHeight()
+//						row3 += "			<td><img src='./imgs" + fn1 + "'></td>\n"; // + "' width='10' height='" + this.imgCanvasActiveCenter.getHeight()
 					}
 				} catch ( final IOException e ) {
 					JOptionPane.showMessageDialog( gui, "Tracking imagery could not be saved entirely!", "Export Error", JOptionPane.ERROR_MESSAGE );

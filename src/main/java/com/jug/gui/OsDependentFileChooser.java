@@ -88,7 +88,7 @@ public class OsDependentFileChooser {
 		if ( OSValidator.isMac() && frame != null ) {
 
 			System.setProperty( "apple.awt.fileDialogForDirectories", "true" );
-			final FileDialog fd = new FileDialog( frame, title, FileDialog.SAVE );
+			final FileDialog fd = new FileDialog( frame, title );
 			fd.setDirectory( path );
 			fd.setVisible( true );
 			final File selectedFile = new File( fd.getDirectory() + "/" + fd.getFile() );
