@@ -1176,6 +1176,16 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 						sliderTrackingRange.setValue( 0 );
 					}
 
+					if ( sliderTime.getValue() > sliderTrackingRange.getUpperValue() ) {
+						sliderTrackingRange.setUpperValue( sliderTime.getValue() );
+					}
+					if ( sliderTime.getValue() < sliderTrackingRange.getValue() ) {
+						final int len =
+								sliderTrackingRange.getUpperValue() - sliderTrackingRange.getValue();
+						sliderTrackingRange.setValue( sliderTime.getValue() - len / 2 );
+						sliderTrackingRange.setUpperValue( sliderTime.getValue() + len / 2 + len % 2 );
+					}
+
 					model.getCurrentGL().getIlp().freezeBefore( sliderTrackingRange.getValue() );
 					model.getCurrentGL().getIlp().ignoreBeyond( sliderTrackingRange.getUpperValue() );
 
