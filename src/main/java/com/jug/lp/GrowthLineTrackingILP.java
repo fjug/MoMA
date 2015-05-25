@@ -1611,6 +1611,19 @@ public class GrowthLineTrackingILP {
 				}
 			}
 
+			// Pruning Roots
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			out.write( "# PruningRoots (PR)\n" );
+			for ( int t = 0; t < gl.size(); t++ ) {
+				final List< Hypothesis< Component< FloatType, ? >>> hyps =
+						nodes.getHypothesesAt( t );
+				for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
+					if ( hyp.isPruneRoot() ) {
+						out.write( String.format( "\tPR, %d, %d\n", t, hyp.getId() ) );
+					}
+				}
+			}
+
 			out.close();
 		} catch ( final IOException e ) {
 			e.printStackTrace();
@@ -1623,6 +1636,9 @@ public class GrowthLineTrackingILP {
 	 */
 	public void loadState( final File file ) throws IOException {
 		final BufferedReader reader = new BufferedReader( new FileReader( file ) );
+
+		final List< Hypothesis< ? >> pruneRoots = new ArrayList< Hypothesis< ? >>();
+
 		String line;
 		while ( ( line = reader.readLine() ) != null ) {
 			// ignore comments and empty lines
@@ -1734,6 +1750,24 @@ public class GrowthLineTrackingILP {
 						e.printStackTrace();
 					}
 				}
+				// Pruning Roots
+				// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+				if ( constraintType.equals( "PR" ) ) {
+					try {
+						final int t = Integer.parseInt( columns[ 1 ].trim() );
+						final int id = Integer.parseInt( columns[ 2 ].trim() );
+						System.out.println( String.format( "PR %d %d", t, id ) );
+						final List< Hypothesis< Component< FloatType, ? >>> hyps =
+								nodes.getHypothesesAt( t );
+						for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
+							if ( hyp.getId() == id ) {
+								pruneRoots.add( hyp );
+							}
+						}
+					} catch ( final NumberFormatException e ) {
+						e.printStackTrace();
+					}
+				}
 			}
 		}
 
@@ -1742,6 +1776,11 @@ public class GrowthLineTrackingILP {
 			run();
 		} catch ( final GRBException e ) {
 			e.printStackTrace();
+		}
+
+		// Activate all PruneRoots
+		for ( final Hypothesis< ? > hyp : pruneRoots ) {
+			hyp.setPruneRoot( true, this );
 		}
 		MotherMachine.getGui().dataToDisplayChanged();
 	}
