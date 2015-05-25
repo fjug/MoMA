@@ -245,8 +245,6 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 
 			@Override
 			public void run() {
-				ilp.freezeBefore( sliderTrackingRange.getValue() );
-				ilp.ignoreBeyond( sliderTrackingRange.getUpperValue() );
 				ilp.run();
 			}
 		}

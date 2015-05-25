@@ -32,6 +32,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
@@ -126,7 +127,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 	private JTabbedPane tabsViews;
 	private CountOverviewPanel panelCountingView;
-	private JPanel panelSegmentationAndAssignmentView;
+	private JScrollPane panelSegmentationAndAssignmentView;
 	private JPanel panelDetailedDataView;
 	private Plot2DPanel plot;
 
@@ -163,7 +164,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private JCheckBox cbAssignmentsOkLeft;
 	private JCheckBox cbAssignmentsOkRight;
 
-	private JButton bCheckBoxLineFixHistory;
+	private JButton bFreezeHistory;
 	private JButton bCheckBoxLineSet;
 	private JButton bCheckBoxLineReset;
 
@@ -248,31 +249,33 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		sliderTime.setPaintTicks( true );
 		sliderTime.setPaintLabels( true );
 		sliderTime.setBorder( BorderFactory.createEmptyBorder( 0, 0, 0, 3 ) );
-		panelHorizontalHelper = new JPanel( new BorderLayout() );
-		panelHorizontalHelper.setBorder( BorderFactory.createEmptyBorder( 5, 10, 0, 5 ) );
 		lblCurrentTime = new JLabel( String.format( " t = %4d", sliderTime.getValue() ) );
-		panelHorizontalHelper.add( lblCurrentTime, BorderLayout.WEST );
-		panelHorizontalHelper.add( sliderTime, BorderLayout.CENTER );
-		panelVerticalHelper = new JPanel( new BorderLayout() );
-		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.CENTER );
 
 		// --- Slider for TrackingRage ----------
+
 		sliderTrackingRange =
 				new RangeSlider( 0, model.getCurrentGL().size() - 2 );
+		sliderTrackingRange.setBorder( BorderFactory.createEmptyBorder( 0, 7, 0, 7 ) );
 		sliderTrackingRange.setValue( 0 );
 		sliderTrackingRange.setUpperValue( model.getCurrentGL().size() - 2 );
 		sliderTrackingRange.addChangeListener( this );
-		panelHorizontalHelper = new JPanel( new BorderLayout() );
-		panelHorizontalHelper.setBorder( BorderFactory.createEmptyBorder( 0, 10, 15, 5 ) );
 		final JLabel lblIgnoreBeyond =
 				new JLabel( String.format( "opt. range:", sliderTrackingRange.getValue() ) );
 		lblIgnoreBeyond.setToolTipText( "correct up to left slider / ignore data beyond right slider" );
-		panelHorizontalHelper.add( lblIgnoreBeyond, BorderLayout.WEST );
-		panelHorizontalHelper.add( sliderTrackingRange, BorderLayout.CENTER );
-		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.SOUTH );
 
-		panelContent.add( panelVerticalHelper, BorderLayout.SOUTH );
+		// --- Assemble sliders -----------------
+		final JPanel panelSliderArrangement =
+				new JPanel( new MigLayout( "wrap 2", "[]3[grow,fill]", "[]0[]" ) );
+		panelSliderArrangement.add( lblIgnoreBeyond );
+		panelSliderArrangement.add( sliderTrackingRange );
+		panelSliderArrangement.add( lblCurrentTime );
+		panelSliderArrangement.add( sliderTime );
 
+		panelHorizontalHelper = new JPanel( new BorderLayout() );
+		panelHorizontalHelper.add( panelSliderArrangement, BorderLayout.CENTER );
+		panelContent.add( panelHorizontalHelper, BorderLayout.SOUTH );
+
+		// Does not exist any more...
 		sliderGL = new JSlider( JSlider.VERTICAL, 0, model.mm.getGrowthLines().size() - 1, 0 );
 		sliderGL.setValue( 0 );
 		sliderGL.addChangeListener( this );
@@ -296,7 +299,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		tabsViews.addChangeListener( this );
 
 		panelCountingView = new CountOverviewPanel();
-		panelSegmentationAndAssignmentView = buildSegmentationAndAssignmentView();
+		panelSegmentationAndAssignmentView = new JScrollPane( buildSegmentationAndAssignmentView() );
+		panelSegmentationAndAssignmentView.setHorizontalScrollBarPolicy( JScrollPane.HORIZONTAL_SCROLLBAR_NEVER );
 		panelDetailedDataView = buildDetailedDataView();
 
 		tabsViews.add( "Cell Counting", panelCountingView );
@@ -319,6 +323,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 //		btnSaveFG = new JButton( "Save FG" );
 //		btnSaveFG.addActionListener( this );
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.RIGHT, 5, 0 ) );
+		panelHorizontalHelper.setBorder( BorderFactory.createEmptyBorder( 3, 0, 5, 0 ) );
 //		panelHorizontalHelper.add( btnRedoAllHypotheses );
 		panelHorizontalHelper.add( btnReoptimize );
 		panelHorizontalHelper.add( btnOptimizeMore );
@@ -343,7 +348,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'r' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'o' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'e' ), "MMGUI_bindings" );
-		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( ' ' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'v' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '?' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '0' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '1' ), "MMGUI_bindings" );
@@ -619,8 +624,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		cbSegmentationOkRight = new JCheckBox();
 		panelView.add( cbSegmentationOkRight, "align center" );
 		// - - - - - -
-		bCheckBoxLineFixHistory = new JButton( "<-all" );
-		bCheckBoxLineFixHistory.addActionListener( this );
+		bFreezeHistory = new JButton( "<-all" );
+		bFreezeHistory.addActionListener( this );
 		bCheckBoxLineSet = new JButton( "set" );
 		bCheckBoxLineSet.addActionListener( this );
 		panelView.add( bCheckBoxLineSet, "align center" );
@@ -629,7 +634,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		// - - - - - -
 
-		panelView.add( bCheckBoxLineFixHistory, "align center" );
+		panelView.add( bFreezeHistory, "align center" );
 		panelView.add( panelIsee, "cell 1 2 5 1, align center" );
 		panelView.add( bCheckBoxLineReset, "align center, wrap" );
 
@@ -1115,19 +1120,19 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			} );
 			t.start();
 		}
-		if ( e.getSource().equals( bCheckBoxLineFixHistory ) ) {
+		if ( e.getSource().equals( bFreezeHistory ) ) {
 			final Thread t = new Thread( new Runnable() {
 
 				@Override
 				public void run() {
 					final int t = sliderTime.getValue();
-					final int extent =
-							sliderTrackingRange.getUpperValue() - sliderTrackingRange.getValue();
-					sliderTrackingRange.setUpperValue( t + extent );
-					sliderTrackingRange.setValue( t );
-
-					sliderTime.requestFocus();
-					dataToDisplayChanged();
+					if ( sliderTrackingRange.getUpperValue() < sliderTrackingRange.getMaximum() ) {
+						final int extent =
+								sliderTrackingRange.getUpperValue() - sliderTrackingRange.getValue();
+						sliderTrackingRange.setUpperValue( t - 1 + extent );
+						btnOptimizeMore.doClick();
+					}
+					sliderTrackingRange.setValue( t - 1 );
 				}
 
 			} );
@@ -1168,6 +1173,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				public void run() {
 					if ( model.getCurrentGL().getIlp() == null ) {
 						prepareOptimization();
+						sliderTrackingRange.setValue( 0 );
 					}
 
 					model.getCurrentGL().getIlp().freezeBefore( sliderTrackingRange.getValue() );
@@ -1318,8 +1324,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		}
 
 		boolean doExport = true;
-		int startFrame = 0;
-		int endFrame = sliderTime.getMaximum();
+		int startFrame = 1;
+		int endFrame = sliderTime.getMaximum() + 1;
 
 		File file = new File( String.format( MotherMachine.STATS_OUTPUT_PATH + String.format( "/index.html" ) ) );
 
@@ -1364,7 +1370,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		// ----------------------------------------------------------------------------------------------------
 		if ( doExport ) {
-			exportHtmlTrackingOverview( file, startFrame, endFrame );
+			exportHtmlTrackingOverview( file, startFrame - 1, endFrame - 1 );
 		}
 		// ----------------------------------------------------------------------------------------------------
 

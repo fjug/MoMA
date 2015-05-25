@@ -1840,6 +1840,12 @@ public class GrowthLineTrackingILP {
 				ignoreSegmentsAt( i );
 			}
 		}
+		try {
+			model.update();
+		} catch ( final GRBException e ) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -1896,7 +1902,13 @@ public class GrowthLineTrackingILP {
 			freezeAssignmentsAsAre( i );
 		}
 		for ( int i = t + 1; i < gl.size(); i++ ) {
-			unfreezeSegmentsAt( i );
+			unfreezeAssignmentsFor( i );
+		}
+		try {
+			model.update();
+		} catch ( final GRBException e ) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -1936,7 +1948,7 @@ public class GrowthLineTrackingILP {
 	/**
 	 * @param t
 	 */
-	private void unfreezeSegmentsAt( final int t ) {
+	private void unfreezeAssignmentsFor( final int t ) {
 		final List< Hypothesis< Component< FloatType, ? >>> hyps =
 				nodes.getHypothesesAt( t );
 		for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
