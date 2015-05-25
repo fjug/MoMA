@@ -195,7 +195,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	/**
 	 * Reads out all image intensities along the GrowthLine center (green
 	 * pixels).
-	 * 
+	 *
 	 * @param img
 	 *            - an Img.
 	 * @return a float array containing the image intensities in
@@ -226,7 +226,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 	/**
 	 * Adds a detected center point to a GrowthsLineFrame.
-	 * 
+	 *
 	 * @param point
 	 */
 	public void addPoint( final Point point ) {
@@ -248,7 +248,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 	/**
 	 * Gets a detected center point of a GrowthsLine.
-	 * 
+	 *
 	 * @param idx
 	 *            - index of the Point to be returned.
 	 */
@@ -273,7 +273,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	/**
 	 * Using the imglib2 component tree to find the most stable components
 	 * (bacteria).
-	 * 
+	 *
 	 * @param img
 	 */
 	public void generateSimpleSegmentationHypotheses( final Img< FloatType > img ) {
@@ -296,7 +296,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	/**
 	 * Using the imglib2 component tree to find the most stable components
 	 * (bacteria).
-	 * 
+	 *
 	 * @param img
 	 */
 	public void generateAwesomeSegmentationHypotheses( final Img< FloatType > img ) {
@@ -325,7 +325,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	 * tree, put each node in a priority queue, take then the numComponents
 	 * first elements out of it, put them in a ArrayList and give them back to
 	 * the caller. Efficiency: O(turbo-puke) !!
-	 * 
+	 *
 	 * @param numComponents
 	 * @return null, if there are less components in the tree then the callee
 	 *         requested
@@ -389,7 +389,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 	/**
 	 * GapSep guesses based on the intensity image alone
-	 * 
+	 *
 	 * @param img
 	 * @return
 	 */
@@ -412,7 +412,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	 * Because the GL stops there and below come dark, dark pixels.
 	 * This is a way out. (How well this does in cases where the bottom cell
 	 * moves up considerably has to be seen...)
-	 * 
+	 *
 	 * @param fkt
 	 * @return
 	 */
@@ -432,7 +432,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 	/**
 	 * GapSep guesses based on the awesome paramaxflow-sum-image...
-	 * 
+	 *
 	 * @param img
 	 * @return
 	 */
@@ -452,7 +452,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 		awesomeSepValues = getInvertedIntensitiesAtImgLocations( paramaxflowSumImageFloatTyped, true );
 
-		// special case: simple value is better then trained random forest: leave some simple value in there and 
+		// special case: simple value is better then trained random forest: leave some simple value in there and
 		// it might help to divide at right spots
 		if ( MotherMachine.SEGMENTATION_MIX_CT_INTO_PMFRF > 0.00001 ) {
 			final float percSimpleToStay = MotherMachine.SEGMENTATION_MIX_CT_INTO_PMFRF;
@@ -469,7 +469,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 	/**
 	 * Trying to look there a bit smarter... ;)
-	 * 
+	 *
 	 * @param img
 	 * @param wellPoints
 	 * @return
@@ -480,7 +480,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 	/**
 	 * Trying to look there a bit smarter... ;)
-	 * 
+	 *
 	 * @param img
 	 * @param wellPoints
 	 * @return
@@ -543,7 +543,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	/**
 	 * Draws the GrowthLine center line into the given annotation
 	 * <code>Img</code>.
-	 * 
+	 *
 	 * @param img
 	 *            the Img to draw into.
 	 */
@@ -554,7 +554,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	/**
 	 * Draws the GrowthLine center line into the given annotation
 	 * <code>Img</code>.
-	 * 
+	 *
 	 * @param img
 	 *            the Img to draw into.
 	 * @param view
@@ -591,7 +591,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	/**
 	 * Draws the optimal segmentation (determined by the solved ILP) into the
 	 * given <code>Img</code>.
-	 * 
+	 *
 	 * @param img
 	 *            the Img to draw into.
 	 * @param view
@@ -623,10 +623,25 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 		for ( final Hypothesis< Component< FloatType, ? >> hyp : optimalSegmentation ) {
 			final Component< FloatType, ? > ctn = hyp.getWrappedHypothesis();
-			if ( hyp.getSegmentSpecificConstraint() != null ) {
-				ArgbDrawingUtils.taintForcedComponentTreeNode( ctn, raAnnotationImg, offsetX + getAvgXpos(), offsetY + MotherMachine.GL_OFFSET_TOP );
+			if ( hyp.isPruned() ) {
+				ArgbDrawingUtils.taintPrunedComponentTreeNode(
+						hyp.isPruneRoot(),
+						ctn,
+						raAnnotationImg,
+						offsetX + getAvgXpos(),
+						offsetY + MotherMachine.GL_OFFSET_TOP );
+			} else if ( hyp.getSegmentSpecificConstraint() != null ) {
+				ArgbDrawingUtils.taintForcedComponentTreeNode(
+						ctn,
+						raAnnotationImg,
+						offsetX + getAvgXpos(),
+						offsetY + MotherMachine.GL_OFFSET_TOP );
 			} else {
-				ArgbDrawingUtils.taintComponentTreeNode( ctn, raAnnotationImg, offsetX + getAvgXpos(), offsetY + MotherMachine.GL_OFFSET_TOP );
+				ArgbDrawingUtils.taintComponentTreeNode(
+						ctn,
+						raAnnotationImg,
+						offsetX + getAvgXpos(),
+						offsetY + MotherMachine.GL_OFFSET_TOP );
 			}
 		}
 	}

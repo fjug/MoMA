@@ -59,9 +59,9 @@ public class GrowthLineTrackingILP {
 	public static int NUMERIC = 5;
 	public static int LIMIT_REACHED = 6;
 
-	public static int ASSIGNMENT_EXIT = 0;
-	public static int ASSIGNMENT_MAPPING = 1;
-	public static int ASSIGNMENT_DIVISION = 2;
+	public static final int ASSIGNMENT_EXIT = 0;
+	public static final int ASSIGNMENT_MAPPING = 1;
+	public static final int ASSIGNMENT_DIVISION = 2;
 
 	public static final float CUTOFF_COST = 3.0f;
 
@@ -1012,6 +1012,25 @@ public class GrowthLineTrackingILP {
 		}
 
 		return ret;
+	}
+
+	public boolean isSelected( final Hypothesis< Component< FloatType, ? > > hyp ) {
+		Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > nh;
+		if ( hyp.getTime() > 0 ) {
+			nh = edgeSets.getLeftNeighborhood( hyp );
+		} else {
+			nh = edgeSets.getRightNeighborhood( hyp );
+		}
+
+		try {
+			final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> aa =
+					findActiveAssignment( nh );
+			if ( aa != null ) { return true; }
+		} catch ( final GRBException e ) {
+//			System.err.println( "It could not be determined of a certain assignment was choosen during the convex optimization!" );
+//			e.printStackTrace();
+		}
+		return false;
 	}
 
 	/**

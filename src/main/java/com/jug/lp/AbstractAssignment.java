@@ -37,6 +37,8 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	private boolean isGroundUntruth = false;
 	private GRBConstr constrGroundTruth;
 
+	private boolean isPruned = false;
+
 	/**
 	 * Creates an assignment...
 	 *
@@ -238,5 +240,20 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 */
 	public GRBConstr getGroundTroothConstraint() {
 		return constrGroundTruth;
+	}
+
+	/**
+	 * @param value
+	 */
+	public void setPruned( final boolean value ) {
+		this.isPruned = value;
+	}
+
+	/**
+	 *
+	 * @return
+	 */
+	public boolean isPruned() {
+		return isPruned;
 	}
 }

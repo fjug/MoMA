@@ -4,6 +4,10 @@
 package com.jug.lp;
 
 import gurobi.GRBConstr;
+import gurobi.GRBException;
+
+import java.util.LinkedList;
+
 import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.FloatType;
@@ -19,6 +23,7 @@ import com.jug.util.filteredcomponents.FilteredComponent;
  *
  * @author jug
  */
+@SuppressWarnings( "restriction" )
 public class Hypothesis< T extends Component< FloatType, ? > > {
 
 	public class HypLoc {
@@ -47,6 +52,13 @@ public class Hypothesis< T extends Component< FloatType, ? > > {
 	 * value is null.
 	 */
 	private GRBConstr segmentSpecificConstraint = null;
+
+	/**
+	 * Used to store track-branch pruning sources. This is a way to easily
+	 * exclude branches from data export etc.
+	 */
+	private boolean isPruneRoot = false;
+	private boolean isPruned = false;
 
 	public Hypothesis( final int t, final T elementToWrap, final float costs ) {
 		// setSegmentHypothesis( elementToWrap );
@@ -113,5 +125,70 @@ public class Hypothesis< T extends Component< FloatType, ? > > {
 
 	public int getTime() {
 		return location.t;
+	}
+
+	/**
+	 *
+	 */
+	public void setPruneRoot( final boolean value, final GrowthLineTrackingILP ilp ) {
+
+		this.isPruneRoot = value;
+
+		final LinkedList< Hypothesis< Component< FloatType, ? > > > queue =
+				new LinkedList< Hypothesis< Component< FloatType, ? > > >();
+		// TODO there will be no time, but this is of course not nice...
+		queue.add( ( Hypothesis< Component< FloatType, ? > > ) this );
+		while ( !queue.isEmpty() ) {
+			final Hypothesis< Component< FloatType, ? > > node = queue.removeFirst();
+			node.setPruned( value );
+
+			AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assmnt;
+			try {
+				assmnt = ilp.getOptimalRightAssignment( node );
+
+				if ( assmnt != null ) {
+					assmnt.setPruned( value );
+
+					switch ( assmnt.getType() ) {
+					case GrowthLineTrackingILP.ASSIGNMENT_DIVISION:
+						if ( !( ( DivisionAssignment ) assmnt ).getUpperDesinationHypothesis().isPruneRoot() ) {
+							queue.add( ( ( DivisionAssignment ) assmnt ).getUpperDesinationHypothesis() );
+						}
+						if ( !( ( DivisionAssignment ) assmnt ).getLowerDesinationHypothesis().isPruneRoot() ) {
+							queue.add( ( ( DivisionAssignment ) assmnt ).getLowerDesinationHypothesis() );
+						}
+						break;
+					case GrowthLineTrackingILP.ASSIGNMENT_MAPPING:
+						if ( !( ( MappingAssignment ) assmnt ).getDestinationHypothesis().isPruneRoot() ) {
+							queue.add( ( ( MappingAssignment ) assmnt ).getDestinationHypothesis() );
+						}
+						break;
+					}
+				}
+			} catch ( final GRBException e ) {
+//				e.printStackTrace();
+			}
+		}
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isPruneRoot() {
+		return isPruneRoot;
+	}
+
+	/**
+	 * @param value
+	 */
+	public void setPruned( final boolean value ) {
+		this.isPruned = value;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isPruned() {
+		return this.isPruned;
 	}
 }

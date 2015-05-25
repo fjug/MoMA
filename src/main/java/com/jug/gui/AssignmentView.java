@@ -384,14 +384,13 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 
 		// draw it!
 		g2.setStroke( new BasicStroke( 1 ) );
-		if ( ma.isGroundTruth() ) {
-			g2.setPaint( new Color( 160 / 256f, 200 / 256f, 180 / 256f, 0.6f ) );
-		} else if ( ma.isGroundUntruth() ) {
-			g2.setPaint( new Color( 256 / 256f, 50 / 256f, 50 / 256f, 0.6f ) );
-		} else {
+		if ( !ma.isPruned() ) {
 			g2.setPaint( new Color( 25 / 256f, 65 / 256f, 165 / 256f, 0.2f ) );
+			if ( ma.isGroundTruth() || ma.isGroundUntruth() ) {
+				g2.setPaint( g2.getColor().brighter().brighter() );
+			}
+			g2.fill( polygon );
 		}
-		g2.fill( polygon );
 		if ( ma.isGroundTruth() ) {
 			g2.setPaint( Color.GREEN.darker() );
 			g2.setStroke( new BasicStroke( 3 ) );
@@ -495,14 +494,13 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 
 		// draw it!
 		g2.setStroke( new BasicStroke( 1 ) );
-		if ( da.isGroundTruth() ) {
-			g2.setPaint( new Color( 160 / 256f, 200 / 256f, 180 / 256f, 0.6f ) );
-		} else if ( da.isGroundUntruth() ) {
-			g2.setPaint( new Color( 256 / 256f, 50 / 256f, 50 / 256f, 0.6f ) );
-		} else {
+		if ( !da.isPruned() ) {
 			g2.setPaint( new Color( 250 / 256f, 150 / 256f, 40 / 256f, 0.2f ) );
+			if ( da.isGroundTruth() || da.isGroundUntruth() ) {
+				g2.setPaint( g2.getColor().brighter().brighter() );
+			}
+			g2.fill( polygon );
 		}
-		g2.fill( polygon );
 		if ( da.isGroundTruth() ) {
 			g2.setPaint( Color.GREEN.darker() );
 			g2.setStroke( new BasicStroke( 3 ) );
@@ -573,14 +571,13 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 
 		// draw it!
 		g2.setStroke( new BasicStroke( 1 ) );
-		if ( ea.isGroundTruth() ) {
-			g2.setPaint( new Color( 160 / 256f, 200 / 256f, 180 / 256f, 0.6f ) );
-		} else if ( ea.isGroundUntruth() ) {
-			g2.setPaint( new Color( 256 / 256f, 50 / 256f, 50 / 256f, 0.6f ) );
-		} else {
+		if ( !ea.isPruned() ) {
 			g2.setPaint( new Color( 1f, 0f, 0f, 0.2f ) );
+			if ( ea.isGroundTruth() || ea.isGroundUntruth() ) {
+				g2.setPaint( g2.getColor().brighter().brighter() );
+			}
+			g2.fillRect( x1, y1, x2 - x1, y2 - y1 );
 		}
-		g2.fillRect( x1, y1, x2 - x1, y2 - y1 );
 		if ( ea.isGroundTruth() ) {
 			g2.setPaint( Color.GREEN.darker() );
 			g2.setStroke( new BasicStroke( 3 ) );

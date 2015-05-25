@@ -143,9 +143,11 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 				projector.map();
 			}
 			glf.drawCenterLine( screenImage, view );
-			//TODO NOT nice... do something against that, please!
 			final int t = glf.getParent().getFrames().indexOf( glf );
+
+			// DRAW OPTIMAL SEGMENTATION + PRUNE-COLORING
 			glf.drawOptimalSegmentation( screenImage, view, glf.getParent().getIlp().getOptimalSegmentation( t ) );
+
 		} catch ( final ArrayIndexOutOfBoundsException e ) {
 			// this can happen if a growth line, due to shift, exists in one
 			// frame, and does not exist in others.
@@ -216,18 +218,37 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 		final GrowthLineTrackingILP ilp = glf.getParent().getIlp();
 
 		if ( e.isControlDown() ) {
-			final List< Hypothesis< Component< FloatType, ? >>> hyps2avoid = ilp.getSegmentsAtLocation( t, this.mousePosY );
-			try {
-				for ( final Hypothesis< Component< FloatType, ? >> hyp2avoid : hyps2avoid ) {
-					if ( hyp2avoid.getSegmentSpecificConstraint() != null ) {
-						ilp.model.remove( hyp2avoid.getSegmentSpecificConstraint() );
+			if ( e.isShiftDown() ) {
+				// ctrl + shift == PRUNING
+				// -----------------------
+				final List< Hypothesis< Component< FloatType, ? >>> hypsUnderMouse =
+						ilp.getSegmentsAtLocation( t, this.mousePosY );
+				for ( final Hypothesis< Component< FloatType, ? >> hyp : hypsUnderMouse ) {
+					if ( ilp.isSelected( hyp ) ) {
+						hyp.setPruneRoot( !hyp.isPruneRoot(), ilp );
 					}
-					ilp.addSegmentNotInSolutionConstraint( hyp2avoid );
 				}
-			} catch ( final GRBException e1 ) {
-				e1.printStackTrace();
+				mmgui.dataToDisplayChanged();
+				return; // avoid re-optimization!
+			} else {
+				// ctrl alone == AVOIDING
+				// ----------------------
+				final List< Hypothesis< Component< FloatType, ? >>> hyps2avoid =
+						ilp.getSegmentsAtLocation( t, this.mousePosY );
+				try {
+					for ( final Hypothesis< Component< FloatType, ? >> hyp2avoid : hyps2avoid ) {
+						if ( hyp2avoid.getSegmentSpecificConstraint() != null ) {
+							ilp.model.remove( hyp2avoid.getSegmentSpecificConstraint() );
+						}
+						ilp.addSegmentNotInSolutionConstraint( hyp2avoid );
+					}
+				} catch ( final GRBException e1 ) {
+					e1.printStackTrace();
+				}
 			}
 		} else {
+			// simple click == SELECTING
+			// -------------------------
 			final Hypothesis< Component< FloatType, ? >> hyp2add = ilp.getLowestInTreeHypAt( t, this.mousePosY );
 			final List< Hypothesis< Component< FloatType, ? >>> hyps2remove = ilp.getOptimalSegmentationsInConflict( t, hyp2add );
 
