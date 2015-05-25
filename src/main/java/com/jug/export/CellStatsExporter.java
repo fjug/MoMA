@@ -54,6 +54,7 @@ public class CellStatsExporter {
 	final class SegmentRecord {
 
 		private static final int ENDOFTRACKING = 1234;
+		private static final int USER_PRUNING = 4321;
 
 		private static final int UNKNOWN = 0;
 		private static final int LOWER = 1;
@@ -119,6 +120,7 @@ public class CellStatsExporter {
 		public SegmentRecord nextSegmentInTime( final GrowthLineTrackingILP ilp ) {
 			SegmentRecord ret = this;
 
+			exists = true;
 			try {
 				final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> rightAssmt = ilp.getOptimalRightAssignment( this.hyp );
 				if ( rightAssmt == null ) {
@@ -126,8 +128,13 @@ public class CellStatsExporter {
 					terminated_by = SegmentRecord.ENDOFTRACKING;
 				} else if ( rightAssmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ) {
 					final MappingAssignment ma = ( MappingAssignment ) rightAssmt;
-					ret = new SegmentRecord( this );
-					ret.hyp = ma.getDestinationHypothesis();
+					if ( !ma.isPruned() ) {
+						ret = new SegmentRecord( this );
+						ret.hyp = ma.getDestinationHypothesis();
+					} else {
+						terminated_by = SegmentRecord.USER_PRUNING;
+						exists = false;
+					}
 				} else {
 					terminated_by = rightAssmt.getType();
 					exists = false;
@@ -285,7 +292,9 @@ public class CellStatsExporter {
 	 */
 	public void exportCellStats( final File file ) throws GRBException {
 
+		// ------- THE MAGIC *** THE MAGIC *** THE MAGIC *** THE MAGIG -------
 		final Vector< String > linesToExport = getCellStatsExportData();
+		// -------------------------------------------------------------------
 
 		System.out.println( "Exporting collected cell-statistics..." );
 		Writer out = null;
@@ -317,7 +326,8 @@ public class CellStatsExporter {
 
 		final GrowthLineFrame firstGLF = gui.model.getCurrentGL().getFrames().get( 0 );
 		final GrowthLineTrackingILP ilp = firstGLF.getParent().getIlp();
-		final Vector< ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> > segmentsInFirstFrame = firstGLF.getSortedActiveHypsAndPos();
+		final Vector< ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> > segmentsInFirstFrame =
+				firstGLF.getSortedActiveHypsAndPos();
 		final List< SegmentRecord > startingPoints = new ArrayList< SegmentRecord >();
 
 		int nextCellId = 0;
@@ -330,7 +340,10 @@ public class CellStatsExporter {
 
 			final SegmentRecord prepPoint = new SegmentRecord( point );
 			prepPoint.hyp = point.hyp;
-			queue.add( prepPoint );
+
+			if ( !prepPoint.hyp.isPruned() ) {
+				queue.add( prepPoint );
+			}
 		}
 		while ( !queue.isEmpty() ) {
 			final SegmentRecord prepPoint = queue.poll();
@@ -345,7 +358,9 @@ public class CellStatsExporter {
 				final MappingAssignment ma = ( MappingAssignment ) rightAssmt;
 				final SegmentRecord next = new SegmentRecord( prepPoint );
 				next.hyp = ma.getDestinationHypothesis();
-				queue.add( next );
+				if ( !prepPoint.hyp.isPruned() ) {
+					queue.add( next );
+				}
 			}
 			// DIVISON -- NEW CELLS ARE BORN CURRENT ONE ENDS
 			if ( rightAssmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION ) {
@@ -357,16 +372,20 @@ public class CellStatsExporter {
 				prepPoint.id = nextCellId;
 				prepPoint.hyp = da.getLowerDesinationHypothesis();
 				prepPoint.daughterType = SegmentRecord.LOWER;
-				startingPoints.add( prepPoint.clone() );
-				queue.add( new SegmentRecord( prepPoint ) );
-				nextCellId++;
+				if ( !prepPoint.hyp.isPruned() && !( prepPoint.tbirth > gui.sliderTime.getMaximum() ) ) {
+					startingPoints.add( prepPoint.clone() );
+					queue.add( new SegmentRecord( prepPoint ) );
+					nextCellId++;
+				}
 
 				prepPoint.id = nextCellId;
 				prepPoint.hyp = da.getUpperDesinationHypothesis();
 				prepPoint.daughterType = SegmentRecord.UPPER;
-				startingPoints.add( prepPoint.clone() );
-				queue.add( new SegmentRecord( prepPoint ) );
-				nextCellId++;
+				if ( !prepPoint.hyp.isPruned() && !( prepPoint.tbirth > gui.sliderTime.getMaximum() ) ) {
+					startingPoints.add( prepPoint.clone() );
+					queue.add( new SegmentRecord( prepPoint ) );
+					nextCellId++;
+				}
 			}
 		}
 
@@ -421,6 +440,7 @@ public class CellStatsExporter {
 //						Util.getSegmentBoxPixelCount( segmentRecord.hyp, firstGLF.getAvgXpos() ),
 //						estimatedSize ) );
 
+				// WARNING -- if you change substring 'frame' you need also to change the last-row-deletion procedure below for the ENDOFTRACKING case... yes, this is not clean... ;)
 				linesToExport.add( String.format(
 						"\tframe=%d; pixel_limits=[%d,%d]; cell_height=%.2f; num_pixels_in_box=%d",
 						segmentRecord.frame,
@@ -489,12 +509,16 @@ public class CellStatsExporter {
 				linesToExport.add( "\tEXIT\n" );
 			} else if ( segmentRecord.terminated_by == GrowthLineTrackingILP.ASSIGNMENT_DIVISION ) {
 				linesToExport.add( "\tDIVISION\n" );
+			} else if ( segmentRecord.terminated_by == SegmentRecord.USER_PRUNING ) {
+				linesToExport.add( "\tUSER_PRUNING\n" );
 			} else if ( segmentRecord.terminated_by == SegmentRecord.ENDOFTRACKING ) {
-				// UGLY TRICK ALERT: remember the trick to fix the tracking towards the last frame?
-				// Yes, we double the last frame. This also means that we should not export this fake frame, ergo we remove it here!
-				for ( int i = 0; i < MotherMachine.instance.getRawChannelImgs().size() + 1; i++ ) {
-					linesToExport.remove( linesToExport.size() - 1 );
+//				// UGLY TRICK ALERT: remember the trick to fix the tracking towards the last frame?
+//				// Yes, we double the last frame. This also means that we should not export this fake frame, ergo we remove it here!
+				String deleted = "";
+				do {
+					deleted = linesToExport.remove( linesToExport.size() - 1 );
 				}
+				while ( !deleted.trim().startsWith( "frame" ) );
 				linesToExport.add( "\tENDOFDATA\n" );
 			} else {
 				linesToExport.add( "\tGUROBI_EXCEPTION\n" );

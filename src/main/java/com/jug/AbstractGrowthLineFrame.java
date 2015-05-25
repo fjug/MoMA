@@ -792,7 +792,9 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 				max = Math.max( max, ypos );
 			}
 
-			positionedHyps.add( new ValuePair< Integer, Hypothesis< Component< FloatType, ? >> >( -max, hyp ) );
+			if ( !hyp.isPruned() ) {
+				positionedHyps.add( new ValuePair< Integer, Hypothesis< Component< FloatType, ? >> >( -max, hyp ) );
+			}
 		}
 
 		Collections.sort( positionedHyps, new Comparator< ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> >() {
