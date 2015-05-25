@@ -90,6 +90,7 @@ public class CostFactory {
 		final Pair< Integer, Integer > segInterval = ComponentTreeUtils.getTreeNodeInterval( ctNode );
 		final int a = segInterval.getA().intValue();
 		final int b = segInterval.getB().intValue();
+		final int segLen = b-a;
 
 		// 'reduced' in this context means the part inside interval [a,b] that lies between local minima
 		// closest to a (towards the right) and b (towards the left).
@@ -115,11 +116,15 @@ public class CostFactory {
 		float cost = -( maxRimHeight - reducedMaxHeight ) + MotherMachine.MIN_GAP_CONTRAST;
 
 		// Special case: min-value is above average gap-sep-fkt value (happens often at the very top)
-		final float avgFktValue = SimpleFunctionAnalysis.getSum( gapSepFkt ) / ( gapSepFkt.length - 1 );
+		// * Note: we compare median value with average obtained +- some context above and below because
+		// * sometimes there are some cells in a brighter band on top fraction of GL.
+		final int localA = Math.max( a - 150, 0 );
+		final int localB = Math.min( b + 150, gapSepFkt.length - 1 );
+		final float avgFktValue = SimpleFunctionAnalysis.getSum( gapSepFkt, localA, localB ) / ( localB-localA );
 		final float medianSegmentValue = SimpleFunctionAnalysis.getMedian( gapSepFkt, a, b );
 		final float distAboveAvg = medianSegmentValue - avgFktValue;
 		if ( distAboveAvg > 0f ) {
-			cost += ( distAboveAvg + 0.05 ) * Math.pow( 1 + ( distAboveAvg + 0.05 ), 8.0 );
+			cost += distAboveAvg * Math.pow( 1 + distAboveAvg, 8.0 );
 		}
 
 		// cell is too small
