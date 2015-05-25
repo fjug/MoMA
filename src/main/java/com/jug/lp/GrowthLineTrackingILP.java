@@ -1840,12 +1840,6 @@ public class GrowthLineTrackingILP {
 				ignoreSegmentsAt( i );
 			}
 		}
-		try {
-			model.update();
-		} catch ( final GRBException e ) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 
 	/**
@@ -1903,12 +1897,6 @@ public class GrowthLineTrackingILP {
 		}
 		for ( int i = t + 1; i < gl.size(); i++ ) {
 			unfreezeAssignmentsFor( i );
-		}
-		try {
-			model.update();
-		} catch ( final GRBException e ) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 	}
 

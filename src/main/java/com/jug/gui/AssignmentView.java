@@ -377,7 +377,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 					g2.drawString( String.format( "c=%.4f", cost ), DISPLAY_COSTS_ABSOLUTE_X, this.mousePosY + OFFSET_DISPLAY_COSTS - this.currentCostLine * LINEHEIGHT_DISPLAY_COSTS );
 					this.currentCostLine++;
 				} catch ( final GRBException e ) {
-					e.printStackTrace();
+//					e.printStackTrace();
 				}
 			}
 		}
@@ -488,7 +488,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 					g2.drawString( String.format( "c=%.4f", cost ), DISPLAY_COSTS_ABSOLUTE_X, this.mousePosY + OFFSET_DISPLAY_COSTS - this.currentCostLine * LINEHEIGHT_DISPLAY_COSTS );
 					this.currentCostLine++;
 				} catch ( final GRBException e ) {
-					e.printStackTrace();
+//					e.printStackTrace();
 				}
 			}
 		}
@@ -566,7 +566,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 					g2.drawString( String.format( "c=%.4f", cost ), 10, this.mousePosY - 10 - this.currentCostLine * 20 );
 					this.currentCostLine++;
 				} catch ( final GRBException e ) {
-					e.printStackTrace();
+//					e.printStackTrace();
 				}
 			}
 		}
