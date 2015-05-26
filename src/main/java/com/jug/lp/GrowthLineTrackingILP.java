@@ -27,10 +27,10 @@ import java.util.Set;
 import javax.swing.JOptionPane;
 
 import net.imglib2.Localizable;
-import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.algorithm.componenttree.ComponentForest;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.ValuePair;
 
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
@@ -499,8 +499,8 @@ public class GrowthLineTrackingILP {
 		final float valueFrom = from.getWrappedHypothesis().value().get();
 		final float valueTo = to.getWrappedHypothesis().value().get();
 
-		final Pair< Integer, Integer > intervalFrom = from.getLocation();
-		final Pair< Integer, Integer > intervalTo = to.getLocation();
+		final ValuePair< Integer, Integer > intervalFrom = from.getLocation();
+		final ValuePair< Integer, Integer > intervalTo = to.getLocation();
 
 		final float oldPosU = intervalFrom.getA().intValue();
 		final float newPosU = intervalTo.getA().intValue();
@@ -611,9 +611,9 @@ public class GrowthLineTrackingILP {
 		final float valueFrom = from.getWrappedHypothesis().value().get();
 		final float valueTo = 0.5f * ( toUpper.getWrappedHypothesis().value().get() + toLower.getWrappedHypothesis().value().get() );
 
-		final Pair< Integer, Integer > intervalFrom = from.getLocation();
-		final Pair< Integer, Integer > intervalToU = toUpper.getLocation();
-		final Pair< Integer, Integer > intervalToL = toLower.getLocation();
+		final ValuePair< Integer, Integer > intervalFrom = from.getLocation();
+		final ValuePair< Integer, Integer > intervalToU = toUpper.getLocation();
+		final ValuePair< Integer, Integer > intervalToL = toLower.getLocation();
 
 		final float oldPosU = intervalFrom.getA().intValue();
 		final float newPosU = intervalToU.getA().intValue();
@@ -918,7 +918,8 @@ public class GrowthLineTrackingILP {
 	public Hypothesis< Component< FloatType, ? >> getOptimalSegmentationAtLocation( final int t, final int gapSepYPos ) {
 		final List< Hypothesis< Component< FloatType, ? >>> hyps = getOptimalHypotheses( t );
 		for ( final Hypothesis< Component< FloatType, ? >> h : hyps ) {
-			final Pair< Integer, Integer > ctnLimits = ComponentTreeUtils.getTreeNodeInterval( h.getWrappedHypothesis() );
+			final ValuePair< Integer, Integer > ctnLimits =
+					ComponentTreeUtils.getTreeNodeInterval( h.getWrappedHypothesis() );
 			if ( ctnLimits.getA().intValue() <= gapSepYPos && ctnLimits.getB().intValue() >= gapSepYPos ) { return h; }
 		}
 		return null;
@@ -939,13 +940,15 @@ public class GrowthLineTrackingILP {
 	public List< Hypothesis< Component< FloatType, ? >>> getOptimalSegmentationsInConflict( final int t, final Hypothesis< Component< FloatType, ? >> hyp ) {
 		final List< Hypothesis< Component< FloatType, ? >>> ret = new ArrayList< Hypothesis< Component< FloatType, ? >>>();
 
-		final Pair< Integer, Integer > interval = ComponentTreeUtils.getTreeNodeInterval( hyp.getWrappedHypothesis() );
+		final ValuePair< Integer, Integer > interval =
+				ComponentTreeUtils.getTreeNodeInterval( hyp.getWrappedHypothesis() );
 		final int startpos = interval.getA();
 		final int endpos = interval.getB();
 
 		final List< Hypothesis< Component< FloatType, ? >>> hyps = getOptimalHypotheses( t );
 		for ( final Hypothesis< Component< FloatType, ? >> h : hyps ) {
-			final Pair< Integer, Integer > ctnLimits = ComponentTreeUtils.getTreeNodeInterval( h.getWrappedHypothesis() );
+			final ValuePair< Integer, Integer > ctnLimits =
+					ComponentTreeUtils.getTreeNodeInterval( h.getWrappedHypothesis() );
 			if ( ( ctnLimits.getA().intValue() <= startpos && ctnLimits.getB().intValue() >= startpos ) || // overlap at top
 			( ctnLimits.getA().intValue() <= endpos && ctnLimits.getB().intValue() >= endpos ) ||    // overlap at bottom
 			( ctnLimits.getA().intValue() >= startpos && ctnLimits.getB().intValue() <= endpos ) ) {  // fully contained inside
@@ -965,7 +968,8 @@ public class GrowthLineTrackingILP {
 
 		final List< Hypothesis< Component< FloatType, ? >>> hyps = nodes.getHypothesesAt( t );
 		for ( final Hypothesis< Component< FloatType, ? >> h : hyps ) {
-			final Pair< Integer, Integer > ctnLimits = ComponentTreeUtils.getTreeNodeInterval( h.getWrappedHypothesis() );
+			final ValuePair< Integer, Integer > ctnLimits =
+					ComponentTreeUtils.getTreeNodeInterval( h.getWrappedHypothesis() );
 			if ( ctnLimits.getA().intValue() <= gapSepYPos && ctnLimits.getB().intValue() >= gapSepYPos ) {  // fully contained inside
 				ret.add( h );
 			}

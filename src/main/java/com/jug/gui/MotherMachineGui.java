@@ -43,6 +43,7 @@ import javax.swing.event.ChangeListener;
 
 import loci.formats.gui.ExtensionFileFilter;
 import net.imglib2.Localizable;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.algorithm.componenttree.ComponentForest;
 import net.imglib2.converter.Converters;
@@ -833,12 +834,26 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemChannel1 ) ) {
 				final IntervalView< FloatType > viewToShow = Views.hyperSlice( model.mm.getRawChannelImgs().get( 1 ), 2, glf.getOffsetF() );
 				Util.computeMinMax( Views.iterable( viewToShow ), min, max );
-				viewImgCenterActive = Views.offset( Converters.convert( viewToShow, new RealFloatNormalizeConverter( max.get() ), new FloatType() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+				viewImgCenterActive =
+						Views.offset(
+								Converters.convert(
+										( RandomAccessibleInterval< FloatType > ) viewToShow,
+										new RealFloatNormalizeConverter( max.get() ),
+										new FloatType() ),
+								glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS,
+								glf.getOffsetY() );
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
 			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemChannel2 ) ) {
 				final IntervalView< FloatType > viewToShow = Views.hyperSlice( model.mm.getRawChannelImgs().get( 2 ), 2, glf.getOffsetF() );
 				Util.computeMinMax( Views.iterable( viewToShow ), min, max );
-				viewImgCenterActive = Views.offset( Converters.convert( viewToShow, new RealFloatNormalizeConverter( max.get() ), new FloatType() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+				viewImgCenterActive =
+						Views.offset(
+								Converters.convert(
+										( RandomAccessibleInterval< FloatType > ) viewToShow,
+										new RealFloatNormalizeConverter( max.get() ),
+										new FloatType() ),
+								glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS,
+								glf.getOffsetY() );
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
 //			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemClassified ) ) {
 //				final Thread t = new Thread() {

@@ -5,9 +5,9 @@ package com.jug.lp.costs;
 
 import java.util.List;
 
-import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.ValuePair;
 
 import com.jug.MotherMachine;
 import com.jug.lp.Hypothesis;
@@ -87,7 +87,8 @@ public class CostFactory {
 	 * @return
 	 */
 	public static float getIntensitySegmentationCost( final Component< ?, ? > ctNode, final float[] gapSepFkt ) {
-		final Pair< Integer, Integer > segInterval = ComponentTreeUtils.getTreeNodeInterval( ctNode );
+		final ValuePair< Integer, Integer > segInterval =
+				ComponentTreeUtils.getTreeNodeInterval( ctNode );
 		final int a = segInterval.getA().intValue();
 		final int b = segInterval.getB().intValue();
 		final int segLen = b-a;
@@ -140,7 +141,8 @@ public class CostFactory {
 	 * @return
 	 */
 	public static float getParamaxflowSegmentationCost( final Component< ?, ? > ctNode, final float[] gapSepFkt ) {
-		final Pair< Integer, Integer > segInterval = ComponentTreeUtils.getTreeNodeInterval( ctNode );
+		final ValuePair< Integer, Integer > segInterval =
+				ComponentTreeUtils.getTreeNodeInterval( ctNode );
 		final int a = segInterval.getA().intValue();
 		final int b = segInterval.getB().intValue();
 

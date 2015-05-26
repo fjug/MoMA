@@ -8,9 +8,9 @@ import gurobi.GRBException;
 
 import java.util.LinkedList;
 
-import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.ValuePair;
 
 import com.jug.util.ComponentTreeUtils;
 import com.jug.util.filteredcomponents.FilteredComponent;
@@ -29,7 +29,7 @@ public class Hypothesis< T extends Component< FloatType, ? > > {
 	public class HypLoc {
 
 		protected int t = -1;
-		protected Pair< Integer, Integer > limits;
+		protected ValuePair< Integer, Integer > limits;
 
 		public HypLoc( final int t, final T segment ) {
 			this.t = t;
@@ -115,7 +115,7 @@ public class Hypothesis< T extends Component< FloatType, ? > > {
 		this.segmentSpecificConstraint = constr;
 	}
 
-	public Pair< Integer, Integer > getLocation() {
+	public ValuePair< Integer, Integer > getLocation() {
 		return location.limits;
 	}
 

@@ -21,7 +21,6 @@ import java.util.Vector;
 import javax.swing.JOptionPane;
 
 import net.imglib2.IterableInterval;
-import net.imglib2.Pair;
 import net.imglib2.Point;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.histogram.Histogram1d;
@@ -413,7 +412,8 @@ public class CellStatsExporter {
 
 			linesToExport.add( segmentRecord.toString() );
 			do {
-				Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( segmentRecord.hyp.getWrappedHypothesis() );
+				ValuePair< Integer, Integer > limits =
+						ComponentTreeUtils.getTreeNodeInterval( segmentRecord.hyp.getWrappedHypothesis() );
 				if ( segmentRecord.hyp.getWrappedHypothesis() instanceof FilteredComponent ) {
 					limits = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) segmentRecord.hyp.getWrappedHypothesis() );
 				}

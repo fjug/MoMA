@@ -241,13 +241,13 @@ public class MotherMachine {
 	 * Width (in pixels) of the main GUI-window. This value will be loaded from
 	 * and stored in the properties file!
 	 */
-	private static int GUI_WIDTH = 800;
+	private static int GUI_WIDTH = 620;
 
 	/**
 	 * Width (in pixels) of the main GUI-window. This value will be loaded from
 	 * and stored in the properties file!
 	 */
-	private static int GUI_HEIGHT = 630;
+	private static int GUI_HEIGHT = 740;
 
 	/**
 	 * Width (in pixels) of the console window. This value will be loaded from
@@ -272,8 +272,8 @@ public class MotherMachine {
 	 * tracking solution. (After that period of time GUROBI will stop and best
 	 * solution found so far will be used.)
 	 */
-	public static double GUROBI_TIME_LIMIT = 30.0;
-	public static double GUROBI_MAX_OPTIMALITY_GAP = 1.00;
+	public static double GUROBI_TIME_LIMIT = 15.0;
+	public static double GUROBI_MAX_OPTIMALITY_GAP = 0.99;
 
 	/**
 	 * Control if ImageJ and loaded data will be shown...

@@ -15,11 +15,11 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 import net.imglib2.IterableInterval;
-import net.imglib2.Pair;
 import net.imglib2.Point;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.integer.ShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.ValuePair;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
@@ -235,7 +235,7 @@ public class Util {
 	 * @return
 	 */
 	private static long[] getTopLeftInSourceImg( final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long middle ) {
-		final Pair< Integer, Integer > limits = hyp.getLocation();
+		final ValuePair< Integer, Integer > limits = hyp.getLocation();
 		final long left = middle - MotherMachine.GL_WIDTH_IN_PIXELS / 2;
 		final long top = limits.getA() + MotherMachine.GL_OFFSET_TOP;;
 		return new long[] { left, top };
@@ -246,7 +246,7 @@ public class Util {
 	 * @return
 	 */
 	private static long[] getRightBottomInSourceImg( final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long middle ) {
-		final Pair< Integer, Integer > limits = hyp.getLocation();
+		final ValuePair< Integer, Integer > limits = hyp.getLocation();
 		final long right = middle + MotherMachine.GL_WIDTH_IN_PIXELS / 2 + MotherMachine.GL_WIDTH_IN_PIXELS % 2 - 1;
 		final long bottom = limits.getB() + MotherMachine.GL_OFFSET_TOP;
 		return new long[] { right, bottom };

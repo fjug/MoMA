@@ -62,7 +62,10 @@ public final class FilteredComponentTree< T extends Type< T > > implements Compo
 		for ( int d = 0; d < numDimensions; ++d )
 			size *= input.dimension( d );
 		if( size > Integer.MAX_VALUE ) {
-			final int cellSize = ( int ) Math.pow( Integer.MAX_VALUE / new LongType().getEntitiesPerPixel(), 1.0 / numDimensions );
+			final int cellSize =
+					( int ) Math.pow(
+							Integer.MAX_VALUE / new LongType().getEntitiesPerPixel().getRatio(), //TODO Tobi, is das ok?
+							1.0 / numDimensions );
 			return buildComponentTree( input, type, new CellImgFactory< LongType >( cellSize ), minComponentSize, maxComponentSize, darkToBright );
 		} else
 			return buildComponentTree( input, type, new ArrayImgFactory< LongType >(), minComponentSize, maxComponentSize, darkToBright );

@@ -20,9 +20,9 @@ import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import javax.swing.event.MouseInputListener;
 
-import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.ValuePair;
 
 import com.jug.MotherMachine;
 import com.jug.lp.AbstractAssignment;
@@ -317,8 +317,8 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		final Hypothesis< Component< FloatType, ? >> leftHyp = ma.getSourceHypothesis();
 		final Hypothesis< Component< FloatType, ? >> rightHyp = ma.getDestinationHypothesis();
 
-		final Pair< Integer, Integer > limitsLeft = leftHyp.getLocation();
-		final Pair< Integer, Integer > limitsRight = rightHyp.getLocation();
+		final ValuePair< Integer, Integer > limitsLeft = leftHyp.getLocation();
+		final ValuePair< Integer, Integer > limitsRight = rightHyp.getLocation();
 
 		final int x1 = 0;
 		final int y1 = offsetY + limitsLeft.getA().intValue();
@@ -417,9 +417,9 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		final Hypothesis< Component< FloatType, ? >> rightHypUpper = da.getUpperDesinationHypothesis();
 		final Hypothesis< Component< FloatType, ? >> rightHypLower = da.getLowerDesinationHypothesis();
 
-		final Pair< Integer, Integer > limitsLeft = leftHyp.getLocation();
-		final Pair< Integer, Integer > limitsRightUpper = rightHypUpper.getLocation();
-		final Pair< Integer, Integer > limitsRightLower = rightHypLower.getLocation();
+		final ValuePair< Integer, Integer > limitsLeft = leftHyp.getLocation();
+		final ValuePair< Integer, Integer > limitsRightUpper = rightHypUpper.getLocation();
+		final ValuePair< Integer, Integer > limitsRightLower = rightHypLower.getLocation();
 
 		final int x1 = 0;
 		final int y1 = offsetY + limitsLeft.getA().intValue();
@@ -524,7 +524,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 */
 	private void drawExitAssignment( final Graphics g, final Graphics2D g2, final ExitAssignment ea, final Dimension size ) {
 		final Hypothesis< Component< FloatType, ? >> hyp = ea.getAssociatedHypothesis();
-		final Pair< Integer, Integer > limits = hyp.getLocation();
+		final ValuePair< Integer, Integer > limits = hyp.getLocation();
 
 		final int x1 = 0;
 		final int x2 = this.getWidth() / 5;

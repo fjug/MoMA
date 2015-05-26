@@ -8,7 +8,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import net.imglib2.Localizable;
-import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.algorithm.componenttree.ComponentForest;
 import net.imglib2.algorithm.componenttree.ComponentTree;
@@ -60,8 +59,8 @@ public class ComponentTreeUtils {
 	public static boolean isAbove(
 			final Hypothesis< Component< FloatType, ? >> candidate,
 			final Hypothesis< Component< FloatType, ? >> hyp ) {
-		final Pair< Integer, Integer > candMinMax = candidate.getLocation();
-		final Pair< Integer, Integer > refMinMax = hyp.getLocation();
+		final ValuePair< Integer, Integer > candMinMax = candidate.getLocation();
+		final ValuePair< Integer, Integer > refMinMax = hyp.getLocation();
 		return candMinMax.getB().intValue() < refMinMax.getA().intValue();
 	}
 
@@ -74,8 +73,8 @@ public class ComponentTreeUtils {
 			final Hypothesis< Component< FloatType, ? >> to,
 			final Hypothesis< Component< FloatType, ? >> from,
 			final int numPixels ) {
-		final Pair< Integer, Integer > candMinMax = to.getLocation();
-		final Pair< Integer, Integer > refMinMax = from.getLocation();
+		final ValuePair< Integer, Integer > candMinMax = to.getLocation();
+		final ValuePair< Integer, Integer > refMinMax = from.getLocation();
 		return ( candMinMax.getA().intValue() - refMinMax.getB().intValue() ) > numPixels;
 	}
 
@@ -92,7 +91,7 @@ public class ComponentTreeUtils {
 	 *         leftmost and rightmost point on the x-axis that is covered by
 	 *         this component-tree-node respectively.
 	 */
-	public static Pair< Integer, Integer > getTreeNodeInterval( final Component< ?, ? > node ) {
+	public static ValuePair< Integer, Integer > getTreeNodeInterval( final Component< ?, ? > node ) {
 		int min = Integer.MAX_VALUE;
 		int max = Integer.MIN_VALUE;
 		final Iterator< Localizable > componentIterator = node.iterator();
@@ -118,7 +117,8 @@ public class ComponentTreeUtils {
 	 *         this component-tree-node respectively.
 	 */
 	@SuppressWarnings( "unchecked" )
-	public static Pair< Integer, Integer > getExtendedTreeNodeInterval( final FilteredComponent< ? > node ) {
+	public static ValuePair< Integer, Integer > getExtendedTreeNodeInterval(
+			final FilteredComponent< ? > node ) {
 		int min = Integer.MAX_VALUE;
 		int max = Integer.MIN_VALUE;
 		final Iterator< Localizable > componentIterator = node.iteratorExtended();
@@ -132,7 +132,7 @@ public class ComponentTreeUtils {
 
 	// public static float[] getFunctionValues( final Component<
 	// FloatType, ? > node ) {
-	// Pair< Integer, Integer > interval = getTreeNodeInterval( node );
+	// ValuePair< Integer, Integer > interval = getTreeNodeInterval( node );
 	//
 	// float[] ret = new float[ interval.b.intValue() - interval.a.intValue()
 	// ];
