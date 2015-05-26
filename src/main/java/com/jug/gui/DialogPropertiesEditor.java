@@ -46,9 +46,15 @@ public class DialogPropertiesEditor extends JDialog implements ActionListener {
 			if ( sourceName.equals( "GUROBI_TIME_LIMIT" ) ) {
 				MotherMachine.GUROBI_TIME_LIMIT =
 						Double.parseDouble( evt.getNewValue().toString() );
+					MotherMachine.props.setProperty(
+							"GUROBI_TIME_LIMIT",
+							"" + MotherMachine.GUROBI_TIME_LIMIT );
 			} else if ( sourceName.equals( "GUROBI_MAX_OPTIMALITY_GAP" ) ) {
 				MotherMachine.GUROBI_MAX_OPTIMALITY_GAP =
 						Double.parseDouble( evt.getNewValue().toString() );
+					MotherMachine.props.setProperty(
+							"GUROBI_MAX_OPTIMALITY_GAP",
+							"" + MotherMachine.GUROBI_MAX_OPTIMALITY_GAP );
 			} else {
 				JOptionPane.showMessageDialog(
 						MotherMachine.getGui(),
@@ -183,7 +189,6 @@ public class DialogPropertiesEditor extends JDialog implements ActionListener {
 
 
 	private JButton bClose;
-	private JButton bCancel;
 	private final Properties props;
 
 	public DialogPropertiesEditor( final Component parent, final Properties props ) {
@@ -252,10 +257,6 @@ public class DialogPropertiesEditor extends JDialog implements ActionListener {
 	@Override
 	public void actionPerformed( final ActionEvent e ) {
 		if ( e.getSource().equals( bClose ) ) {
-			this.setVisible( false );
-			this.dispose();
-		}
-		if ( e.getSource().equals( bCancel ) ) {
 			this.setVisible( false );
 			this.dispose();
 		}
