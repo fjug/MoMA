@@ -41,7 +41,6 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import loci.formats.gui.ExtensionFileFilter;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.componenttree.Component;
@@ -54,6 +53,8 @@ import net.imglib2.view.Views;
 import net.miginfocom.swing.MigLayout;
 
 import org.math.plot.Plot2DPanel;
+
+import weka.gui.ExtensionFileFilter;
 
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
@@ -989,7 +990,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 							self,
 							MotherMachine.STATS_OUTPUT_PATH,
 							"Choose tracking to load...",
-							null );
+							new ExtensionFileFilter( "timm", "Curated TIMM tracking" ) );
 					System.out.println( "File to load tracking from: " + file.getAbsolutePath() );
 					try {
 						ilp.loadState( file );
@@ -1010,7 +1011,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 						this,
 						MotherMachine.STATS_OUTPUT_PATH,
 						"Save current tracking to...",
-						null );
+						new ExtensionFileFilter( "timm", "Curated TIMM tracking" ) );
 				System.out.println( "File to save tracking to: " + file.getAbsolutePath() );
 				ilp.saveState( file );
 			} else {

@@ -12,6 +12,8 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
+import weka.gui.ExtensionFileFilter;
+
 import com.jug.util.OSValidator;
 
 /**
@@ -133,7 +135,7 @@ public class OsDependentFileChooser {
 			final Component parent,
 			final String path,
 			final String title,
-			final FileFilter fileFilter ) {
+			final ExtensionFileFilter fileFilter ) {
 
 		JFrame frame = null;
 		try {
@@ -146,8 +148,24 @@ public class OsDependentFileChooser {
 
 			final FileDialog fd = new FileDialog( frame, title, FileDialog.SAVE );
 			fd.setDirectory( path );
+//			fd.setFile( "." + fileFilter.getExtensions() );
+			fd.setFilenameFilter( fileFilter );
 			fd.setVisible( true );
-			final File selectedFile = new File( fd.getDirectory() + "/" + fd.getFile() );
+
+			String extensionToAdd = "";
+			if ( fileFilter != null && fileFilter.getExtensions() != null && fileFilter.getExtensions().length != 0 ) {
+				boolean correct = false;
+				for ( final String extension : fileFilter.getExtensions() ) {
+					if ( fd.getFile().endsWith( extension ) ) {
+						correct = true;
+					}
+				}
+				if ( !correct ) {
+					extensionToAdd = "." + fileFilter.getExtensions()[ 0 ];
+				}
+			}
+			final File selectedFile =
+					new File( fd.getDirectory() + "/" + fd.getFile() + extensionToAdd );
 			if ( fd.getFile() == null ) { return null; }
 			return selectedFile;
 
@@ -183,7 +201,7 @@ public class OsDependentFileChooser {
 			final Component parent,
 			final String path,
 			final String title,
-			final FileFilter fileFilter ) {
+			final ExtensionFileFilter fileFilter ) {
 
 		JFrame frame = null;
 		try {
@@ -196,6 +214,7 @@ public class OsDependentFileChooser {
 
 			final FileDialog fd = new FileDialog( frame, title, FileDialog.LOAD );
 			fd.setDirectory( path );
+			fd.setFilenameFilter( fileFilter );
 			fd.setVisible( true );
 			final File selectedFile = new File( fd.getDirectory() + "/" + fd.getFile() );
 			if ( fd.getFile() == null ) { return null; }
