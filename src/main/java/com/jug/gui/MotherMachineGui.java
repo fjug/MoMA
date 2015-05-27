@@ -993,7 +993,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 							new ExtensionFileFilter( "timm", "Curated TIMM tracking" ) );
 					System.out.println( "File to load tracking from: " + file.getAbsolutePath() );
 					try {
-						ilp.loadState( file );
+						if ( file != null ) {
+							ilp.loadState( file );
+						}
 					} catch ( final IOException e1 ) {
 						e1.printStackTrace();
 					}
