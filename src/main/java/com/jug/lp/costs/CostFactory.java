@@ -46,10 +46,10 @@ public class CostFactory {
 			deltaL = Math.max( 0, deltaL - 0.05f ); // growing up 5% is free
 			power = 4.0f;
 		} else { // shrinkage
-			power = 12.0f;
+			power = 40.0f;
 		}
 		deltaL = Math.abs( deltaL );
-		costDeltaL = deltaL * ( float ) Math.pow( 1 + deltaL, power );
+		costDeltaL += deltaL * ( float ) Math.pow( 1 + deltaL, power );
 //		latestCostEvaluation = String.format( "c_l = %.4f * %.4f^%.1f = %.4f", deltaL, 1 + deltaL, power, costDeltaL );
 		return costDeltaL;
 	}
@@ -91,7 +91,7 @@ public class CostFactory {
 				ComponentTreeUtils.getTreeNodeInterval( ctNode );
 		final int a = segInterval.getA().intValue();
 		final int b = segInterval.getB().intValue();
-		final int segLen = b-a;
+		final int relSegLen = ( b - a ) / gapSepFkt.length;
 
 		// 'reduced' in this context means the part inside interval [a,b] that lies between local minima
 		// closest to a (towards the right) and b (towards the left).
@@ -112,9 +112,36 @@ public class CostFactory {
 		final float maxReduced = SimpleFunctionAnalysis.getMax( gapSepFkt, aReduced, bReduced ).b.floatValue();
 		final float min = SimpleFunctionAnalysis.getMin( gapSepFkt, a, b ).b.floatValue();
 
+		// The latest shitty hack: get max gradient in [a,b], then check if gradient at a or b is flatter
+		// and make the negative cost smaller if a or b have a flat gradient.
+		final int span = 2;
+		float[] diff = SimpleFunctionAnalysis.differentiateFloatArray( gapSepFkt, span );
+		diff = SimpleFunctionAnalysis.elementWiseAbs( diff );
+		final float maxDiff =
+				SimpleFunctionAnalysis.getMax(
+						diff,
+						Math.max( 0, a - span ),
+						Math.max( 0, Math.min( diff.length - 1, b - span ) ) ).b;
+		diff = SimpleFunctionAnalysis.elementWiseDivide( diff, maxDiff );
+		float avgBorderGradientDivisor =
+				1f / ( Math.min(
+						diff[ Math.max( 0, a - span ) ],
+						diff[ Math.max( 0, Math.min( diff.length - 1, b - span ) ) ] ) );
+		avgBorderGradientDivisor -= 1f;
+		avgBorderGradientDivisor /= 2;
+		avgBorderGradientDivisor += 1f;
+
 		final float maxRimHeight = Math.max( l, r ) - min;
 		final float reducedMaxHeight = maxReduced - min;
-		float cost = -( maxRimHeight - reducedMaxHeight ) + MotherMachine.MIN_GAP_CONTRAST;
+		final float averageSegmentValue = SimpleFunctionAnalysis.getAvg( gapSepFkt, a, b );
+		float cost =
+				-( maxRimHeight - reducedMaxHeight );
+//						+ ( float ) Math.pow( averageSegmentValue - min, .75 );
+//						+ MotherMachine.MIN_GAP_CONTRAST;
+		if ( cost < 0 ) {
+			cost /= avgBorderGradientDivisor;
+		}
+
 
 		// Special case: min-value is above average gap-sep-fkt value (happens often at the very top)
 		// * Note: we compare median value with average obtained +- some context above and below because
@@ -123,16 +150,16 @@ public class CostFactory {
 		final int localB = Math.min( b + 150, gapSepFkt.length - 1 );
 		final float avgFktValue = SimpleFunctionAnalysis.getSum( gapSepFkt, localA, localB ) / ( localB-localA );
 		final float medianSegmentValue = SimpleFunctionAnalysis.getMedian( gapSepFkt, a, b );
-		final float distAboveAvg = medianSegmentValue - avgFktValue;
-		if ( distAboveAvg > 0f ) {
-			cost += distAboveAvg * Math.pow( 1 + distAboveAvg, 8.0 );
+		final float distAboveMedian = medianSegmentValue - avgFktValue;
+		if ( distAboveMedian > 0f ) {
+			cost += distAboveMedian * Math.pow( 1 + distAboveMedian, 8.0 );
 		}
 
 		// cell is too small
 		if ( a > 0 && b + 1 < gapSepFkt.length && b - a < MotherMachine.MIN_CELL_LENGTH ) { // if a==0 or b==gapSepFkt.len, only a part of the cell is seen!
 			cost = 100;
 		}
-		return 2 * cost;
+		return cost * 2f;
 	}
 
 	/**

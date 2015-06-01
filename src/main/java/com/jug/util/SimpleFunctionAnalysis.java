@@ -12,7 +12,7 @@ import net.imglib2.util.ValuePair;
 
 /**
  * @author jug
- * 
+ *
  */
 public class SimpleFunctionAnalysis {
 
@@ -20,7 +20,7 @@ public class SimpleFunctionAnalysis {
 	 * Takes float function values and returns the location of all maxima.
 	 * that have some minimal specified lateral extent (see monotonicity
 	 * parameters '*FlankWidth').
-	 * 
+	 *
 	 * @param fktValues
 	 *            - discrete float function values.
 	 * @param minLeftFlankWidth
@@ -67,7 +67,7 @@ public class SimpleFunctionAnalysis {
 	 * all minima
 	 * that have some minimal specified lateral extent (see monotonicity
 	 * parameters '*FlankWidth').
-	 * 
+	 *
 	 * @param fktValues
 	 *            - discrete float function values.
 	 * @param minLeftFlankWidth
@@ -224,7 +224,8 @@ public class SimpleFunctionAnalysis {
 	public static float[] differentiateFloatArray( final float[] array, final int span ) {
 		final float[] ret = new float[ array.length - 2 * span ];
 		for ( int i = span; i < array.length - span; i++ ) {
-			ret[ i - span ] = .5f * ( ( array[ i - span ] - array[ i ] ) + ( array[ i ] - array[ i + span ] ) );
+			ret[ i - span ] =
+					.5f * ( ( array[ i ] - array[ i - span ] ) + ( array[ i + span ] - array[ i ] ) );
 		}
 		return ret;
 	}
@@ -497,6 +498,31 @@ public class SimpleFunctionAnalysis {
 		final float[] ret = new float[ fkt.length ];
 		for ( int i = 0; i < fkt.length; i++ ) {
 			ret[ i ] = fkt[ i ] + offset;
+		}
+		return ret;
+	}
+
+	/**
+	 * @param fkt
+	 * @param divisor
+	 * @return
+	 */
+	public static float[] elementWiseDivide( final float[] fkt, final float divisor ) {
+		final float[] ret = new float[ fkt.length ];
+		for ( int i = 0; i < fkt.length; i++ ) {
+			ret[ i ] = fkt[ i ] / divisor;
+		}
+		return ret;
+	}
+
+	/**
+	 * @param fkt
+	 * @return
+	 */
+	public static float[] elementWiseAbs( final float[] fkt ) {
+		final float[] ret = new float[ fkt.length ];
+		for ( int i = 0; i < fkt.length; i++ ) {
+			ret[ i ] = Math.abs( fkt[ i ] );
 		}
 		return ret;
 	}
