@@ -225,6 +225,8 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 		final int t = glf.getTime();
 		final GrowthLineTrackingILP ilp = glf.getParent().getIlp();
 
+		ilp.autosave();
+
 		if ( e.isControlDown() ) {
 			if ( e.isShiftDown() ) {
 				// ctrl + shift == PRUNING

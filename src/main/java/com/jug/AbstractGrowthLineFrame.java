@@ -423,7 +423,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 			if ( fkt.length - lastMaximaLoc < MotherMachine.MOTHER_CELL_BOTTOM_TRICK_MAX_PIXELS ) {
 				for ( int i = lastMaximaLoc; i < fkt.length; i++ ) {
-					fkt[ i ] = Math.max( fkt[ i - 1 ] + 0.0005f, fkt[ i ] );
+					fkt[ i ] = Math.max( fkt[ i - 1 ] + 0.005f, fkt[ i ] );
 				}
 			}
 		}

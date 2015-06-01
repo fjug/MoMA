@@ -47,7 +47,7 @@ public class CostFactory {
 			power = 4.0f;
 		} else { // shrinkage
 			power = 40.0f;
-			costDeltaL += ( newSize - oldSize ) * 0.01;
+			costDeltaL += ( newSize - oldSize ) * 0.00;
 		}
 		deltaL = Math.abs( deltaL );
 		costDeltaL += deltaL * ( float ) Math.pow( 1 + deltaL, power );

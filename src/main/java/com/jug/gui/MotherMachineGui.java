@@ -126,7 +126,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 //	private JButton btnRedoAllHypotheses;
 //	private JButton btnExchangeSegHyps;
-	private JButton btnReoptimize;
+	private JButton btnRestart;
 	private JButton btnOptimizeMore;
 	private JButton btnExportHtml;
 	private JButton btnExportData;
@@ -302,8 +302,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		// --- Controls ----------------------------------
 //		btnRedoAllHypotheses = new JButton( "Resegment" );
 //		btnRedoAllHypotheses.addActionListener( this );
-		btnReoptimize = new JButton( "Restart" );
-		btnReoptimize.addActionListener( this );
+		btnRestart = new JButton( "Restart" );
+		btnRestart.addActionListener( this );
 		btnOptimizeMore = new JButton( "Optimize" );
 		btnOptimizeMore.addActionListener( this );
 		btnExportHtml = new JButton( "Export HTML" );
@@ -315,7 +315,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.RIGHT, 5, 0 ) );
 		panelHorizontalHelper.setBorder( BorderFactory.createEmptyBorder( 3, 0, 5, 0 ) );
 //		panelHorizontalHelper.add( btnRedoAllHypotheses );
-		panelHorizontalHelper.add( btnReoptimize );
+		panelHorizontalHelper.add( btnRestart );
 		panelHorizontalHelper.add( btnOptimizeMore );
 		panelHorizontalHelper.add( btnExportHtml );
 		panelHorizontalHelper.add( btnExportData );
@@ -387,7 +387,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					btnExportData.doClick();
 				}
 				if ( e.getActionCommand().equals( "r" ) ) {
-					btnReoptimize.doClick();
+					btnRestart.doClick();
 				}
 				if ( e.getActionCommand().equals( "o" ) ) {
 					btnOptimizeMore.doClick();
@@ -440,6 +440,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 			@Override
 			public void actionPerformed( final ActionEvent e ) {
+				model.getCurrentGL().getIlp().autosave();
+
 				int numCells = 0;
 				final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
 				try {
@@ -1102,6 +1104,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 				@Override
 				public void run() {
+					model.getCurrentGL().getIlp().autosave();
+
 					setAllVariablesFixedWhereChecked();
 
 					System.out.println( "Finding optimal result..." );
@@ -1120,6 +1124,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 				@Override
 				public void run() {
+					model.getCurrentGL().getIlp().autosave();
+
 					setAllVariablesFreeWhereChecked();
 
 					System.out.println( "Finding optimal result..." );
@@ -1151,33 +1157,43 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			} );
 			t.start();
 		}
-		if ( e.getSource().equals( btnReoptimize ) ) {
-			final Thread t = new Thread( new Runnable() {
+		if ( e.getSource().equals( btnRestart ) ) {
+			final int choise =
+					JOptionPane.showConfirmDialog(
+							this,
+							"Do you really want to restart the optimization?\nYou will loose all manual edits performed so far!",
+							"Are you sure?",
+							JOptionPane.YES_NO_OPTION );
 
-				@Override
-				public void run() {
-					prepareOptimization();
+			if ( choise == JOptionPane.OK_OPTION ) {
+    			final Thread t = new Thread( new Runnable() {
 
-					if ( !( sliderTrackingRange.getUpperValue() == sliderTrackingRange.getMaximum() ) ) {
-						final int extent =
-								sliderTrackingRange.getUpperValue() - sliderTrackingRange.getValue();
-						sliderTrackingRange.setUpperValue( 0 + extent );
-					}
-					sliderTrackingRange.setValue( 0 );
+    				@Override
+    				public void run() {
+						model.getCurrentGL().getIlp().autosave();
 
-					model.getCurrentGL().getIlp().freezeBefore( sliderTrackingRange.getValue() );
-					model.getCurrentGL().getIlp().ignoreBeyond( sliderTrackingRange.getUpperValue() );
+    					prepareOptimization();
 
-					System.out.println( "Finding optimal result..." );
-					model.getCurrentGL().runILP();
-					System.out.println( "...done!" );
+    					if ( !( sliderTrackingRange.getUpperValue() == sliderTrackingRange.getMaximum() ) ) {
+    						final int extent =
+    								sliderTrackingRange.getUpperValue() - sliderTrackingRange.getValue();
+    						sliderTrackingRange.setUpperValue( 0 + extent );
+    					}
+    					sliderTrackingRange.setValue( 0 );
 
-					sliderTime.requestFocus();
-					dataToDisplayChanged();
-				}
+    					model.getCurrentGL().getIlp().freezeBefore( sliderTrackingRange.getValue() );
+    					model.getCurrentGL().getIlp().ignoreBeyond( sliderTrackingRange.getUpperValue() );
 
-			} );
-			t.start();
+    					System.out.println( "Finding optimal result..." );
+    					model.getCurrentGL().runILP();
+    					System.out.println( "...done!" );
+
+    					dataToDisplayChanged();
+    				}
+
+    			} );
+    			t.start();
+			}
 		}
 		if ( e.getSource().equals( btnOptimizeMore ) ) {
 			final Thread t = new Thread( new Runnable() {
@@ -1206,7 +1222,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					model.getCurrentGL().runILP();
 					System.out.println( "...done!" );
 
-					sliderTime.requestFocus();
 					dataToDisplayChanged();
 				}
 

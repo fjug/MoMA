@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -288,6 +287,11 @@ public class MotherMachine {
 	 */
 	private static File fileUserProps;
 
+	/**
+	 * Stores a string used to decorate filenames e.g. before export.
+	 */
+	private static String defaultFilenameDecoration;
+
 	// ====================================================================================================================
 
 	/**
@@ -328,7 +332,7 @@ public class MotherMachine {
 		outfolder.setRequired( false );
 
 		final Option userProps = new Option( "p", "props", true, "properties file to be loaded (mm.properties)" );
-		infolder.setRequired( false );
+		userProps.setRequired( false );
 
 		options.addOption( help );
 		options.addOption( headless );
@@ -511,6 +515,8 @@ public class MotherMachine {
 		if ( inputFolder == null || inputFolder.equals( "" ) ) {
 			inputFolder = main.showStartupDialog( getGuiFrame(), path );
 		}
+		System.out.println( "Default filename decoration = " + inputFolder.getName() );
+		defaultFilenameDecoration = inputFolder.getName();
 		path = inputFolder.getAbsolutePath();
 		props.setProperty( "import_path", path );
 
@@ -932,33 +938,32 @@ public class MotherMachine {
 
 		// CLASSIFIER TO BE LOADED --- CLASSIFIER TO BE LOADED --- CLASSIFIER TO BE LOADED
 
-		final String message = "Should this classifier be used:\n" + SEGMENTATION_CLASSIFIER_MODEL_FILE + "\n\nIn case you want to choose a different one, please select 'No'...";
-		final String title = "MotherMachine Classifier Selection";
-		decision = JOptionPane.showConfirmDialog( guiFrame, message, title, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE );
-		if ( decision == JOptionPane.YES_OPTION ) {
-			GrowthLineSegmentationMagic.setClassifier( SEGMENTATION_CLASSIFIER_MODEL_FILE, "" );
-		} else {
-			final FileDialog fd = new FileDialog( guiFrame, "Select classifier model file...", FileDialog.LOAD );
-			fd.setDirectory( SEGMENTATION_CLASSIFIER_MODEL_FILE );
-			fd.setFilenameFilter( new FilenameFilter() {
-
-				@Override
-				public boolean accept( final File dir, final String name ) {
-					final String lowercaseName = name.toLowerCase();
-					if ( lowercaseName.endsWith( ".model" ) ) {
-						return true;
-					} else {
-						return false;
-					}
-				}
-			} );
-//			fd.setLocation(50,50);
-			fd.setVisible( true );
-			final String filename = fd.getDirectory() + "/" + fd.getFile();
-			if ( filename != null ) {
-				SEGMENTATION_CLASSIFIER_MODEL_FILE = filename;
-			}
-		}
+//		final String message = "Should this classifier be used:\n" + SEGMENTATION_CLASSIFIER_MODEL_FILE + "\n\nIn case you want to choose a different one, please select 'No'...";
+//		final String title = "MotherMachine Classifier Selection";
+//		decision = JOptionPane.showConfirmDialog( guiFrame, message, title, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE );
+//		if ( decision == JOptionPane.YES_OPTION ) {
+//			GrowthLineSegmentationMagic.setClassifier( SEGMENTATION_CLASSIFIER_MODEL_FILE, "" );
+//		} else {
+//			final FileDialog fd = new FileDialog( guiFrame, "Select classifier model file...", FileDialog.LOAD );
+//			fd.setDirectory( SEGMENTATION_CLASSIFIER_MODEL_FILE );
+//			fd.setFilenameFilter( new FilenameFilter() {
+//
+//				@Override
+//				public boolean accept( final File dir, final String name ) {
+//					final String lowercaseName = name.toLowerCase();
+//					if ( lowercaseName.endsWith( ".model" ) ) {
+//						return true;
+//					} else {
+//						return false;
+//					}
+//				}
+//			} );
+//			fd.setVisible( true );
+//			final String filename = fd.getDirectory() + "/" + fd.getFile();
+//			if ( filename != null ) {
+//				SEGMENTATION_CLASSIFIER_MODEL_FILE = filename;
+//			}
+//		}
 
 		return file;
 	}
@@ -1617,5 +1622,20 @@ public class MotherMachine {
 	 */
 	public static MotherMachineGui getGui() {
 		return gui;
+	}
+
+	/**
+	 * @return the defaultFilenameDecoration
+	 */
+	public static String getDefaultFilenameDecoration() {
+		return defaultFilenameDecoration;
+	}
+
+	/**
+	 * @param defaultFilenameDecoration
+	 *            the defaultFilenameDecoration to set
+	 */
+	public static void setDefaultFilenameDecoration( final String defaultFilenameDecoration ) {
+		MotherMachine.defaultFilenameDecoration = defaultFilenameDecoration;
 	}
 }

@@ -603,17 +603,18 @@ public class GrowthLineTrackingILP {
 	 *         hypothesis.
 	 */
 	private float compatibilityCostOfDivision( final Hypothesis< Component< FloatType, ? >> from, final Hypothesis< Component< FloatType, ? >> toUpper, final Hypothesis< Component< FloatType, ? >> toLower ) {
+		final ValuePair< Integer, Integer > intervalFrom = from.getLocation();
+		final ValuePair< Integer, Integer > intervalToU = toUpper.getLocation();
+		final ValuePair< Integer, Integer > intervalToL = toLower.getLocation();
+
 		final long sizeFrom = from.getWrappedHypothesis().size();
 		final long sizeToU = toUpper.getWrappedHypothesis().size();
 		final long sizeToL = toLower.getWrappedHypothesis().size();
 		final long sizeTo = sizeToU + sizeToL;
+		final long sizeToPlusGap = intervalToU.a - intervalToL.b;
 
 		final float valueFrom = from.getWrappedHypothesis().value().get();
 		final float valueTo = 0.5f * ( toUpper.getWrappedHypothesis().value().get() + toLower.getWrappedHypothesis().value().get() );
-
-		final ValuePair< Integer, Integer > intervalFrom = from.getLocation();
-		final ValuePair< Integer, Integer > intervalToU = toUpper.getLocation();
-		final ValuePair< Integer, Integer > intervalToL = toLower.getLocation();
 
 		final float oldPosU = intervalFrom.getA().intValue();
 		final float newPosU = intervalToU.getA().intValue();
@@ -811,6 +812,13 @@ public class GrowthLineTrackingILP {
 		}
 	}
 
+	public void autosave() {
+		final File autosaveFile =
+				new File( MotherMachine.props.getProperty( "import_path" ) + "/--autosave.timm" );
+		saveState( autosaveFile );
+		System.out.println( "Autosave to: " + autosaveFile.getAbsolutePath() );
+	}
+
 	/**
 	 * This function takes the ILP (hopefully) built up in <code>model</code>
 	 * and starts the convex optimization procedure. This is actually the step
@@ -820,7 +828,7 @@ public class GrowthLineTrackingILP {
 	public void run() {
 		try {
 			// Set maximum time Gurobi may use!
-//			model.getEnv().set( GRB.DoubleParam.TimeLimit, MotherMachine.GUROBI_TIME_LIMIT ); // handled by callback!
+//			model.getEnv().set( GRB.DoubleParam.TimeLimit, MotherMachine.GUROBI_TIME_LIMIT ); // now handled by callback!
 			model.getEnv().set( GRB.IntParam.OutputFlag, 0 );
 
 			final DialogGurobiProgress dialog = new DialogGurobiProgress( MotherMachine.getGuiFrame() );
@@ -1588,8 +1596,7 @@ public class GrowthLineTrackingILP {
 							rhs = hyp.getSegmentSpecificConstraint().get( GRB.DoubleAttr.RHS );
 							out.write( String.format( "\tSSC, %d, %d, %s\n", t, hyp.getId(), rhs ) );
 						} catch ( final GRBException e ) {
-							out.write( String.format( "\tSSC, %d, %d, GUROBI_ERROR\n", t, hyp.getId() ) );
-							e.printStackTrace();
+//							out.write( String.format( "\tSSC, %d, %d, GUROBI_ERROR\n", t, hyp.getId() ) );
 						}
 					}
 				}
@@ -1608,8 +1615,7 @@ public class GrowthLineTrackingILP {
 							rhs = assmnt.getGroundTroothConstraint().get( GRB.DoubleAttr.RHS );
 							out.write( String.format( "\tASC, %d, %d, %s\n", t, assmnt.getId(), rhs ) );
 						} catch ( final GRBException e ) {
-							out.write( String.format("\tASC, %d, %d, GUROBI_ERROR\n", t, assmnt.getId() ) );
-							e.printStackTrace();
+//							out.write( String.format("\tASC, %d, %d, GUROBI_ERROR\n", t, assmnt.getId() ) );
 						}
 					}
 				}

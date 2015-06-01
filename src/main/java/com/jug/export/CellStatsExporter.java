@@ -264,21 +264,21 @@ public class CellStatsExporter {
 					return;
 				}
 				if ( doTrackExport ) {
-					exportTracks( new File( folderToUse, "ExportedTracks.csv" ) );
+					exportTracks( new File( folderToUse, "ExportedTracks_" + MotherMachine.getDefaultFilenameDecoration() + "_.csv" ) );
 				}
 				try {
-					exportCellStats( new File( folderToUse, "ExportedCellStats.csv" ) );
+					exportCellStats( new File( folderToUse, "ExportedCellStats_" + MotherMachine.getDefaultFilenameDecoration() + "_.csv" ) );
 				} catch ( final GRBException e ) {
 					e.printStackTrace();
 				}
 			}
 		} else {
 			if ( doTrackExport ) {
-				exportTracks( new File( MotherMachine.STATS_OUTPUT_PATH, "ExportedTracks.csv" ) );
+				exportTracks( new File( MotherMachine.STATS_OUTPUT_PATH, "ExportedTracks_" + MotherMachine.getDefaultFilenameDecoration() + "_.csv" ) );
 			}
 
 			try {
-				exportCellStats( new File( MotherMachine.STATS_OUTPUT_PATH, "ExportedCellStats.csv" ) );
+				exportCellStats( new File( MotherMachine.STATS_OUTPUT_PATH, "ExportedCellStats_" + MotherMachine.getDefaultFilenameDecoration() + "_.csv" ) );
 			} catch ( final GRBException e ) {
 				e.printStackTrace();
 			}
