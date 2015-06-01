@@ -47,6 +47,7 @@ public class CostFactory {
 			power = 4.0f;
 		} else { // shrinkage
 			power = 40.0f;
+			costDeltaL += ( newSize - oldSize ) * 0.01;
 		}
 		deltaL = Math.abs( deltaL );
 		costDeltaL += deltaL * ( float ) Math.pow( 1 + deltaL, power );
@@ -128,20 +129,17 @@ public class CostFactory {
 						diff[ Math.max( 0, a - span ) ],
 						diff[ Math.max( 0, Math.min( diff.length - 1, b - span ) ) ] ) );
 		avgBorderGradientDivisor -= 1f;
-		avgBorderGradientDivisor /= 2;
+		avgBorderGradientDivisor /= 4;
 		avgBorderGradientDivisor += 1f;
 
 		final float maxRimHeight = Math.max( l, r ) - min;
 		final float reducedMaxHeight = maxReduced - min;
 		final float averageSegmentValue = SimpleFunctionAnalysis.getAvg( gapSepFkt, a, b );
-		float cost =
-				-( maxRimHeight - reducedMaxHeight );
-//						+ ( float ) Math.pow( averageSegmentValue - min, .75 );
-//						+ MotherMachine.MIN_GAP_CONTRAST;
+
+		float cost = -( maxRimHeight - reducedMaxHeight ) + MotherMachine.MIN_GAP_CONTRAST;
 		if ( cost < 0 ) {
 			cost /= avgBorderGradientDivisor;
 		}
-
 
 		// Special case: min-value is above average gap-sep-fkt value (happens often at the very top)
 		// * Note: we compare median value with average obtained +- some context above and below because

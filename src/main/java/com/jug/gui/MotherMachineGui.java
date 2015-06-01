@@ -99,21 +99,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 */
 	IntervalView< FloatType > viewImgRightActive;
 
-	/**
-	 * The view onto <code>imgRaw</code> that is supposed to be shown on screen
-	 * (left one in inactive assignments view).
-	 */
-	IntervalView< FloatType > viewImgLeftInactive;
-	/**
-	 * The view onto <code>imgRaw</code> that is supposed to be shown on screen
-	 * (center one in inactive assignments view).
-	 */
-	IntervalView< FloatType > viewImgCenterInactive;
-	/**
-	 * The view onto <code>imgRaw</code> that is supposed to be shown on screen
-	 * (right one in inactive assignments view).
-	 */
-	IntervalView< FloatType > viewImgRightInactive;
+	// show helper lines in IntervalViews?
+	private boolean showSegmentationAnnotations = true;
+
 
 	// -------------------------------------------------------------------------------------
 	// gui-fields
@@ -351,6 +339,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'o' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'e' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'v' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put(	KeyStroke.getKeyStroke( 'b' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '?' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '0' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( '1' ), "MMGUI_bindings" );
@@ -366,7 +355,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		this.getActionMap().put( "MMGUI_bindings", new AbstractAction() {
 
 			private static final long serialVersionUID = 1L;
-
 			@Override
 			public void actionPerformed( final ActionEvent e ) {
 				if ( e.getActionCommand().equals( "t" ) ) {
@@ -411,6 +399,13 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 						selIdx = 0;
 					}
 					cbWhichImgToShow.setSelectedIndex( selIdx );
+				}
+				if ( e.getActionCommand().equals( "b" ) ) {
+					showSegmentationAnnotations = !showSegmentationAnnotations;
+					imgCanvasActiveLeft.showSegmentationAnnotations( showSegmentationAnnotations );
+					imgCanvasActiveCenter.showSegmentationAnnotations( showSegmentationAnnotations );
+					imgCanvasActiveRight.showSegmentationAnnotations( showSegmentationAnnotations );
+					dataToDisplayChanged();
 				}
 				if ( e.getActionCommand().equals( "?" ) || e.getActionCommand().equals( "0" ) || e.getActionCommand().equals( "1" ) || e.getActionCommand().equals( "2" ) || e.getActionCommand().equals( "3" ) || e.getActionCommand().equals( "4" ) || e.getActionCommand().equals( "5" ) || e.getActionCommand().equals( "6" ) || e.getActionCommand().equals( "7" ) || e.getActionCommand().equals( "8" ) || e.getActionCommand().equals( "9" ) ) {
 					txtNumCells.requestFocus();

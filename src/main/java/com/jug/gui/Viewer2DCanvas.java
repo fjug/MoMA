@@ -47,6 +47,8 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 	private IntervalView< FloatType > view;
 	private GrowthLineFrame glf;
 
+	private boolean showSegmentationAnnotations = true;
+
 	// tracking the mouse (when over)
 	private boolean isMouseOver;
 	private int mousePosX;
@@ -142,11 +144,17 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 			if ( projector != null ) {
 				projector.map();
 			}
-			glf.drawCenterLine( screenImage, view );
-			final int t = glf.getParent().getFrames().indexOf( glf );
 
-			// DRAW OPTIMAL SEGMENTATION + PRUNE-COLORING
-			glf.drawOptimalSegmentation( screenImage, view, glf.getParent().getIlp().getOptimalSegmentation( t ) );
+			if ( showSegmentationAnnotations ) {
+				glf.drawCenterLine( screenImage, view );
+				final int t = glf.getParent().getFrames().indexOf( glf );
+
+				// DRAW OPTIMAL SEGMENTATION + PRUNE-COLORING
+				glf.drawOptimalSegmentation(
+						screenImage,
+						view,
+						glf.getParent().getIlp().getOptimalSegmentation( t ) );
+			}
 
 		} catch ( final ArrayIndexOutOfBoundsException e ) {
 			// this can happen if a growth line, due to shift, exists in one
@@ -336,5 +344,20 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 	@Override
 	public int getHeight() {
 		return h;
+	}
+
+	/**
+	 * @return the showSegmentationAnnotations
+	 */
+	public boolean isShowingSegmentationAnnotations() {
+		return showSegmentationAnnotations;
+	}
+
+	/**
+	 * @param showSegmentationAnnotations
+	 *            the showSegmentationAnnotations to set
+	 */
+	public void showSegmentationAnnotations( final boolean showSegmentationAnnotations ) {
+		this.showSegmentationAnnotations = showSegmentationAnnotations;
 	}
 }
