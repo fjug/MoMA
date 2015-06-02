@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Properties;
 
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -911,17 +912,26 @@ public class MotherMachine {
 		} );
 
 		if ( !HEADLESS ) {
-			final java.net.URL url = MotherMachine.class.getResource(
-					"IconMpiCbg128.png" );
-			final Toolkit kit = Toolkit.getDefaultToolkit();
-			final Image img = kit.createImage( url );
+			Image image = null;
+			try {
+				image = new ImageIcon( MotherMachine.class.getClassLoader().getResource( "IconMpiCbg128.png" ) ).getImage();
+			} catch (final Exception e) {
+				try {
+					image = new ImageIcon( MotherMachine.class.getClassLoader().getResource(
+									"resources/IconMpiCbg128.png" ) ).getImage();
+				} catch ( final Exception e2 ) {
+					System.out.println( ">>> Error: app icon not found..." );
+				}
+			}
 
-			if ( OSValidator.isMac() ) {
-				System.out.println( "On a Mac! --> trying to set icons..." );
-				Application.getApplication().setDockIconImage( img );
-			} else {
-				System.out.println( "Not a Mac! --> trying to set icons..." );
-				guiFrame.setIconImage( img );
+			if (image != null) {
+    			if ( OSValidator.isMac() ) {
+    				System.out.println( "On a Mac! --> trying to set icons..." );
+    				Application.getApplication().setDockIconImage( image );
+    			} else {
+    				System.out.println( "Not a Mac! --> trying to set icons..." );
+    				guiFrame.setIconImage( image );
+    			}
 			}
 		}
 	}
