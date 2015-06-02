@@ -12,6 +12,7 @@ import ij.Prefs;
 import java.awt.FileDialog;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -60,6 +61,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.SystemUtils;
 
+import com.apple.eawt.Application;
 import com.jug.gui.JFrameSnapper;
 import com.jug.gui.MotherMachineGui;
 import com.jug.gui.MotherMachineModel;
@@ -70,6 +72,7 @@ import com.jug.segmentation.GrowthLineSegmentationMagic;
 import com.jug.segmentation.SilentWekaSegmenter;
 import com.jug.util.DataMover;
 import com.jug.util.FloatTypeImgLoader;
+import com.jug.util.OSValidator;
 import com.jug.util.converter.RealFloatProbMapToSegmentation;
 
 /**
@@ -440,7 +443,11 @@ public class MotherMachine {
 			if ( HEADLESS ) {
 				System.out.println( msgs );
 			} else {
-				JOptionPane.showMessageDialog( MotherMachine.getGuiFrame(), msgs, "Gurobi Error?", JOptionPane.ERROR_MESSAGE );
+				JOptionPane.showMessageDialog(
+						MotherMachine.guiFrame,
+						msgs,
+						"Gurobi Error?",
+						JOptionPane.ERROR_MESSAGE );
 			}
 			e.printStackTrace();
 			System.exit( 98 );
@@ -449,7 +456,11 @@ public class MotherMachine {
 			if ( HEADLESS ) {
 				System.out.println( msgs );
 			} else {
-				JOptionPane.showMessageDialog( MotherMachine.getGuiFrame(), msgs, "Gurobi Error?", JOptionPane.ERROR_MESSAGE );
+				JOptionPane.showMessageDialog(
+						MotherMachine.guiFrame,
+						msgs,
+						"Gurobi Error?",
+						JOptionPane.ERROR_MESSAGE );
 				ulr.printStackTrace();
 			}
 			System.out.println( "\n>>>>> Java library path: " + jlp + "\n" );
@@ -460,7 +471,7 @@ public class MotherMachine {
 		final MotherMachine main = new MotherMachine();
 		if ( !HEADLESS ) {
 			guiFrame = new JFrame( "Interactive MotherMachine" );
-			main.initMainWindow( getGuiFrame() );
+			main.initMainWindow( guiFrame );
 		}
 
 		props = main.loadParams();
@@ -516,7 +527,7 @@ public class MotherMachine {
 
 		String path = props.getProperty( "import_path", System.getProperty( "user.home" ) );
 		if ( inputFolder == null || inputFolder.equals( "" ) ) {
-			inputFolder = main.showStartupDialog( getGuiFrame(), path );
+			inputFolder = main.showStartupDialog( guiFrame, path );
 		}
 		System.out.println( "Default filename decoration = " + inputFolder.getName() );
 		defaultFilenameDecoration = inputFolder.getName();
@@ -564,21 +575,21 @@ public class MotherMachine {
 
 			final JFrameSnapper snapper = new JFrameSnapper();
 			snapper.addFrame( main.frameConsoleWindow );
-			snapper.addFrame( getGuiFrame() );
+			snapper.addFrame( guiFrame );
 
 			gui.setVisible( true );
-			getGuiFrame().add( gui );
-			getGuiFrame().setSize( GUI_WIDTH, GUI_HEIGHT );
-			getGuiFrame().setLocation( GUI_POS_X, GUI_POS_Y );
-			getGuiFrame().setVisible( true );
+			guiFrame.add( gui );
+			guiFrame.setSize( GUI_WIDTH, GUI_HEIGHT );
+			guiFrame.setLocation( GUI_POS_X, GUI_POS_Y );
+			guiFrame.setVisible( true );
 
-			SwingUtilities.invokeLater( new Runnable() {
-
-				@Override
-				public void run() {
-					snapper.snapFrames( main.frameConsoleWindow, getGuiFrame(), JFrameSnapper.EAST );
-				}
-			} );
+//			SwingUtilities.invokeLater( new Runnable() {
+//
+//				@Override
+//				public void run() {
+//					snapper.snapFrames( main.frameConsoleWindow, guiFrame, JFrameSnapper.EAST );
+//				}
+//			} );
 			System.out.println( " done!" );
 		} else {
 //			final String name = inputFolder.getName();
@@ -898,16 +909,21 @@ public class MotherMachine {
 				System.exit( 0 );
 			}
 		} );
-		// final java.net.URL url = MotherMachine.class.getResource(
-		// "gui/media/IconMotherMachine128.png" );
-		// final Toolkit kit = Toolkit.getDefaultToolkit();
-		// final Image img = kit.createImage( url );
-		// if ( !OSValidator.isMac() ) {
-		// guiFrame.setIconImage( img );
-		// }
-		// if ( OSValidator.isMac() ) {
-		// Application.getApplication().setDockIconImage( img );
-		// }
+
+		if ( !HEADLESS ) {
+			final java.net.URL url = MotherMachine.class.getResource(
+					"IconMpiCbg128.png" );
+			final Toolkit kit = Toolkit.getDefaultToolkit();
+			final Image img = kit.createImage( url );
+
+			if ( OSValidator.isMac() ) {
+				System.out.println( "On a Mac! --> trying to set icons..." );
+				Application.getApplication().setDockIconImage( img );
+			} else {
+				System.out.println( "Not a Mac! --> trying to set icons..." );
+				guiFrame.setIconImage( img );
+			}
+		}
 	}
 
 	/**
@@ -1120,11 +1136,10 @@ public class MotherMachine {
 			props.setProperty( "GUROBI_MAX_OPTIMALITY_GAP", Double.toString( GUROBI_MAX_OPTIMALITY_GAP ) );
 
 			if ( !MotherMachine.HEADLESS ) {
-				final java.awt.Point loc = getGuiFrame().getLocation();
-				GUI_POS_X = loc.x;
-				GUI_POS_Y = loc.y;
-				GUI_WIDTH = getGuiFrame().getWidth();
-				GUI_HEIGHT = getGuiFrame().getHeight();
+				GUI_POS_X = guiFrame.getX();
+				GUI_POS_Y = guiFrame.getY();
+				GUI_WIDTH = guiFrame.getWidth();
+				GUI_HEIGHT = guiFrame.getHeight();
 			}
 
 			props.setProperty( "GUI_POS_X", Integer.toString( GUI_POS_X ) );
