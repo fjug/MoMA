@@ -10,6 +10,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import com.jug.util.filteredcomponents.FilteredComponent;
 import com.jug.util.filteredcomponents.FilteredComponentTree;
 import com.jug.util.filteredcomponents.FilteredComponentTree.Filter;
+import com.jug.util.filteredcomponents.FilteredComponentTree.MaxGrowthPerStep;
 import com.jug.util.filteredcomponents.FilteredComponentTree.MaxGrowthPerStepRatioWithMinimalAbsoluteIncrease;
 
 /**
@@ -23,7 +24,7 @@ import com.jug.util.filteredcomponents.FilteredComponentTree.MaxGrowthPerStepRat
  */
 public class GrowthLineFrame extends AbstractGrowthLineFrame< FilteredComponent< FloatType > > {
 
-//	final Filter maxGrowthPerStep = new MaxGrowthPerStep( 4 );
+	final Filter noFilterFilter = new MaxGrowthPerStep( 1000 );
 //	final Filter maxGrowthPerStepRatio = new MaxGrowthPerStepRatio( 0.075 );
 	final Filter maxGrowthPerStepRatioWithMinimalAbsoluteIncrease =
 			new MaxGrowthPerStepRatioWithMinimalAbsoluteIncrease( 0.05, 6 );
@@ -38,7 +39,7 @@ public class GrowthLineFrame extends AbstractGrowthLineFrame< FilteredComponent<
 				new FloatType(),
 				MotherMachine.MIN_CELL_LENGTH,
 				Long.MAX_VALUE,
-				maxGrowthPerStepRatioWithMinimalAbsoluteIncrease,
+				noFilterFilter, //maxGrowthPerStepRatioWithMinimalAbsoluteIncrease,
 				true );
 //		return MserTree.buildMserTree( raiFkt, MotherMachine.MIN_GAP_CONTRAST / 2.0, MotherMachine.MIN_CELL_LENGTH, Long.MAX_VALUE, 0.5, 0.33, true );
 	}
@@ -53,7 +54,7 @@ public class GrowthLineFrame extends AbstractGrowthLineFrame< FilteredComponent<
 				new FloatType(),
 				3,
 				Long.MAX_VALUE,
-				maxGrowthPerStepRatioWithMinimalAbsoluteIncrease,
+				noFilterFilter, //maxGrowthPerStepRatioWithMinimalAbsoluteIncrease,
 				true );
 	}
 

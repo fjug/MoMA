@@ -198,6 +198,15 @@ public class MotherMachine {
 	public static final int MAX_CELL_DROP = 50;
 
 	// - - - - - - - - - - - - - -
+	// Info about loaded data
+	// - - - - - - - - - - - - - -
+	private static int minTime = -1;
+	private static int maxTime = -1;
+	private static int minChannelIdx = 1;
+	private static int numChannels = 1;
+
+
+	// - - - - - - - - - - - - - -
 	// GUI-WINDOW RELATED STATICS
 	// - - - - - - - - - - - - - -
 	/**
@@ -317,7 +326,7 @@ public class MotherMachine {
 		timeFirst.setRequired( false );
 
 		final Option timeLast = new Option( "tmax", "max_time", true, "last time-point to be processed" );
-		timeFirst.setRequired( false );
+		timeLast.setRequired( false );
 
 		final Option numChannelsOption = new Option( "c", "channels", true, "number of channels to be loaded and analyzed." );
 		numChannelsOption.setRequired( true );
@@ -407,25 +416,19 @@ public class MotherMachine {
 			fileUserProps = new File( cmd.getOptionValue( "p" ) );
 		}
 
-		int minChannelIdx = 1;
 		if ( cmd.hasOption( "cmin" ) ) {
 			minChannelIdx = Integer.parseInt( cmd.getOptionValue( "cmin" ) );
 		}
-		int numChannels = 1;
 		if ( cmd.hasOption( "c" ) ) {
 			numChannels = Integer.parseInt( cmd.getOptionValue( "c" ) );
 		}
 
-		int minTime = -1;
-		int maxTime = -1;
 		if ( cmd.hasOption( "tmin" ) ) {
 			minTime = Integer.parseInt( cmd.getOptionValue( "tmin" ) );
 		}
 		if ( cmd.hasOption( "tmax" ) ) {
 			maxTime = Integer.parseInt( cmd.getOptionValue( "tmax" ) );
 		}
-
-		System.out.print( String.format( "Loading tiff sequence (%d time points):", maxTime - minTime ) );
 
 		// ******** CHECK GUROBI ********* CHECK GUROBI ********* CHECK GUROBI *********
 		final String jlp = System.getProperty( "java.library.path" );
@@ -1638,4 +1641,33 @@ public class MotherMachine {
 	public static void setDefaultFilenameDecoration( final String defaultFilenameDecoration ) {
 		MotherMachine.defaultFilenameDecoration = defaultFilenameDecoration;
 	}
+
+	/**
+	 * @return the first time-point loaded
+	 */
+	public static int getMinTime() {
+		return minTime;
+	}
+
+	/**
+	 * @return the last loaded time-point
+	 */
+	public static int getMaxTime() {
+		return maxTime;
+	}
+
+	/**
+	 * @return the first channel index of the loaded data
+	 */
+	public static int getMinChannelIdx() {
+		return minChannelIdx;
+	}
+
+	/**
+	 * @return the number of channels loaded
+	 */
+	public static int getNumChannels() {
+		return numChannels;
+	}
+
 }

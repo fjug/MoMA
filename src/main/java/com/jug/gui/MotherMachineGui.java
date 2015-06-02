@@ -124,6 +124,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	public AssignmentViewer leftAssignmentViewer;
 	public AssignmentViewer rightAssignmentViewer;
 
+	private JCheckBox cbAutosave;
 //	private JButton btnRedoAllHypotheses;
 //	private JButton btnExchangeSegHyps;
 	private JButton btnRestart;
@@ -300,6 +301,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		tabsViews.setSelectedComponent( panelSegmentationAndAssignmentView );
 
 		// --- Controls ----------------------------------
+		cbAutosave = new JCheckBox( "autosave?" );
 //		btnRedoAllHypotheses = new JButton( "Resegment" );
 //		btnRedoAllHypotheses.addActionListener( this );
 		btnRestart = new JButton( "Restart" );
@@ -314,6 +316,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 //		btnSaveFG.addActionListener( this );
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.RIGHT, 5, 0 ) );
 		panelHorizontalHelper.setBorder( BorderFactory.createEmptyBorder( 3, 0, 5, 0 ) );
+		panelHorizontalHelper.add( cbAutosave );
 //		panelHorizontalHelper.add( btnRedoAllHypotheses );
 		panelHorizontalHelper.add( btnRestart );
 		panelHorizontalHelper.add( btnOptimizeMore );
@@ -1532,5 +1535,14 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 */
 	public void focusOnSliderTime() {
 		sliderTime.requestFocus();
+	}
+
+	/**
+	 * Checkbox getter to enable or disable autosave functionality.
+	 * 
+	 * @return true if the corresponding CheckBox is checked.
+	 */
+	public boolean isAutosaveRequested() {
+		return cbAutosave.isSelected();
 	}
 }

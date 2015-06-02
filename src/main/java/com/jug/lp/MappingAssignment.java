@@ -25,7 +25,7 @@ public class MappingAssignment extends AbstractAssignment< Hypothesis< Component
 
 	/**
 	 * Creates an MappingAssignment.
-	 * 
+	 *
 	 * @param nodes
 	 * @param edges
 	 * @param from
@@ -43,7 +43,7 @@ public class MappingAssignment extends AbstractAssignment< Hypothesis< Component
 	/**
 	 * This method is void. MAPPING assignments do not come with assignment
 	 * specific constrains...
-	 * 
+	 *
 	 * @throws GRBException
 	 * @see com.jug.lp.AbstractAssignment#addConstraintsToLP(gurobi.GRBModel,
 	 *      com.jug.lp.AssignmentsAndHypotheses,
@@ -54,7 +54,7 @@ public class MappingAssignment extends AbstractAssignment< Hypothesis< Component
 
 	/**
 	 * Mapping assignments do not come with constraints.
-	 * 
+	 *
 	 * @see com.jug.lp.AbstractAssignment#getConstraint()
 	 */
 	@Override
@@ -63,7 +63,7 @@ public class MappingAssignment extends AbstractAssignment< Hypothesis< Component
 	/**
 	 * Returns the segmentation hypothesis this mapping-assignment comes from
 	 * (the one at the earlier time-point t).
-	 * 
+	 *
 	 * @return the associated segmentation-hypothesis.
 	 */
 	public Hypothesis< Component< FloatType, ? >> getSourceHypothesis() {
@@ -73,11 +73,19 @@ public class MappingAssignment extends AbstractAssignment< Hypothesis< Component
 	/**
 	 * Returns the segmentation hypothesis this mapping-assignment links to
 	 * (the one at the later time-point t+1).
-	 * 
+	 *
 	 * @return the associated segmentation-hypothesis.
 	 */
 	public Hypothesis< Component< FloatType, ? >> getDestinationHypothesis() {
 		return to;
+	}
+
+	/**
+	 * @see com.jug.lp.AbstractAssignment#getId()
+	 */
+	@Override
+	public int getId() {
+		return from.getId() + to.getId();
 	}
 
 }

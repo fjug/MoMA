@@ -22,16 +22,12 @@ import java.util.List;
 @SuppressWarnings( "restriction" )
 public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 
-	private static int nextId = 0;
-
 	private int type;
 
 	protected GrowthLineTrackingILP ilp;
 
 //	private int exportVarIdx = -1;
 	private GRBVar ilpVar;
-
-	private final int id;
 
 	private boolean isGroundTruth = false;
 	private boolean isGroundUntruth = false;
@@ -46,15 +42,12 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 * @param cost
 	 */
 	public AbstractAssignment( final int type, final GRBVar ilpVariable, final GrowthLineTrackingILP ilp ) {
-		id = nextId++;
 		this.setType( type );
 		setGRBVar( ilpVariable );
 		setGrowthLineTrackingILP( ilp );
 	}
 
-	public int getId() {
-		return id;
-	}
+	abstract public int getId();
 
 	/**
 	 * @return the type

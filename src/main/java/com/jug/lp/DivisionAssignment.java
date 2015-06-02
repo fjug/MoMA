@@ -26,7 +26,7 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 
 	/**
 	 * Creates an DivisionAssignment.
-	 * 
+	 *
 	 * @param nodes
 	 * @param edges
 	 * @param from
@@ -46,7 +46,7 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	/**
 	 * This method is void. DIVISION assignments do not come with assignment
 	 * specific constrains...
-	 * 
+	 *
 	 * @throws GRBException
 	 * @see com.jug.lp.AbstractAssignment#addConstraintsToLP(gurobi.GRBModel,
 	 *      com.jug.lp.AssignmentsAndHypotheses,
@@ -57,7 +57,7 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 
 	/**
 	 * Division assignments do not come with constraints.
-	 * 
+	 *
 	 * @see com.jug.lp.AbstractAssignment#getConstraint()
 	 */
 	@Override
@@ -66,7 +66,7 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	/**
 	 * Returns the segmentation hypothesis this division-assignment comes from
 	 * (the one at the earlier time-point t).
-	 * 
+	 *
 	 * @return the associated segmentation-hypothesis.
 	 */
 	public Hypothesis< Component< FloatType, ? >> getSourceHypothesis() {
@@ -77,7 +77,7 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	 * Returns the upper of the two segmentation hypothesis this
 	 * division-assignment links to (the upper of the two at the later
 	 * time-point t+1).
-	 * 
+	 *
 	 * @return the associated segmentation-hypothesis.
 	 */
 	public Hypothesis< Component< FloatType, ? >> getUpperDesinationHypothesis() {
@@ -88,10 +88,18 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	 * Returns the upper of the two segmentation hypothesis this
 	 * division-assignment links to (the upper of the two at the later
 	 * time-point t+1).
-	 * 
+	 *
 	 * @return the associated segmentation-hypothesis.
 	 */
 	public Hypothesis< Component< FloatType, ? >> getLowerDesinationHypothesis() {
 		return toLower;
+	}
+
+	/**
+	 * @see com.jug.lp.AbstractAssignment#getId()
+	 */
+	@Override
+	public int getId() {
+		return from.getId() + toUpper.getId() + toLower.getId();
 	}
 }

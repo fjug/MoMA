@@ -812,11 +812,17 @@ public class GrowthLineTrackingILP {
 		}
 	}
 
+	/**
+	 * Performs autosave of current tracking interactions (if the checkbox in
+	 * the MotherMachineGui is checked).
+	 */
 	public void autosave() {
-		final File autosaveFile =
-				new File( MotherMachine.props.getProperty( "import_path" ) + "/--autosave.timm" );
-		saveState( autosaveFile );
-		System.out.println( "Autosave to: " + autosaveFile.getAbsolutePath() );
+		if ( !MotherMachine.HEADLESS && MotherMachine.getGui().isAutosaveRequested() ) {
+			final File autosaveFile =
+					new File( MotherMachine.props.getProperty( "import_path" ) + "/--autosave.timm" );
+			saveState( autosaveFile );
+			System.out.println( "Autosave to: " + autosaveFile.getAbsolutePath() );
+		}
 	}
 
 	/**
@@ -1554,9 +1560,9 @@ public class GrowthLineTrackingILP {
 			out.newLine();
 			out.newLine();
 
-			// Write T, numHyps, numAssmnts
+			// Write characteristics of dataset
 			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-			final int numT = gl.size();
+			final int numT = gl.size() - 1;
 			int numH = 0;
 			for ( final List< Hypothesis< Component< FloatType, ? >>> innerList : nodes.getAllHypotheses() ) {
 				for ( @SuppressWarnings( "unused" )
@@ -1570,8 +1576,12 @@ public class GrowthLineTrackingILP {
 					numA++;
 				}
 			}
-			out.write( String.format( "DATAPROPS, %d, %d, %d\n", numT, numH, numA ) );
+			out.write( String.format( "TIME, %d, %d, %d\n", numT,
+					MotherMachine.getMinTime(), MotherMachine.getMaxTime() ) );
+			out.write( String.format( "SIZE, %d, %d\n", numH, numA ) );
 			out.newLine();
+
+			final int timeOffset = MotherMachine.getMinTime();
 
 			// SegmentsInFrameCountConstraints
 			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1579,7 +1589,7 @@ public class GrowthLineTrackingILP {
 			for ( int t = 0; t < gl.size(); t++ ) {
 				final int value = getSegmentsInFrameCountConstraintRHS( t );
 				if ( value >= 0 ) {
-					out.write( String.format( "\tSIFCC, %d, %d\n", t, value ) );
+					out.write( String.format( "\tSIFCC, %d, %d\n", t + timeOffset, value ) );
 				}
 			}
 
@@ -1594,9 +1604,13 @@ public class GrowthLineTrackingILP {
 						double rhs;
 						try {
 							rhs = hyp.getSegmentSpecificConstraint().get( GRB.DoubleAttr.RHS );
-							out.write( String.format( "\tSSC, %d, %d, %s\n", t, hyp.getId(), rhs ) );
+							out.write( String.format(
+									"\tSSC, %d, %d, %s\n",
+									t + timeOffset,
+									hyp.getId(),
+									rhs ) );
 						} catch ( final GRBException e ) {
-//							out.write( String.format( "\tSSC, %d, %d, GUROBI_ERROR\n", t, hyp.getId() ) );
+//							out.write( String.format( "\tSSC, %d, %d, GUROBI_ERROR\n", t + timeOffset, hyp.getId() ) );
 						}
 					}
 				}
@@ -1613,9 +1627,13 @@ public class GrowthLineTrackingILP {
 						double rhs;
 						try {
 							rhs = assmnt.getGroundTroothConstraint().get( GRB.DoubleAttr.RHS );
-							out.write( String.format( "\tASC, %d, %d, %s\n", t, assmnt.getId(), rhs ) );
+							out.write( String.format(
+									"\tASC, %d, %d, %s\n",
+									t + timeOffset,
+									assmnt.getId(),
+									rhs ) );
 						} catch ( final GRBException e ) {
-//							out.write( String.format("\tASC, %d, %d, GUROBI_ERROR\n", t, assmnt.getId() ) );
+//							out.write( String.format("\tASC, %d, %d, GUROBI_ERROR\n", t + timeOffset, assmnt.getId() ) );
 						}
 					}
 				}
@@ -1629,7 +1647,7 @@ public class GrowthLineTrackingILP {
 						nodes.getHypothesesAt( t );
 				for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
 					if ( hyp.isPruneRoot() ) {
-						out.write( String.format( "\tPR, %d, %d\n", t, hyp.getId() ) );
+						out.write( String.format( "\tPR, %d, %d\n", t + timeOffset, hyp.getId() ) );
 					}
 				}
 			}
@@ -1649,6 +1667,8 @@ public class GrowthLineTrackingILP {
 
 		final List< Hypothesis< ? >> pruneRoots = new ArrayList< Hypothesis< ? >>();
 
+		final int timeOffset = MotherMachine.getMinTime();
+
 		String line;
 		while ( ( line = reader.readLine() ) != null ) {
 			// ignore comments and empty lines
@@ -1660,45 +1680,34 @@ public class GrowthLineTrackingILP {
 
 				// DataProperties (to see if this load makes any sense)
 				// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-				if ( constraintType.equals( "DATAPROPS" ) ) {
-					final int readNumT = Integer.parseInt( columns[1].trim() );
-					final int readNumH = Integer.parseInt( columns[ 2 ].trim() );
-					final int readNumA = Integer.parseInt( columns[ 3 ].trim() );
+				if ( constraintType.equals( "TIME" ) ) {
+					final int readNumT = Integer.parseInt( columns[ 1 ].trim() );
+					final int readTmin = Integer.parseInt( columns[ 2 ].trim() );
+					final int readTmax = Integer.parseInt( columns[ 3 ].trim() );
 
-					final int numT = gl.size();
-					int numH = 0;
-					for ( final List< Hypothesis< Component< FloatType, ? >>> innerList : nodes.getAllHypotheses() ) {
-						for ( @SuppressWarnings( "unused" )
-						final Hypothesis< Component< FloatType, ? >> hypothesis : innerList ) {
-							numH++;
-						}
-					}
-					int numA = 0;
-					for ( final List< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > innerList : nodes.getAllAssignments() ) {
-						for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> assignment : innerList ) {
-							numA++;
-						}
-					}
-					if ( !( numT == readNumT ) || !( numH == readNumH ) ) { //|| !( numA == readNumA ) ) {
+					if ( MotherMachine.getMinTime() != readTmin || MotherMachine.getMaxTime() != readTmax ) {
 						if ( !MotherMachine.HEADLESS ) {
 							JOptionPane.showMessageDialog(
 									MotherMachine.getGui(),
-									"Tracking to be loaded does not fit the opened dataset.",
-									"Error",
-									JOptionPane.ERROR_MESSAGE );
-							return;
+									"Tracking to be loaded is at best a partial fit.\nMatching data will be loaded whereever possible...",
+									"Warning",
+									JOptionPane.WARNING_MESSAGE );
 						} else {
-							System.out.println( "Tracking to be loaded does not fit the opened dataset. Abort headless TIMM instance..." );
+							System.out.println( "Tracking to be loaded is at most a partial fit. Continue to load matching data..." );
 							System.exit( 946 );
 						}
 					}
+				}
+				if ( constraintType.equals( "SIZE" ) ) {
+					final int readNumH = Integer.parseInt( columns[ 1 ].trim() );
+					final int readNumA = Integer.parseInt( columns[ 2 ].trim() );
 				}
 
 				// SegmentsInFrameCountConstraints
 				// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 				if ( constraintType.equals( "SIFCC" ) ) {
 					try {
-						final int t = Integer.parseInt( columns[ 1 ].trim() );
+						final int t = Integer.parseInt( columns[ 1 ].trim() ) - timeOffset;
 						final int numCells = Integer.parseInt( columns[ 2 ].trim() );
 						try {
 							System.out.println( String.format( "SIFCC %d %d", t, numCells ) );
@@ -1714,7 +1723,7 @@ public class GrowthLineTrackingILP {
 				// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 				if ( constraintType.equals( "SSC" ) ) {
 					try {
-						final int t = Integer.parseInt( columns[ 1 ].trim() );
+						final int t = Integer.parseInt( columns[ 1 ].trim() ) - timeOffset;
 						final int id = Integer.parseInt( columns[ 2 ].trim() );
 						final double rhs = Double.parseDouble( columns[ 3 ].trim() );
 						try {
@@ -1741,7 +1750,7 @@ public class GrowthLineTrackingILP {
 				// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 				if ( constraintType.equals( "ASC" ) ) {
 					try {
-						final int t = Integer.parseInt( columns[ 1 ].trim() );
+						final int t = Integer.parseInt( columns[ 1 ].trim() ) - timeOffset;
 						final int id = Integer.parseInt( columns[ 2 ].trim() );
 						final double rhs = Double.parseDouble( columns[ 3 ].trim() );
 						System.out.println( String.format( "ASC %d %d %f", t, id, rhs ) );
@@ -1764,7 +1773,7 @@ public class GrowthLineTrackingILP {
 				// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 				if ( constraintType.equals( "PR" ) ) {
 					try {
-						final int t = Integer.parseInt( columns[ 1 ].trim() );
+						final int t = Integer.parseInt( columns[ 1 ].trim() ) - timeOffset;
 						final int id = Integer.parseInt( columns[ 2 ].trim() );
 						System.out.println( String.format( "PR %d %d", t, id ) );
 						final List< Hypothesis< Component< FloatType, ? >>> hyps =
@@ -1780,6 +1789,7 @@ public class GrowthLineTrackingILP {
 				}
 			}
 		}
+		reader.close();
 
 		try {
 			model.update();

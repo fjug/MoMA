@@ -118,4 +118,13 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< F
 	public Hypothesis< Component< FloatType, ? >> getAssociatedHypothesis() {
 		return who;
 	}
+
+	/**
+	 * @see com.jug.lp.AbstractAssignment#getId()
+	 */
+	@Override
+	public int getId() {
+		return who.getId();
+	}
+
 }
