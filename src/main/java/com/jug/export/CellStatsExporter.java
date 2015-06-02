@@ -66,39 +66,57 @@ public class CellStatsExporter {
 		public int daughterType = SegmentRecord.UNKNOWN;
 		public int frame = 0;
 
+		public List< Integer > genealogy;
+
 		public Hypothesis< Component< FloatType, ? >> hyp;
 		private int terminated_by = Integer.MIN_VALUE;
 
-		public SegmentRecord( final Hypothesis< Component< FloatType, ? >> hyp, final int id, final int pid, final int tbirth ) {
-			this.hyp = hyp;
-			this.id = id;
-			this.pid = pid;
-			this.tbirth = tbirth;
-			this.daughterType = SegmentRecord.UNKNOWN;
-			this.frame = 0;
-		}
-
-		public SegmentRecord( final Hypothesis< Component< FloatType, ? >> hyp, final int id, final int pid, final int tbirth, final int daughterType ) {
+		public SegmentRecord(
+				final Hypothesis< Component< FloatType, ? >> hyp,
+				final int id,
+				final int pid,
+				final int tbirth,
+				final int daughterType,
+				final List< Integer > genealogy ) {
 			this.hyp = hyp;
 			this.id = id;
 			this.pid = pid;
 			this.tbirth = tbirth;
 			this.daughterType = daughterType;
+			this.genealogy = genealogy;
 			this.frame = 0;
 		}
 
-		public SegmentRecord( final SegmentRecord point ) {
+		public SegmentRecord(
+				final Hypothesis< Component< FloatType, ? >> hyp,
+				final int id,
+				final int pid,
+				final int tbirth,
+				final int daughterType ) {
+			this.hyp = hyp;
+			this.id = id;
+			this.pid = pid;
+			this.tbirth = tbirth;
+			this.daughterType = daughterType;
+			this.genealogy = new ArrayList< Integer >();
+			genealogy.add( UNKNOWN );
+			this.frame = 0;
+		}
+
+		public SegmentRecord( final SegmentRecord point, final int frameOffset ) {
 			this.hyp = point.hyp;
 			this.id = point.id;
 			this.pid = point.pid;
 			this.tbirth = point.tbirth;
 			this.daughterType = point.daughterType;
-			this.frame = point.frame + 1;
+			this.frame = point.frame + frameOffset;
+			this.genealogy = new ArrayList< Integer >( point.genealogy );
 		}
 
 		@Override
 		public SegmentRecord clone() {
-			final SegmentRecord ret = new SegmentRecord( this.hyp, this.id, this.pid, this.tbirth, this.daughterType );
+			final SegmentRecord ret =
+					new SegmentRecord( this.hyp, this.id, this.pid, this.tbirth, this.daughterType, this.genealogy );
 			ret.exists = this.exists;
 			ret.frame = this.frame;
 			ret.terminated_by = this.terminated_by;
@@ -108,8 +126,8 @@ public class CellStatsExporter {
 		@Override
 		public String toString() {
 			String dt = "UNKNOWN";
-			if ( daughterType == SegmentRecord.UPPER ) dt = "UPPER";
-			if ( daughterType == SegmentRecord.LOWER ) dt = "LOWER";
+			if ( daughterType == SegmentRecord.UPPER ) dt = "TOP";
+			if ( daughterType == SegmentRecord.LOWER ) dt = "BOTTOM";
 			return String.format( "id=%d; pid=%d; birth_frame=%d; daughter_type=%s", id, pid, tbirth, dt );
 		}
 
@@ -128,7 +146,7 @@ public class CellStatsExporter {
 				} else if ( rightAssmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ) {
 					final MappingAssignment ma = ( MappingAssignment ) rightAssmt;
 					if ( !ma.isPruned() ) {
-						ret = new SegmentRecord( this );
+						ret = new SegmentRecord( this, 1 );
 						ret.hyp = ma.getDestinationHypothesis();
 					} else {
 						terminated_by = SegmentRecord.USER_PRUNING;
@@ -221,12 +239,32 @@ public class CellStatsExporter {
 			}
 			return ret;
 		}
+
+		/**
+		 * @return
+		 */
+		public String getGenealogyString() {
+			String ret = "";
+			for ( final int dt : genealogy ) {
+				if ( dt == SegmentRecord.UPPER ) {
+					ret = ret + "T";
+				}
+				if ( dt == SegmentRecord.LOWER ) {
+					ret = ret + "B";
+				}
+				if ( dt == SegmentRecord.UNKNOWN ) {
+					ret = ret + "U";
+				}
+			}
+			return ret;
+		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private final MotherMachineGui gui;
-	private boolean doTrackExport = true;
+	private boolean doTrackExport = false;
+	private boolean doExportUserInputs = true;
 	private boolean includeHistograms = true;
 	private boolean includeQuantiles = true;
 	private boolean includeColIntensitySums = true;
@@ -237,10 +275,12 @@ public class CellStatsExporter {
 	}
 
 	public boolean showConfigDialog() {
-		final DialogCellStatsExportSetup dialog = new DialogCellStatsExportSetup( gui, doTrackExport, includeHistograms, includeQuantiles, includeColIntensitySums, includePixelIntensities );
+		final DialogCellStatsExportSetup dialog =
+				new DialogCellStatsExportSetup( gui, doExportUserInputs, doTrackExport, includeHistograms, includeQuantiles, includeColIntensitySums, includePixelIntensities );
 		dialog.ask();
 		if ( !dialog.wasCanceled() ) {
 			this.doTrackExport = dialog.doExportTracks;
+			this.doExportUserInputs = dialog.doExportUserInputs;
 			this.includeHistograms = dialog.includeHistograms;
 			this.includeQuantiles = dialog.includeQuantiles;
 			this.includeColIntensitySums = dialog.includeColIntensitySums;
@@ -264,21 +304,43 @@ public class CellStatsExporter {
 					return;
 				}
 				if ( doTrackExport ) {
-					exportTracks( new File( folderToUse, "ExportedTracks_" + MotherMachine.getDefaultFilenameDecoration() + "_.csv" ) );
+					exportTracks( new File( folderToUse, "ExportedTracks_" + MotherMachine.getDefaultFilenameDecoration() + ".csv" ) );
+				}
+				if ( doExportUserInputs ) {
+					final int tmin = MotherMachine.getMinTime();
+					final int tmax = MotherMachine.getMaxTime();
+					final File file =
+							new File( folderToUse, String.format(
+									"--[%d-%d]_%s.timm",
+									tmin,
+									tmax,
+									MotherMachine.getDefaultFilenameDecoration() ) );
+					MotherMachine.getGui().model.getCurrentGL().getIlp().saveState( file );
 				}
 				try {
-					exportCellStats( new File( folderToUse, "ExportedCellStats_" + MotherMachine.getDefaultFilenameDecoration() + "_.csv" ) );
+					exportCellStats( new File( folderToUse, "ExportedCellStats_" + MotherMachine.getDefaultFilenameDecoration() + ".csv" ) );
 				} catch ( final GRBException e ) {
 					e.printStackTrace();
 				}
 			}
 		} else {
 			if ( doTrackExport ) {
-				exportTracks( new File( MotherMachine.STATS_OUTPUT_PATH, "ExportedTracks_" + MotherMachine.getDefaultFilenameDecoration() + "_.csv" ) );
+				exportTracks( new File( MotherMachine.STATS_OUTPUT_PATH, "ExportedTracks_" + MotherMachine.getDefaultFilenameDecoration() + ".csv" ) );
+			}
+			if ( doExportUserInputs ) {
+				final int tmin = MotherMachine.getMinTime();
+				final int tmax = MotherMachine.getMaxTime();
+				final File file =
+						new File( MotherMachine.STATS_OUTPUT_PATH, String.format(
+								"--[%d-%d]_%s.timm",
+								tmin,
+								tmax,
+								MotherMachine.getDefaultFilenameDecoration() ) );
+				MotherMachine.getGui().model.getCurrentGL().getIlp().saveState( file );
 			}
 
 			try {
-				exportCellStats( new File( MotherMachine.STATS_OUTPUT_PATH, "ExportedCellStats_" + MotherMachine.getDefaultFilenameDecoration() + "_.csv" ) );
+				exportCellStats( new File( MotherMachine.STATS_OUTPUT_PATH, "ExportedCellStats_" + MotherMachine.getDefaultFilenameDecoration() + ".csv" ) );
 			} catch ( final GRBException e ) {
 				e.printStackTrace();
 			}
@@ -334,10 +396,11 @@ public class CellStatsExporter {
 
 		for ( final ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> valuePair : segmentsInFirstFrame ) {
 
-			final SegmentRecord point = new SegmentRecord( valuePair.b, nextCellId++, -1, -1 );
+			final SegmentRecord point =
+					new SegmentRecord( valuePair.b, nextCellId++, -1, -1, SegmentRecord.UNKNOWN );
 			startingPoints.add( point );
 
-			final SegmentRecord prepPoint = new SegmentRecord( point );
+			final SegmentRecord prepPoint = new SegmentRecord( point, 1 );
 			prepPoint.hyp = point.hyp;
 
 			if ( !prepPoint.hyp.isPruned() ) {
@@ -355,7 +418,7 @@ public class CellStatsExporter {
 			// MAPPING -- JUST DROP SEGMENT STATS
 			if ( rightAssmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ) {
 				final MappingAssignment ma = ( MappingAssignment ) rightAssmt;
-				final SegmentRecord next = new SegmentRecord( prepPoint );
+				final SegmentRecord next = new SegmentRecord( prepPoint, 1 );
 				next.hyp = ma.getDestinationHypothesis();
 				if ( !prepPoint.hyp.isPruned() ) {
 					queue.add( next );
@@ -372,8 +435,11 @@ public class CellStatsExporter {
 				prepPoint.hyp = da.getLowerDesinationHypothesis();
 				prepPoint.daughterType = SegmentRecord.LOWER;
 				if ( !prepPoint.hyp.isPruned() && !( prepPoint.tbirth > gui.sliderTime.getMaximum() ) ) {
-					startingPoints.add( prepPoint.clone() );
-					queue.add( new SegmentRecord( prepPoint ) );
+					final SegmentRecord newPoint = new SegmentRecord( prepPoint, 0 );
+					newPoint.genealogy.add( SegmentRecord.LOWER );
+					startingPoints.add( newPoint.clone() );
+					newPoint.frame++;
+					queue.add( newPoint );
 					nextCellId++;
 				}
 
@@ -381,8 +447,11 @@ public class CellStatsExporter {
 				prepPoint.hyp = da.getUpperDesinationHypothesis();
 				prepPoint.daughterType = SegmentRecord.UPPER;
 				if ( !prepPoint.hyp.isPruned() && !( prepPoint.tbirth > gui.sliderTime.getMaximum() ) ) {
-					startingPoints.add( prepPoint.clone() );
-					queue.add( new SegmentRecord( prepPoint ) );
+					final SegmentRecord newPoint = new SegmentRecord( prepPoint, 0 );
+					newPoint.genealogy.add( SegmentRecord.UPPER );
+					startingPoints.add( newPoint.clone() );
+					newPoint.frame++;
+					queue.add( newPoint );
 					nextCellId++;
 				}
 			}
@@ -423,6 +492,11 @@ public class CellStatsExporter {
 				final List< Point > centerLine = glf.getImgLocations();
 				final double height = Util.evaluatePolygonLength( centerLine, limits.getA(), limits.getB() );
 
+				final int numCells = glf.getSolutionStats_numCells();
+				final int cellPos = glf.getSolutionStats_cellPos( segmentRecord.hyp );
+
+				final String genealogy = segmentRecord.getGenealogyString();
+
 //				final IntervalView< ShortType > segmentedFrame = Views.hyperSlice( MotherMachine.instance.getCellSegmentedChannelImgs(), 2, segmentRecord.frame );
 //				if ( cid == 6 && segmentRecord.frame >= 35 ) {
 //					System.out.println( "BREAKPOINT" );
@@ -442,12 +516,15 @@ public class CellStatsExporter {
 
 				// WARNING -- if you change substring 'frame' you need also to change the last-row-deletion procedure below for the ENDOFTRACKING case... yes, this is not clean... ;)
 				linesToExport.add( String.format(
-						"\tframe=%d; pixel_limits=[%d,%d]; cell_height=%.2f; num_pixels_in_box=%d",
+						"\tframe=%d; pos_in_GL=[%d,%d]; pixel_limits=[%d,%d]; cell_height=%.2f; num_pixels_in_box=%d; genealogy=%s",
 						segmentRecord.frame,
+						cellPos,
+						numCells,
 						limits.getA(),
 						limits.getB(),
 						height,
-						Util.getSegmentBoxPixelCount( segmentRecord.hyp, firstGLF.getAvgXpos() ) ) );
+						Util.getSegmentBoxPixelCount( segmentRecord.hyp, firstGLF.getAvgXpos() ),
+						genealogy ) );
 
 				// export info per image channel
 				for ( int c = 0; c < MotherMachine.instance.getRawChannelImgs().size(); c++ ) {

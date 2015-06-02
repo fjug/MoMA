@@ -31,6 +31,7 @@ public class DialogCellStatsExportSetup extends JDialog implements ActionListene
 
 	private boolean wasCanceled;
 
+	public boolean doExportUserInputs;
 	public boolean doExportTracks;
 	public boolean includeHistograms;
 	public boolean includeQuantiles;
@@ -47,13 +48,23 @@ public class DialogCellStatsExportSetup extends JDialog implements ActionListene
 
 	private JCheckBox cbDoExportTracks;
 
-	public DialogCellStatsExportSetup( final JComponent parent, final boolean doExportTracks, final boolean includeHistograms, final boolean includeQuantiles, final boolean includeColIntensitySums, final boolean includePixelIntensities ) {
+	private JCheckBox cbDoExportUserInputs;
+
+	public DialogCellStatsExportSetup(
+			final JComponent parent,
+			final boolean doExportUserInputs,
+			final boolean doExportTracks,
+			final boolean includeHistograms,
+			final boolean includeQuantiles,
+			final boolean includeColIntensitySums,
+			final boolean includePixelIntensities ) {
 		super( SwingUtilities.windowForComponent( parent ), "Data-export setup..." );
 		this.dialogInit();
 		this.setModal( true );
 
 		this.wasCanceled = true;
 
+		this.doExportUserInputs = doExportUserInputs;
 		this.doExportTracks = doExportTracks;
 		this.includeHistograms = includeHistograms;
 		this.includeQuantiles = includeQuantiles;
@@ -93,11 +104,13 @@ public class DialogCellStatsExportSetup extends JDialog implements ActionListene
 		verticalHelper.setBorder( BorderFactory.createTitledBorder( "Pick data to be exported..." ) );
 		toplevelHelper.add( verticalHelper );
 
-		cbDoExportTracks = new JCheckBox( "yes, do it!", doExportTracks );
+		cbDoExportTracks = new JCheckBox( "dump tracking trees", doExportTracks );
+		cbDoExportUserInputs = new JCheckBox( "save user inputs", doExportUserInputs );
 
-		verticalHelper = new JPanel( new GridLayout( 1, 1 ) );
+		verticalHelper = new JPanel( new GridLayout( 1, 2 ) );
 		verticalHelper.add( cbDoExportTracks );
-		verticalHelper.setBorder( BorderFactory.createTitledBorder( "Also export tracks-file?" ) );
+		verticalHelper.add( cbDoExportUserInputs );
+		verticalHelper.setBorder( BorderFactory.createTitledBorder( "Other exports?" ) );
 		toplevelHelper.add( verticalHelper );
 
 		bOk = new JButton( "OK" );
@@ -137,6 +150,7 @@ public class DialogCellStatsExportSetup extends JDialog implements ActionListene
 		if ( e.getSource().equals( bOk ) ) {
 			this.wasCanceled = false;
 
+			this.doExportUserInputs = cbDoExportUserInputs.isSelected();
 			this.doExportTracks = cbDoExportTracks.isSelected();
 			this.includeHistograms = cbHist.isSelected();
 			this.includeQuantiles = cbQuant.isSelected();

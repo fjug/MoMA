@@ -34,8 +34,11 @@ import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
 import com.jug.lp.AbstractAssignment;
+import com.jug.lp.DivisionAssignment;
+import com.jug.lp.ExitAssignment;
 import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.Hypothesis;
+import com.jug.lp.MappingAssignment;
 import com.jug.segmentation.GrowthLineSegmentationMagic;
 import com.jug.util.ArgbDrawingUtils;
 import com.jug.util.SimpleFunctionAnalysis;
@@ -740,6 +743,11 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 		return isParaMaxFlowComponentTree;
 	}
 
+	/**
+	 * Returns the number of cells in this GLF.
+	 *
+	 * @return
+	 */
 	public int getSolutionStats_numCells() {
 		int cells = 0;
 		final GrowthLineTrackingILP ilp = getParent().getIlp();
@@ -750,6 +758,42 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			}
 		}
 		return cells;
+	}
+
+	/**
+	 * Returns the position of the given hypothesis in the GL.
+	 *
+	 * @param hyp
+	 * @return the uppermost segmented cell would return a 1. For each active
+	 *         segmentation that is strictly above the given hypothesis the
+	 *         return value is increased by 1.
+	 */
+	public int getSolutionStats_cellPos( final Hypothesis< Component< FloatType, ? >> hyp ) {
+		int pos = 1;
+
+		final GrowthLineTrackingILP ilp = getParent().getIlp();
+		for ( final Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> > optRightAssmnt : ilp.getOptimalRightAssignments(
+				this.getTime() ).values() ) {
+
+			for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> ora : optRightAssmnt ) {
+				Hypothesis< Component< FloatType, ? >> srcHyp = null;
+				if ( ora instanceof MappingAssignment ) {
+					srcHyp = ( ( MappingAssignment ) ora ).getSourceHypothesis();
+				}
+				if ( ora instanceof DivisionAssignment ) {
+					srcHyp = ( ( DivisionAssignment ) ora ).getSourceHypothesis();
+				}
+				if ( ora instanceof ExitAssignment ) {
+					srcHyp = ( ( ExitAssignment ) ora ).getAssociatedHypothesis();
+				}
+				if ( srcHyp != null ) {
+					if ( srcHyp.getLocation().b < hyp.getLocation().a ) {
+						pos++;
+					}
+				}
+			}
+		}
+		return pos;
 	}
 
 	public Vector< ValuePair< ValuePair< Integer, Integer >, ValuePair< Integer, Integer > >> getSolutionStats_limitsAndRightAssType() {
