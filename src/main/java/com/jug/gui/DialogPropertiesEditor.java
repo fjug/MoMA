@@ -55,6 +55,36 @@ public class DialogPropertiesEditor extends JDialog implements ActionListener {
 					MotherMachine.props.setProperty(
 							"GUROBI_MAX_OPTIMALITY_GAP",
 							"" + MotherMachine.GUROBI_MAX_OPTIMALITY_GAP );
+			} else if ( sourceName.equals( "GL_OFFSET_TOP" ) ) {
+				MotherMachine.GL_OFFSET_TOP =
+						Integer.parseInt( evt.getNewValue().toString() );
+				MotherMachine.props.setProperty(
+						"GL_OFFSET_TOP",
+						"" + MotherMachine.GL_OFFSET_TOP );
+				final Thread t = new Thread( new Runnable() {
+
+					@Override
+					public void run() {
+						MotherMachine.instance.restartFromGLSegmentation();
+						MotherMachine.getGui().dataToDisplayChanged();
+					}
+				} );
+				t.start();
+			} else if ( sourceName.equals( "GL_OFFSET_BOTTOM" ) ) {
+				MotherMachine.GL_OFFSET_BOTTOM =
+						Integer.parseInt( evt.getNewValue().toString() );
+				MotherMachine.props.setProperty(
+						"GL_OFFSET_BOTTOM",
+						"" + MotherMachine.GL_OFFSET_BOTTOM );
+				final Thread t = new Thread( new Runnable() {
+
+					@Override
+					public void run() {
+						MotherMachine.instance.restartFromGLSegmentation();
+						MotherMachine.getGui().dataToDisplayChanged();
+					}
+				} );
+				t.start();
 			} else {
 				JOptionPane.showMessageDialog(
 						MotherMachine.getGui(),

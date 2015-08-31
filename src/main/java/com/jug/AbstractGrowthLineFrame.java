@@ -582,7 +582,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			}
 		}
 
-		for ( final Point p : getMirroredImgLocations() ) { // imgLocations
+		for ( final Point p : imgLocations ) { // getMirroredImgLocations()
 			final long[] pos = Util.pointLocation( p );
 			pos[ 0 ] += offsetX;
 			pos[ 1 ] += offsetY;

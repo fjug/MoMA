@@ -63,7 +63,6 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	// fields
 	// -------------------------------------------------------------------------------------
 	private final int width;
-	private final int offsetY;
 
 	private boolean doFilterDataByType = false;
 	private int filterAssignmentType;
@@ -110,7 +109,6 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 * @param filterMaxCost
 	 */
 	public AssignmentView( final int height, final float filterMinCost, final float filterMaxCost ) {
-		this.offsetY = MotherMachine.GL_OFFSET_TOP;
 		this.width = 90;
 		this.setPreferredSize( new Dimension( width, height - HEIGHT_OFFSET ) );
 
@@ -321,13 +319,13 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		final ValuePair< Integer, Integer > limitsRight = rightHyp.getLocation();
 
 		final int x1 = 0;
-		final int y1 = offsetY + limitsLeft.getA().intValue();
+		final int y1 = MotherMachine.GL_OFFSET_TOP + limitsLeft.getA().intValue();
 		final int x2 = 0;
-		final int y2 = offsetY + limitsLeft.getB().intValue();
+		final int y2 = MotherMachine.GL_OFFSET_TOP + limitsLeft.getB().intValue();
 		final int x3 = this.width;
-		final int y3 = offsetY + limitsRight.getB().intValue();
+		final int y3 = MotherMachine.GL_OFFSET_TOP + limitsRight.getB().intValue();
 		final int x4 = this.width;
-		final int y4 = offsetY + limitsRight.getA().intValue();
+		final int y4 = MotherMachine.GL_OFFSET_TOP + limitsRight.getA().intValue();
 
 		final GeneralPath polygon = new GeneralPath();
 		polygon.moveTo( x1, y1 );
@@ -422,19 +420,20 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		final ValuePair< Integer, Integer > limitsRightLower = rightHypLower.getLocation();
 
 		final int x1 = 0;
-		final int y1 = offsetY + limitsLeft.getA().intValue();
+		final int y1 = MotherMachine.GL_OFFSET_TOP + limitsLeft.getA().intValue();
 		final int x2 = 0;
-		final int y2 = offsetY + limitsLeft.getB().intValue();
+		final int y2 = MotherMachine.GL_OFFSET_TOP + limitsLeft.getB().intValue();
 		final int x3 = this.width;
-		final int y3 = offsetY + limitsRightLower.getB().intValue();
+		final int y3 = MotherMachine.GL_OFFSET_TOP + limitsRightLower.getB().intValue();
 		final int x4 = this.width;
-		final int y4 = offsetY + limitsRightLower.getA().intValue();
+		final int y4 = MotherMachine.GL_OFFSET_TOP + limitsRightLower.getA().intValue();
 		final int x5 = this.width / 3;
-		final int y5 = offsetY + ( 2 * ( limitsLeft.getA().intValue() + limitsLeft.getB().intValue() ) / 2 + 1 * ( limitsRightUpper.getB().intValue() + limitsRightLower.getA().intValue() ) / 2 ) / 3;
+		final int y5 =
+				MotherMachine.GL_OFFSET_TOP + ( 2 * ( limitsLeft.getA().intValue() + limitsLeft.getB().intValue() ) / 2 + 1 * ( limitsRightUpper.getB().intValue() + limitsRightLower.getA().intValue() ) / 2 ) / 3;
 		final int x6 = this.width;
-		final int y6 = offsetY + limitsRightUpper.getB().intValue();
+		final int y6 = MotherMachine.GL_OFFSET_TOP + limitsRightUpper.getB().intValue();
 		final int x7 = this.width;
-		final int y7 = offsetY + limitsRightUpper.getA().intValue();
+		final int y7 = MotherMachine.GL_OFFSET_TOP + limitsRightUpper.getA().intValue();
 
 		final GeneralPath polygon = new GeneralPath();
 		polygon.moveTo( x1, y1 );
@@ -528,7 +527,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 
 		final int x1 = 0;
 		final int x2 = this.getWidth() / 5;
-		final int y1 = offsetY + limits.getA().intValue();
+		final int y1 = MotherMachine.GL_OFFSET_TOP + limits.getA().intValue();
 		final int y2 = y1 + limits.getB().intValue() - limits.getA().intValue();
 
 		if ( !this.isDragging && this.isMouseOver && this.mousePosX > x1 && this.mousePosX < x2 && this.mousePosY > y1 && this.mousePosY < y2 ) {

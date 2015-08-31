@@ -63,7 +63,6 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.SystemUtils;
 
 import com.apple.eawt.Application;
-import com.jug.gui.JFrameSnapper;
 import com.jug.gui.MotherMachineGui;
 import com.jug.gui.MotherMachineModel;
 import com.jug.gui.progress.DialogProgress;
@@ -197,7 +196,7 @@ public class MotherMachine {
 	/**
 	 * Identifier of current version
 	 */
-	public static final String VERSION_STRING = "TIMM_0.9.1beta";
+	public static final String VERSION_STRING = "TIMM_0.9.2beta";
 
 	public static final int MAX_CELL_DROP = 50;
 
@@ -475,6 +474,8 @@ public class MotherMachine {
 			main.initMainWindow( guiFrame );
 		}
 
+		System.out.println( "VERSION: " + VERSION_STRING );
+
 		props = main.loadParams();
 		BGREM_TEMPLATE_XMIN = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMIN", Integer.toString( BGREM_TEMPLATE_XMIN ) ) );
 		BGREM_TEMPLATE_XMAX = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMAX", Integer.toString( BGREM_TEMPLATE_XMAX ) ) );
@@ -574,9 +575,9 @@ public class MotherMachine {
 			System.out.print( "Build GUI..." );
 			main.showConsoleWindow( false );
 
-			final JFrameSnapper snapper = new JFrameSnapper();
-			snapper.addFrame( main.frameConsoleWindow );
-			snapper.addFrame( guiFrame );
+//			final JFrameSnapper snapper = new JFrameSnapper();
+//			snapper.addFrame( main.frameConsoleWindow );
+//			snapper.addFrame( guiFrame );
 
 			gui.setVisible( true );
 			guiFrame.add( gui );
@@ -1193,7 +1194,7 @@ public class MotherMachine {
 			final String filter = String.format( "_c%04d", cIdx );
 			System.out.println( String.format( "Loading tiff sequence for channel, identified by '%s', from '%s'...", filter, path ) );
 			try {
-				if ( cIdx == minChannelIdx ) { // TODO load unnormalized!!! Normalize later...
+				if ( cIdx == minChannelIdx ) {
 					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, true, filter ) );
 				} else {
 					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, false, filter ) );
@@ -1217,26 +1218,7 @@ public class MotherMachine {
 		}
 		System.out.println( " done!" );
 
-		System.out.print( "Searching for GrowthLines..." );
-		resetImgTempToRaw();
-		findGrowthLines();
-		annotateDetectedWellCenters();
-		System.out.println( " done!" );
-
-		// subtracting BG in RAW image...
-		System.out.print( "Subtracting background..." );
-		// ...and make temp image be the same
-		resetImgTempToRaw();
-		subtractBackgroundInTemp();
-		System.out.println( " done!" );
-
-		System.out.print( "Normalize loaded images..." );
-		normalizePerFrame( imgTemp, MotherMachine.GL_OFFSET_TOP, MotherMachine.GL_OFFSET_BOTTOM );
-		System.out.println( " done!" );
-
-		System.out.print( "Generating Segmentation Hypotheses..." );
-		generateAllSimpleSegmentationHypotheses();
-		System.out.println( " done!" );
+		restartFromGLSegmentation();
 
 		if ( HEADLESS ) {
 			System.out.println( "Generating Integer Linear Program(s)..." );
@@ -1695,4 +1677,40 @@ public class MotherMachine {
 		return numChannels;
 	}
 
+	/**
+	 * Allows one to restart by GL segmentation. This is e.g. needed after top
+	 * or bottom offsets are altered, which invalidates all analysis run so far.
+	 */
+	public void restartFromGLSegmentation() {
+		boolean hideConsoleLater = false;
+		if ( !HEADLESS && !isConsoleVisible() ) {
+			showConsoleWindow( true );
+			hideConsoleLater = true;
+		}
+
+		System.out.print( "Searching for GrowthLines..." );
+		resetImgTempToRaw();
+		findGrowthLines();
+		annotateDetectedWellCenters();
+		System.out.println( " done!" );
+
+		// subtracting BG in RAW image...
+		System.out.print( "Subtracting background..." );
+		// ...and make temp image be the same
+		resetImgTempToRaw();
+		subtractBackgroundInTemp();
+		System.out.println( " done!" );
+
+		System.out.print( "Normalize loaded images..." );
+		normalizePerFrame( imgTemp, MotherMachine.GL_OFFSET_TOP, MotherMachine.GL_OFFSET_BOTTOM );
+		System.out.println( " done!" );
+
+		System.out.print( "Generating Segmentation Hypotheses..." );
+		generateAllSimpleSegmentationHypotheses();
+		System.out.println( " done!" );
+
+		if ( !HEADLESS && hideConsoleLater ) {
+			showConsoleWindow( false );
+		}
+	}
 }
