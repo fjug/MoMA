@@ -1,14 +1,5 @@
 package com.jug;
 
-/**
- * Main class for the MotherMachine project.
- */
-
-import gurobi.GRBEnv;
-import gurobi.GRBException;
-import ij.ImageJ;
-import ij.Prefs;
-
 import java.awt.FileDialog;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -38,21 +29,6 @@ import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
-import net.imglib2.Cursor;
-import net.imglib2.Point;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.algorithm.gauss3.Gauss3;
-import net.imglib2.algorithm.stats.Normalize;
-import net.imglib2.exception.IncompatibleTypeException;
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.ARGBType;
-import net.imglib2.type.numeric.integer.ShortType;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.IntervalView;
-import net.imglib2.view.Views;
-
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -74,6 +50,29 @@ import com.jug.util.DataMover;
 import com.jug.util.FloatTypeImgLoader;
 import com.jug.util.OSValidator;
 import com.jug.util.converter.RealFloatProbMapToSegmentation;
+
+/**
+ * Main class for the MotherMachine project.
+ */
+
+import gurobi.GRBEnv;
+import gurobi.GRBException;
+import ij.ImageJ;
+import ij.Prefs;
+import net.imglib2.Cursor;
+import net.imglib2.Point;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.gauss3.Gauss3;
+import net.imglib2.algorithm.stats.Normalize;
+import net.imglib2.exception.IncompatibleTypeException;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.ARGBType;
+import net.imglib2.type.numeric.integer.ShortType;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.IntervalView;
+import net.imglib2.view.Views;
 
 /**
  * @author jug
@@ -1402,6 +1401,19 @@ public class MotherMachine {
 						maxWellCenters = frameWellCenters.get( y ).size();
 						maxWellCentersIdx = y;
 					}
+				}
+			}
+
+			if ( maxWellCenters > 1 ) {
+				final String msg =
+						"ERROR: Two maxima in a single pixel row found while looking for GL centerline at  frame " + frameIdx + ".\nPlease check input images or adjust (increase?) SIGMA_GL_DETECTION_X in properties.";
+				System.out.println( msg );
+				if ( !HEADLESS ) {
+					JOptionPane.showMessageDialog(
+							getGui(),
+							msg,
+							"Error while looking for GL centerline...",
+							JOptionPane.ERROR_MESSAGE );
 				}
 			}
 
