@@ -3,8 +3,6 @@
  */
 package com.jug.export;
 
-import gurobi.GRBException;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -20,16 +18,6 @@ import java.util.Vector;
 
 import javax.swing.JOptionPane;
 
-import net.imglib2.IterableInterval;
-import net.imglib2.Point;
-import net.imglib2.algorithm.componenttree.Component;
-import net.imglib2.histogram.Histogram1d;
-import net.imglib2.histogram.Real1dBinMapper;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.ValuePair;
-import net.imglib2.view.IntervalView;
-import net.imglib2.view.Views;
-
 import com.jug.GrowthLineFrame;
 import com.jug.MotherMachine;
 import com.jug.gui.DialogCellStatsExportSetup;
@@ -44,6 +32,17 @@ import com.jug.lp.MappingAssignment;
 import com.jug.util.ComponentTreeUtils;
 import com.jug.util.Util;
 import com.jug.util.filteredcomponents.FilteredComponent;
+
+import gurobi.GRBException;
+import net.imglib2.IterableInterval;
+import net.imglib2.Point;
+import net.imglib2.algorithm.componenttree.Component;
+import net.imglib2.histogram.Histogram1d;
+import net.imglib2.histogram.Real1dBinMapper;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.ValuePair;
+import net.imglib2.view.IntervalView;
+import net.imglib2.view.Views;
 
 /**
  * @author jug
@@ -473,7 +472,10 @@ public class CellStatsExporter {
 		linesToExport.add( "numCells = " + startingPoints.size() );
 
 		// Line 4: #channels
-		linesToExport.add( "numChannels = " + MotherMachine.instance.getRawChannelImgs().size() + "\n" );
+		linesToExport.add( "numChannels = " + MotherMachine.instance.getRawChannelImgs().size() );
+
+		// Line 5: bottomOffset
+		linesToExport.add( "bottomOffset = " + MotherMachine.GL_OFFSET_BOTTOM + "\n" );
 
 		// Export all cells (we found all their starting segments above)
 		for ( int cid = 0; cid < startingPoints.size(); cid++ ) {
