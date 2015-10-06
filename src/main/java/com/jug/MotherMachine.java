@@ -80,6 +80,11 @@ import net.imglib2.view.Views;
  */
 public class MotherMachine {
 
+	/**
+	 * Identifier of current version
+	 */
+	public static final String VERSION_STRING = "TIMM_0.9.3beta";
+
 	// -------------------------------------------------------------------------------------
 	// statics
 	// -------------------------------------------------------------------------------------
@@ -194,11 +199,6 @@ public class MotherMachine {
 	 * What happens if exit constraints are NOT part of the model?
 	 */
 	public static final boolean DISABLE_EXIT_CONSTRAINTS = false;
-
-	/**
-	 * Identifier of current version
-	 */
-	public static final String VERSION_STRING = "TIMM_0.9.2beta";
 
 	public static final int MAX_CELL_DROP = 50;
 
