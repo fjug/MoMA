@@ -3,20 +3,20 @@
  */
 package com.jug.gui;
 
-import gurobi.GRBException;
-import ij.ImageJ;
-import ij.Prefs;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.HeadlessException;
 import java.awt.Menu;
 import java.awt.MenuBar;
 import java.awt.MenuItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -41,20 +41,7 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import net.imglib2.Localizable;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.algorithm.componenttree.Component;
-import net.imglib2.algorithm.componenttree.ComponentForest;
-import net.imglib2.converter.Converters;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.IntervalView;
-import net.imglib2.view.Views;
-import net.miginfocom.swing.MigLayout;
-
 import org.math.plot.Plot2DPanel;
-
-import weka.gui.ExtensionFileFilter;
 
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
@@ -70,6 +57,21 @@ import com.jug.util.SimpleFunctionAnalysis;
 import com.jug.util.Util;
 import com.jug.util.converter.RealFloatNormalizeConverter;
 import com.jug.util.filteredcomponents.FilteredComponent;
+
+import gurobi.GRBException;
+import ij.ImageJ;
+import ij.Prefs;
+import net.imglib2.Localizable;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.componenttree.Component;
+import net.imglib2.algorithm.componenttree.ComponentForest;
+import net.imglib2.converter.Converters;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.IntervalView;
+import net.imglib2.view.Views;
+import net.miginfocom.swing.MigLayout;
+import weka.gui.ExtensionFileFilter;
 
 /**
  * @author jug
@@ -982,22 +984,73 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				public void run() {
 					GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
 
-					if ( ilp == null ) {
-						prepareOptimization();
-						ilp = model.getCurrentGL().getIlp();
-					}
 					final File file = OsDependentFileChooser.showLoadFileChooser(
 							self,
 							MotherMachine.STATS_OUTPUT_PATH,
 							"Choose tracking to load...",
 							new ExtensionFileFilter( "timm", "Curated TIMM tracking" ) );
 					System.out.println( "File to load tracking from: " + file.getAbsolutePath() );
+
 					try {
 						if ( file != null ) {
+
+							// GL_OFFSET_BOTTOM adjustment if needed...
+							doBottomOffsetAdjustmentIfNecessary( file );
+
+							if ( ilp == null ) {
+								prepareOptimization();
+								ilp = model.getCurrentGL().getIlp();
+							}
 							ilp.loadState( file );
 						}
 					} catch ( final IOException e1 ) {
 						e1.printStackTrace();
+					}
+				}
+
+				private void doBottomOffsetAdjustmentIfNecessary( final File file )
+						throws FileNotFoundException {
+					final BufferedReader reader = new BufferedReader( new FileReader( file ) );
+
+					String line;
+					try {
+						while ( ( line = reader.readLine() ) != null ) {
+							// ignore comments and empty lines
+							if ( line.trim().startsWith( "#" ) || line.trim().length() == 0 )
+								continue;
+
+							final String[] columns = line.split( "," );
+							if ( columns.length > 1 ) {
+								final String keyword = columns[ 0 ].trim();
+
+								if ( keyword.equals( "BOTTOM_OFFSET" ) ) {
+									final int newBottomOffset =
+											Integer.parseInt( columns[ 1 ].trim() );
+									if ( MotherMachine.GL_OFFSET_BOTTOM != newBottomOffset ) {
+										MotherMachine.GL_OFFSET_BOTTOM = newBottomOffset;
+
+										final String message =
+												" >> Loaded tracking is based on a different value for GL_OFFSET_BOTTOM...\n >> Segmentation hypotheses need to be rebuild, please be patient...";
+										System.out.println( message );
+										if ( !MotherMachine.HEADLESS ) {
+											JOptionPane.showMessageDialog(
+													MotherMachine.getGui(),
+													message,
+													"Bottom offset needs adjusting...",
+													JOptionPane.INFORMATION_MESSAGE );
+										}
+										MotherMachine.instance.restartFromGLSegmentation();
+										MotherMachine.getGui().dataToDisplayChanged();
+									}
+								}
+							}
+						}
+					} catch ( final NumberFormatException e ) {
+						e.printStackTrace();
+					} catch ( final HeadlessException e ) {
+						e.printStackTrace();
+					} catch ( final IOException e ) {
+						e.printStackTrace();
 					}
 				}
 
@@ -1539,7 +1592,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 	/**
 	 * Checkbox getter to enable or disable autosave functionality.
-	 * 
+	 *
 	 * @return true if the corresponding CheckBox is checked.
 	 */
 	public boolean isAutosaveRequested() {

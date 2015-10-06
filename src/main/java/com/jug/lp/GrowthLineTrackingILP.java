@@ -3,14 +3,6 @@
  */
 package com.jug.lp;
 
-import gurobi.GRB;
-import gurobi.GRBConstr;
-import gurobi.GRBEnv;
-import gurobi.GRBException;
-import gurobi.GRBLinExpr;
-import gurobi.GRBModel;
-import gurobi.GRBVar;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -26,12 +18,6 @@ import java.util.Set;
 
 import javax.swing.JOptionPane;
 
-import net.imglib2.Localizable;
-import net.imglib2.algorithm.componenttree.Component;
-import net.imglib2.algorithm.componenttree.ComponentForest;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.ValuePair;
-
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
 import com.jug.MotherMachine;
@@ -39,6 +25,19 @@ import com.jug.gui.progress.DialogGurobiProgress;
 import com.jug.gui.progress.ProgressListener;
 import com.jug.lp.costs.CostFactory;
 import com.jug.util.ComponentTreeUtils;
+
+import gurobi.GRB;
+import gurobi.GRBConstr;
+import gurobi.GRBEnv;
+import gurobi.GRBException;
+import gurobi.GRBLinExpr;
+import gurobi.GRBModel;
+import gurobi.GRBVar;
+import net.imglib2.Localizable;
+import net.imglib2.algorithm.componenttree.Component;
+import net.imglib2.algorithm.componenttree.ComponentForest;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.ValuePair;
 
 /**
  * @author jug
@@ -1579,6 +1578,7 @@ public class GrowthLineTrackingILP {
 			out.write( String.format( "TIME, %d, %d, %d\n", numT,
 					MotherMachine.getMinTime(), MotherMachine.getMaxTime() ) );
 			out.write( String.format( "SIZE, %d, %d\n", numH, numA ) );
+			out.write( String.format( "BOTTOM_OFFSET, %d\n", MotherMachine.GL_OFFSET_BOTTOM ) );
 			out.newLine();
 
 			final int timeOffset = MotherMachine.getMinTime();
