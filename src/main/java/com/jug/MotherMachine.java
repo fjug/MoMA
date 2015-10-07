@@ -363,7 +363,11 @@ public class MotherMachine {
 			cmd = parser.parse( options, args );
 		} catch ( final ParseException e1 ) {
 			final HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp( "... -p [props-file] -i [in-folder] -o [out-folder] -c <num-channels> -cmin [start-channel-ids] -tmin [idx] -tmax [idx] [-headless]", "", options, "Error: " + e1.getMessage() );
+			formatter.printHelp(
+					"... [-p props-file] -i in-folder [-o out-folder] -c <num-channels> [-cmin start-channel-ids] [-tmin idx] [-tmax idx] [-headless]",
+					"",
+					options,
+					"Error: " + e1.getMessage() );
 			System.exit( 0 );
 		}
 
@@ -1760,8 +1764,16 @@ public class MotherMachine {
 		final int HEURISTIC_CONSTANT = 2;// that many pixels I detect the onset of the GL lower then I would otherwise... bah...
 
 		// Project all images and sum all rows
+		final long[] mins = new long[getImgTemp().numDimensions()];
+		final long[] maxs = new long[getImgTemp().numDimensions()];
+		getImgTemp().min( mins );
+		getImgTemp().max( maxs );
+		final long xDimLen = getImgTemp().dimension( 0 );
+		mins[ 0 ] = xDimLen / 2 - GL_OFFSET_LATERAL;
+		maxs[ 0 ] = xDimLen / 2 + GL_OFFSET_LATERAL;
+		final RandomAccessibleInterval<FloatType> centralArea = Views.interval( getImgTemp(), mins, maxs );
 		final List< FloatType > rowTimeAverages = new Loops< FloatType, FloatType >()
-				.forEachHyperslice( getImgTemp(), 1, new SumOfRai< FloatType >() );
+				.forEachHyperslice( centralArea, 1, new SumOfRai< FloatType >() );
 
 		float lowerHalfAvg = 0;
 		for ( int i = rowTimeAverages.size() / 2; i < rowTimeAverages.size(); i++ ) {
