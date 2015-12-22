@@ -1797,7 +1797,7 @@ public class MotherMachine {
 			}
 		}
 
-		System.out.println( "\n  >> Dettected GL_OFFSET_BOTTOM is: " + bottom_offset );
+		System.out.println( "\n  >> Detected GL_OFFSET_BOTTOM is: " + bottom_offset );
 		GL_OFFSET_BOTTOM = bottom_offset;
 	}
 }
