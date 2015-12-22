@@ -474,7 +474,11 @@ public class CellStatsExporter {
 		// Line 4: #channels
 		linesToExport.add( "numChannels = " + MotherMachine.instance.getRawChannelImgs().size() );
 
-		// Line 5: bottomOffset
+		// Line 5: imageHeight
+		linesToExport
+				.add( "imageHeight = " + MotherMachine.instance.getImgRaw().dimension( 1 ) + "\n" );
+
+		// Line 6: bottomOffset
 		linesToExport.add( "bottomOffset = " + MotherMachine.GL_OFFSET_BOTTOM + "\n" );
 
 		// Export all cells (we found all their starting segments above)
