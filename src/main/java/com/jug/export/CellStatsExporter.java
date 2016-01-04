@@ -475,11 +475,14 @@ public class CellStatsExporter {
 		linesToExport.add( "numChannels = " + MotherMachine.instance.getRawChannelImgs().size() );
 
 		// Line 5: imageHeight
-		linesToExport
-				.add( "imageHeight = " + MotherMachine.instance.getImgRaw().dimension( 1 ) + "\n" );
+		final long h = MotherMachine.instance.getImgRaw().dimension( 1 );
+		linesToExport.add( "imageHeight = " + h + "\n" );
 
 		// Line 6: bottomOffset
 		linesToExport.add( "bottomOffset = " + MotherMachine.GL_OFFSET_BOTTOM + "\n" );
+
+		// Line 7: track region (pixel row interval we perform tracking within -- this is all but top and bottom offset areas)
+		linesToExport.add( String.format("trackRegionInterval = [%d,%d]", MotherMachine.GL_OFFSET_TOP, h - 1 - MotherMachine.GL_OFFSET_BOTTOM ) );
 
 		// Export all cells (we found all their starting segments above)
 		for ( int cid = 0; cid < startingPoints.size(); cid++ ) {
