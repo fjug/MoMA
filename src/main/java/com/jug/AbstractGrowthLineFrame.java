@@ -13,6 +13,19 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.Vector;
 
+import com.jug.lp.AbstractAssignment;
+import com.jug.lp.DivisionAssignment;
+import com.jug.lp.ExitAssignment;
+import com.jug.lp.GrowthLineTrackingILP;
+import com.jug.lp.Hypothesis;
+import com.jug.lp.MappingAssignment;
+import com.jug.segmentation.GrowthLineSegmentationMagic;
+import com.jug.util.ArgbDrawingUtils;
+import com.jug.util.SimpleFunctionAnalysis;
+import com.jug.util.Util;
+import com.jug.util.converter.RealFloatNormalizeConverter;
+import com.jug.util.filteredcomponents.FilteredComponent;
+
 import net.imglib2.Localizable;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
@@ -32,19 +45,6 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.ValuePair;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
-
-import com.jug.lp.AbstractAssignment;
-import com.jug.lp.DivisionAssignment;
-import com.jug.lp.ExitAssignment;
-import com.jug.lp.GrowthLineTrackingILP;
-import com.jug.lp.Hypothesis;
-import com.jug.lp.MappingAssignment;
-import com.jug.segmentation.GrowthLineSegmentationMagic;
-import com.jug.util.ArgbDrawingUtils;
-import com.jug.util.SimpleFunctionAnalysis;
-import com.jug.util.Util;
-import com.jug.util.converter.RealFloatNormalizeConverter;
-import com.jug.util.filteredcomponents.FilteredComponent;
 
 /**
  * @author jug
@@ -509,7 +509,8 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			ivImg = Views.addDimension( ivImg, 0, 0 );
 		}
 
-		final RealRandomAccessible< FloatType > rrImg = Views.interpolate( Views.hyperSlice( ivImg, 2, centerZ ), new NLinearInterpolatorFactory< FloatType >() );
+		final RealRandomAccessible< FloatType > rrImg =
+				Views.interpolate( Views.extendZero( Views.hyperSlice( ivImg, 2, centerZ ) ), new NLinearInterpolatorFactory< FloatType >() );
 		final RealRandomAccess< FloatType > rraImg = rrImg.realRandomAccess();
 
 		final float[] dIntensity = new float[ imgLocations.size() ]; //  + 1
