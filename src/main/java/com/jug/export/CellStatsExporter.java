@@ -479,7 +479,8 @@ public class CellStatsExporter {
 		linesToExport.add( "imageHeight = " + h + "\n" );
 
 		// Line 6: bottomOffset
-		linesToExport.add( "bottomOffset = " + MotherMachine.GL_OFFSET_BOTTOM + "\n" );
+		linesToExport.add(
+				"glHeight = " + ( h - MotherMachine.GL_OFFSET_BOTTOM - MotherMachine.GL_OFFSET_TOP ) + "\n" );
 
 		// Line 7: track region (pixel row interval we perform tracking within -- this is all but top and bottom offset areas)
 		linesToExport.add( String.format("trackRegionInterval = [%d,%d]", MotherMachine.GL_OFFSET_TOP, h - 1 - MotherMachine.GL_OFFSET_BOTTOM ) );
