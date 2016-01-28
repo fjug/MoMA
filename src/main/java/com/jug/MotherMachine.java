@@ -1761,26 +1761,31 @@ public class MotherMachine {
 	 * average intensity of the lowest 3 rows and the lower half of the GL.
 	 */
 	private void autodetectBottomOffset() {
-		final int HEURISTIC_CONSTANT = 2;// that many pixels I detect the onset of the GL lower then I would otherwise... bah...
 
-		// Project all images and sum all rows
+		final int HEURISTIC_CONSTANT = 2; // that many pixels I move down after finding the onset point
+
+		// Project all images (relevant parts only) + sum rows to single values
 		final long[] mins = new long[getImgTemp().numDimensions()];
 		final long[] maxs = new long[getImgTemp().numDimensions()];
 		getImgTemp().min( mins );
 		getImgTemp().max( maxs );
 		final long xDimLen = getImgTemp().dimension( 0 );
-		mins[ 0 ] = xDimLen / 2 - GL_OFFSET_LATERAL;
-		maxs[ 0 ] = xDimLen / 2 + GL_OFFSET_LATERAL;
+		// Note: the '/3' below was not there. Basel noted some rare problems by averaging the entire lateral offset range when there was
+		// some brighter background close below the GL (at the imgage border). In their case that came from the cropped numbers below the GL.
+		mins[ 0 ] = xDimLen / 2 - GL_OFFSET_LATERAL / 3; // we use the fact that we know that the GL is in the center of the image given to us
+		maxs[ 0 ] = xDimLen / 2 + GL_OFFSET_LATERAL / 3; // we use the fact that we know that the GL is in the center of the image given to us
 		final RandomAccessibleInterval<FloatType> centralArea = Views.interval( getImgTemp(), mins, maxs );
 		final List< FloatType > rowTimeAverages = new Loops< FloatType, FloatType >()
 				.forEachHyperslice( centralArea, 1, new SumOfRai< FloatType >() );
 
+		// compute average of lower half averages
 		float lowerHalfAvg = 0;
 		for ( int i = rowTimeAverages.size() / 2; i < rowTimeAverages.size(); i++ ) {
 			lowerHalfAvg += rowTimeAverages.get( i ).get();
 		}
 		lowerHalfAvg /= rowTimeAverages.size() / 2;
 
+		// compute average of lowest 3 (or such) rows
 		float lowestRowsAvg = 0;
 		final int numRows = 3;
 		for ( int i = rowTimeAverages.size() - numRows; i < rowTimeAverages.size(); i++ ) {
