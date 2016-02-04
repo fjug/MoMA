@@ -481,8 +481,8 @@ public class GrowthLineTrackingILP {
 					}
 
 					// features = [ fromCost, toCost, HU, HL, L, onlyH ? 0 : L ]
-					// weights = [ 0.1, 0.9, 0.5, 0.5, 0, 1 ]
-
+					// weights = [ 0.1, 0.9, 0.5, 0.5, 0.0, 1.0 ]
+					//             2.7, 2.7, 0.7, 0.6, 0.6, 0.2
 					if ( cost <= CUTOFF_COST ) {
 						final String name = String.format( "a_%d^MAPPING--(%d,%d)", t, i, j );
 						final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, name );
