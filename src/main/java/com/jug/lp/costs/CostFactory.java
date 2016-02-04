@@ -5,14 +5,15 @@ package com.jug.lp.costs;
 
 import java.util.List;
 
-import net.imglib2.algorithm.componenttree.Component;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.ValuePair;
-
 import com.jug.MotherMachine;
 import com.jug.lp.Hypothesis;
 import com.jug.util.ComponentTreeUtils;
 import com.jug.util.SimpleFunctionAnalysis;
+
+import net.imglib2.algorithm.componenttree.Component;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 
 /**
  * @author jug
@@ -21,7 +22,7 @@ public class CostFactory {
 
 //	public static String latestCostEvaluation = "";
 
-	public static float getMigrationCost( final float oldPosition, final float newPosition, final float normalizer ) {
+	public static Pair< Float, float[] > getMigrationCost( final float oldPosition, final float newPosition, final float normalizer ) {
 		float deltaH = ( oldPosition - newPosition ) / normalizer;
 		float power = 0.0f;
 		float costDeltaH = 0.0f;
@@ -35,10 +36,10 @@ public class CostFactory {
 		deltaH = Math.abs( deltaH );
 		costDeltaH = deltaH * ( float ) Math.pow( 1 + deltaH, power );
 //		latestCostEvaluation = String.format( "c_h = %.4f * %.4f^%.1f = %.4f", deltaH, 1 + deltaH, power, costDeltaH );
-		return costDeltaH;
+		return new ValuePair< Float, float[] >( costDeltaH, new float[] { costDeltaH } );
 	}
 
-	public static float getGrowthCost( final float oldSize, final float newSize, final float normalizer ) {
+	public static Pair< Float, float[] > getGrowthCost( final float oldSize, final float newSize, final float normalizer ) {
 		float deltaL = ( newSize - oldSize ) / normalizer;
 		float power = 0.0f;
 		float costDeltaL = 0.0f;
@@ -47,12 +48,12 @@ public class CostFactory {
 			power = 4.0f;
 		} else { // shrinkage
 			power = 40.0f;
-			costDeltaL += ( newSize - oldSize ) * 0.00;
+//			costDeltaL += ( newSize - oldSize ) * 0.00;
 		}
 		deltaL = Math.abs( deltaL );
 		costDeltaL += deltaL * ( float ) Math.pow( 1 + deltaL, power );
 //		latestCostEvaluation = String.format( "c_l = %.4f * %.4f^%.1f = %.4f", deltaL, 1 + deltaL, power, costDeltaL );
-		return costDeltaL;
+		return new ValuePair< Float, float[] >( costDeltaL, new float[] { costDeltaL } );
 	}
 
 	public static float getIntensityMismatchCost( final float oldIntensity, final float newIntensity ) {

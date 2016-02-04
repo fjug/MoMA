@@ -24,6 +24,7 @@ import com.jug.MotherMachine;
 import com.jug.gui.progress.DialogGurobiProgress;
 import com.jug.gui.progress.ProgressListener;
 import com.jug.lp.costs.CostFactory;
+import com.jug.lp.costs.CostManager;
 import com.jug.util.ComponentTreeUtils;
 
 import gurobi.GRB;
@@ -37,6 +38,7 @@ import net.imglib2.Localizable;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.algorithm.componenttree.ComponentForest;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 
 /**
@@ -65,6 +67,7 @@ public class GrowthLineTrackingILP {
 	public static final float CUTOFF_COST = 3.0f;
 
 	public static GRBEnv env;
+	public static CostManager costManager;
 
 	// -------------------------------------------------------------------------------------
 	// fields
@@ -107,6 +110,12 @@ public class GrowthLineTrackingILP {
 				System.out.println( "GrowthLineTrackingILP::env could not be initialized!" );
 				e.printStackTrace();
 			}
+		}
+
+		if ( costManager == null ) {
+			costManager = new CostManager( 6, 13 );
+			costManager.setWeights( new double[] { 0.1, 0.9, 0.5, 0.5, 0, 1, 								// mapping
+			                                       0.1, 0.9, 0.5, 0.5, 0, 1, 1, 0, 1, 1, 0, 0.1, 0.03 } );  // division
 		}
 
 		try {
@@ -458,11 +467,31 @@ public class GrowthLineTrackingILP {
 //					cost = 1.0f * ( fromCost + toCost ) + compatibilityCostOfMapping( from, to );
 //					cost = toCost + compatibilityCostOfMapping( from, to );
 //					cost = 0.9f * fromCost + 0.1f * toCost + compatibilityCostOfMapping( from, to );
-					cost = 0.1f * fromCost + 0.9f * toCost + compatibilityCostOfMapping( from, to );
+
+					final Pair< Float, float[] > compatibilityCostOfMapping = compatibilityCostOfMapping( from, to );
+					cost = 0.1f * fromCost + 0.9f * toCost + compatibilityCostOfMapping.getA();
+
+					final int numFeatures = 2 + compatibilityCostOfMapping.getB().length;
+					final float[] featureValues = new float[ numFeatures ];
+					int k = 0;
+					featureValues[ k++ ] = fromCost;
+					featureValues[ k++ ] = toCost;
+					for ( final float f : compatibilityCostOfMapping.getB() ) {
+						featureValues[ k++ ] = f;
+					}
+
+					// features = [ fromCost, toCost, HU, HL, L, onlyH ? 0 : L ]
+					// weights = [ 0.1, 0.9, 0.5, 0.5, 0, 1 ]
 
 					if ( cost <= CUTOFF_COST ) {
 						final String name = String.format( "a_%d^MAPPING--(%d,%d)", t, i, j );
 						final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, name );
+
+						costManager.addMappingVariable( newLPVar, featureValues );
+						if ( Math.abs( cost - costManager.getCurrentCost( newLPVar ) ) > 0.00001 ) {
+							System.err.println( "Mapping cost mismatch!" );
+						}
+
 						final MappingAssignment ma = new MappingAssignment( t, newLPVar, this, nodes, edgeSets, from, to );
 						nodes.addAssignment( t, ma );
 						if ( edgeSets.addToRightNeighborhood( from, ma ) == false ) {
@@ -491,12 +520,14 @@ public class GrowthLineTrackingILP {
 	 * @return the cost we want to set for the given combination of segmentation
 	 *         hypothesis.
 	 */
-	private float compatibilityCostOfMapping( final Hypothesis< Component< FloatType, ? >> from, final Hypothesis< Component< FloatType, ? >> to ) {
+	private Pair< Float, float[] > compatibilityCostOfMapping(
+			final Hypothesis< Component< FloatType, ? > > from,
+			final Hypothesis< Component< FloatType, ? > > to ) {
 		final long sizeFrom = from.getWrappedHypothesis().size();
 		final long sizeTo = to.getWrappedHypothesis().size();
 
-		final float valueFrom = from.getWrappedHypothesis().value().get();
-		final float valueTo = to.getWrappedHypothesis().value().get();
+//		final float valueFrom = from.getWrappedHypothesis().value().get();
+//		final float valueTo = to.getWrappedHypothesis().value().get();
 
 		final ValuePair< Integer, Integer > intervalFrom = from.getLocation();
 		final ValuePair< Integer, Integer > intervalTo = to.getLocation();
@@ -509,25 +540,48 @@ public class GrowthLineTrackingILP {
 		final float glLength = gl.get( 0 ).size();
 
 		// Finally the costs are computed...
-		final float costDeltaHU = CostFactory.getMigrationCost( oldPosU, newPosU, glLength );
-		final float costDeltaHL = CostFactory.getMigrationCost( oldPosL, newPosL, glLength );
-		final float costDeltaH = Math.max( costDeltaHL, costDeltaHU );
-		final float costDeltaL = CostFactory.getGrowthCost( sizeFrom, sizeTo, glLength );
-		final float costDeltaV = CostFactory.getIntensityMismatchCost( valueFrom, valueTo );
+		final Pair< Float, float[] > costDeltaHU = CostFactory.getMigrationCost( oldPosU, newPosU, glLength );
+		final Pair< Float, float[] > costDeltaHL = CostFactory.getMigrationCost( oldPosL, newPosL, glLength );
+//		final float costDeltaH = Math.max( costDeltaHL, costDeltaHU );
+		final float costDeltaH = 0.5f * costDeltaHL.getA() + 0.5f * costDeltaHU.getA();
 
-		float cost = costDeltaL + costDeltaV + costDeltaH;
+		final Pair< Float, float[] > costDeltaL = CostFactory.getGrowthCost( sizeFrom, sizeTo, glLength );
+//		final float costDeltaV = CostFactory.getIntensityMismatchCost( valueFrom, valueTo );
+
+		float cost = costDeltaL.getA() + costDeltaH; // + costDeltaV
 
 		// Border case bullshit
 		// if the target cell touches the upper or lower border (then don't count uneven and shrinking)
 		// (It is not super obvious why this should be true for bottom ones... some data has shitty
 		// contrast at bottom, hence we trick this condition in here not to loose the mother -- which would
 		// mean to loose all future tracks!!!)
+		boolean onlyH = false;
 		if ( intervalTo.getA().intValue() == 0 || intervalTo.getB().intValue() + 1 >= glLength ) {
-			cost = costDeltaH + costDeltaV;
+			onlyH = true;
+			cost = costDeltaH; // + costDeltaV;
 		}
 
+		final int numFeatures = costDeltaHU.getB().length + costDeltaHL.getB().length + 2 * costDeltaL.getB().length;
+		final float[] featureValues = new float[ numFeatures ];
+		int i = 0;
+		for ( final float f : costDeltaHU.getB() ) {
+			featureValues[ i++ ] = f;
+		}
+		for ( final float f : costDeltaHL.getB() ) {
+			featureValues[ i++ ] = f;
+		}
+		for ( final float f : costDeltaL.getB() ) {
+			featureValues[ i++ ] = f;
+		}
+		for ( final float f : costDeltaL.getB() ) {
+			featureValues[ i++ ] = onlyH ? 0 : f;
+		}
+
+		// features = [ HU, HL, L, onlyH ? 0 : L ]
+		// weights = [ 0.5, 0.5, 0, 1 ]
+
 //		System.out.println( String.format( ">>> %f + %f + %f = %f", costDeltaL, costDeltaV, costDeltaH, cost ) );
-		return cost;
+		return new ValuePair< Float, float[] >( cost, featureValues );
 	}
 
 	/**
@@ -567,10 +621,30 @@ public class GrowthLineTrackingILP {
 
 //							cost = 0.9f * fromCost + 0.1f * toCost + compatibilityCostOfDivision( from, to, lowerNeighbor );
 //							cost = toCost + compatibilityCostOfDivision( from, to, lowerNeighbor );
-							cost = 0.1f * fromCost + 0.9f * toCost + compatibilityCostOfDivision( from, to, lowerNeighbor );
+							final Pair< Float, float[] > compatibilityCostOfDivision = compatibilityCostOfDivision( from, to, lowerNeighbor );
+							cost = 0.1f * fromCost + 0.9f * toCost + compatibilityCostOfDivision.getA();
+
+							final int numFeatures = 2 + compatibilityCostOfDivision.getB().length;
+							final float[] featureValues = new float[ numFeatures ];
+							int k = 0;
+							featureValues[ k++ ] = fromCost;
+							featureValues[ k++ ] = toCost;
+							for ( final float f : compatibilityCostOfDivision.getB() ) {
+								featureValues[ k++ ] = f;
+							}
+
+							// features = [ HU, HL, L, c(L,0,0), c(0,LT,LT), S, c(S,0,S), cdl, c(1,0,0), c(0,1,0), c(0,0,1) ]
+							// weights = [ 0.1, 0.9, 0.5, 0.5, 0, 1, 1, 0, 1, 1, 0, 0.1, 0.03 ]
 
 							if ( cost <= CUTOFF_COST ) {
-								final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, String.format( "a_%d^DIVISION--(%d,%d)", t, i, j ) );
+								final String name = String.format( "a_%d^DIVISION--(%d,%d)", t, i, j );
+								final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, name );
+
+								costManager.addDivisionVariable( newLPVar, featureValues );
+								if ( Math.abs( cost - costManager.getCurrentCost( newLPVar ) ) > 0.00001 ) {
+									System.err.println( "Division cost mismatch!" );
+								}
+
 								final DivisionAssignment da = new DivisionAssignment( t, newLPVar, this, nodes, edgeSets, from, to, lowerNeighbor );
 								nodes.addAssignment( t, da );
 								edgeSets.addToRightNeighborhood( from, da );
@@ -601,7 +675,10 @@ public class GrowthLineTrackingILP {
 	 * @return the cost we want to set for the given combination of segmentation
 	 *         hypothesis.
 	 */
-	private float compatibilityCostOfDivision( final Hypothesis< Component< FloatType, ? >> from, final Hypothesis< Component< FloatType, ? >> toUpper, final Hypothesis< Component< FloatType, ? >> toLower ) {
+	private Pair< Float, float[] > compatibilityCostOfDivision(
+			final Hypothesis< Component< FloatType, ? > > from,
+			final Hypothesis< Component< FloatType, ? > > toUpper,
+			final Hypothesis< Component< FloatType, ? > > toLower ) {
 		final ValuePair< Integer, Integer > intervalFrom = from.getLocation();
 		final ValuePair< Integer, Integer > intervalToU = toUpper.getLocation();
 		final ValuePair< Integer, Integer > intervalToL = toLower.getLocation();
@@ -610,7 +687,7 @@ public class GrowthLineTrackingILP {
 		final long sizeToU = toUpper.getWrappedHypothesis().size();
 		final long sizeToL = toLower.getWrappedHypothesis().size();
 		final long sizeTo = sizeToU + sizeToL;
-		final long sizeToPlusGap = intervalToU.a - intervalToL.b;
+//		final long sizeToPlusGap = intervalToU.a - intervalToL.b;
 
 		final float valueFrom = from.getWrappedHypothesis().value().get();
 		final float valueTo = 0.5f * ( toUpper.getWrappedHypothesis().value().get() + toLower.getWrappedHypothesis().value().get() );
@@ -623,33 +700,115 @@ public class GrowthLineTrackingILP {
 		final float glLength = gl.get( 0 ).size();
 
 		// Finally the costs are computed...
-		final float costDeltaHU = CostFactory.getMigrationCost( oldPosU, newPosU, glLength );
-		final float costDeltaHL = CostFactory.getMigrationCost( oldPosL, newPosL, glLength );
-		final float costDeltaH = Math.max( costDeltaHL, costDeltaHU );
-		final float costDeltaL = CostFactory.getGrowthCost( sizeFrom, sizeTo, glLength );
-		final float costDeltaL_ifAtTop = CostFactory.getGrowthCost( sizeFrom, sizeToL * 2, glLength );
-		final float costDeltaV = CostFactory.getIntensityMismatchCost( valueFrom, valueTo );
+		final Pair< Float, float[] > costDeltaHU = CostFactory.getMigrationCost( oldPosU, newPosU, glLength );
+		final Pair< Float, float[] > costDeltaHL = CostFactory.getMigrationCost( oldPosL, newPosL, glLength );
+		final float costDeltaH = .5f * costDeltaHL.getA() + .5f * costDeltaHU.getA();
+		final Pair< Float, float[] > costDeltaL = CostFactory.getGrowthCost( sizeFrom, sizeTo, glLength );
+		final Pair< Float, float[] > costDeltaL_ifAtTop = CostFactory.getGrowthCost( sizeFrom, sizeToL * 2, glLength );
+//		final float costDeltaV = CostFactory.getIntensityMismatchCost( valueFrom, valueTo );
 		final float costDeltaS = CostFactory.getUnevenDivisionCost( sizeToU, sizeToL );
-		final float costDivisionLikelihood = CostFactory.getDivisionLikelihoodCost( from );
+		final float costDivisionLikelihood = CostFactory.getDivisionLikelihoodCost( from ); //TODO: parameterize me!
 
-		float cost = costDeltaL + costDeltaV + costDeltaH + costDeltaS + costDivisionLikelihood;
+		float cost = costDeltaL.getA() + costDeltaH + costDeltaS + costDivisionLikelihood; // + costDeltaV
 
 		// Border case bullshit
 		// if the upper cell touches the upper border (then don't count shrinking and be nicer to uneven)
+		int c = 0;
 		if ( intervalToU.getA().intValue() == 0 || intervalToL.getB().intValue() + 1 >= glLength ) {
 			// In case the upper cell is still at least like 1/2 in
 			if ( ( 1.0 * sizeToU ) / ( 1.0 * sizeToL ) > 0.5 ) {
+				c = 1;
 				// don't count uneven div cost (but pay a bit to avoid exit+division instead of two mappings)
-				cost = costDeltaL_ifAtTop + costDeltaH + costDeltaV + 0.1f + costDivisionLikelihood;
+				cost = costDeltaL_ifAtTop.getA() + costDeltaH + 0.1f + costDivisionLikelihood; // + costDeltaV
 			} else {
+				c = 2;
 				// otherwise do just leave out shrinking cost alone - yeah!
 				cost =
-						costDeltaL_ifAtTop + costDeltaH + costDeltaV + costDeltaS + 0.03f + costDivisionLikelihood;
+						costDeltaL_ifAtTop.getA() + costDeltaH + costDeltaS + 0.03f + costDivisionLikelihood; // + costDeltaV
 			}
 		}
 
+		final int numFeatures =
+				costDeltaHU.getB().length +
+				costDeltaHL.getB().length +
+				2 * costDeltaL.getB().length +
+				costDeltaL_ifAtTop.getB().length +
+				2 +     // two times getUnevenDivisionCost
+				1 + 	// costDivisionLikelihood
+				3; 		// constants in if
+		final float[] featureValues = new float[ numFeatures ];
+		int i = 0;
+		for ( final float f : costDeltaHU.getB() ) {
+			featureValues[ i++ ] = f;
+		}
+		for ( final float f : costDeltaHL.getB() ) {
+			featureValues[ i++ ] = f;
+		}
+		for ( final float f : costDeltaL.getB() ) {
+			featureValues[ i++ ] = f;
+		}
+		for ( final float f : costDeltaL.getB() ) {
+			switch ( c ) {
+			case 0:
+				featureValues[ i++ ] = f;
+				break;
+			case 1:
+				featureValues[ i++ ] = 0;
+				break;
+			case 2:
+				featureValues[ i++ ] = 0;
+				break;
+			}
+		}
+		for ( final float f : costDeltaL_ifAtTop.getB() ) {
+			switch ( c ) {
+			case 0:
+				featureValues[ i++ ] = 0;
+				break;
+			case 1:
+				featureValues[ i++ ] = f;
+				break;
+			case 2:
+				featureValues[ i++ ] = f;
+				break;
+			}
+		}
+		featureValues[ i++ ] = costDeltaS;
+		switch ( c ) {
+		case 0:
+			featureValues[ i++ ] = costDeltaS;
+			break;
+		case 1:
+			featureValues[ i++ ] = 0;
+			break;
+		case 2:
+			featureValues[ i++ ] = costDeltaS;
+			break;
+		}
+		featureValues[ i++ ] = costDivisionLikelihood;
+		switch ( c ) {
+		case 0:
+			featureValues[ i++ ] = 1;
+			featureValues[ i++ ] = 0;
+			featureValues[ i++ ] = 0;
+			break;
+		case 1:
+			featureValues[ i++ ] = 0;
+			featureValues[ i++ ] = 1;
+			featureValues[ i++ ] = 0;
+			break;
+		case 2:
+			featureValues[ i++ ] = 0;
+			featureValues[ i++ ] = 0;
+			featureValues[ i++ ] = 1;
+			break;
+		}
+
+		// features = [ HU, HL, L, c(L,0,0), c(0,LT,LT), S, c(S,0,S), cdl, c(1,0,0), c(0,1,0), c(0,0,1) ]
+		// weights = [ 0.5, 0.5, 0, 1, 1, 0, 1, 1, 0, 0.1, 0.03 ]
+
 //		System.out.println( String.format( ">>> %f + %f + %f + %f = %f", costDeltaL, costDeltaV, costDeltaH, costDeltaS, cost ) );
-		return cost;
+		return new ValuePair< Float, float[] >( cost, featureValues );
 	}
 
 	/**

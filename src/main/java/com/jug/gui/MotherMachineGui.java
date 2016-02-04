@@ -170,6 +170,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private MenuItem menuLoad;
 	private MenuItem menuSave;
 
+	private MenuItem menuTrain;
+
+	// Trainer-related
+	private MMTrainerGui trainerGui;
+
 	// -------------------------------------------------------------------------------------
 	// construction & gui creation
 	// -------------------------------------------------------------------------------------
@@ -214,7 +219,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		menuShowImgRaw.addActionListener( this );
 		menuShowImgTemp = new MenuItem( "Show BG-subtrackted imges..." );
 		menuShowImgTemp.addActionListener( this );
+		menuTrain = new MenuItem( "Show trainer window..." );
+		menuTrain.addActionListener( this );
 		menuView.add( menuViewShowConsole );
+		menuView.add( menuTrain );
+		menuView.addSeparator();
 		menuView.add( menuShowImgRaw );
 		menuView.add( menuShowImgTemp );
 		menuBar.add( menuView );
@@ -973,6 +982,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			final DialogPropertiesEditor propsEditor =
 					new DialogPropertiesEditor( this, MotherMachine.props );
 			propsEditor.setVisible( true );
+		}
+		if ( e.getSource().equals( menuTrain ) ) {
+			this.trainerGui = new MMTrainerGui( this );
+			this.trainerGui.setVisible( true );
 		}
 		if ( e.getSource().equals( menuLoad ) ) {
 
