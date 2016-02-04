@@ -34,6 +34,14 @@ public class CostManager {
 		this.var2row = new HashMap< GRBVar, Integer >();
 	}
 
+	public int getDimensions() {
+		return numFeatures;
+	}
+
+	public double[] getWeights() {
+		return weights;
+	}
+
 	public void setWeights( final double[] weights ) {
 		if ( weights.length != numFeatures ) { throw new IllegalArgumentException( "Dimension mismatch of given weight vector." ); }
 		System.arraycopy( weights, 0, this.weights, 0, numFeatures );
@@ -46,7 +54,12 @@ public class CostManager {
 	}
 
 	public float[] getRow( final GRBVar var ) {
-		return matrix.get( var2row.get( var ) );
+		final Integer muh = var2row.get( var );
+		if ( muh != null ) {
+			return matrix.get( muh );
+		} else {
+			return new float[ numFeatures ];
+		}
 	}
 
 	public void addMappingVariable( final GRBVar var, final float[] values ) {
@@ -65,7 +78,10 @@ public class CostManager {
 
 	public double getCurrentCost( final GRBVar var ) {
 		double ret = 0;
-		final float[] row = matrix.get( var2row.get( var ) );
+		final Integer muh = var2row.get( var );
+		if ( muh == null )
+			return 0;
+		final float[] row = matrix.get( muh );
 		for ( int i = 0; i < row.length; i++ ) {
 			ret += row[ i ] * weights[ i ];
 		}

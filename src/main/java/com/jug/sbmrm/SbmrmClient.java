@@ -29,7 +29,7 @@ public class SbmrmClient {
 		final ZMQ.Context context = ZMQ.context( 1 );
 
 		//  Socket to talk to server
-		System.out.println( "Connecting to SBMRM server…" );
+		System.out.println( "Connecting to SBMRM server..." );
 
 		final ZMQ.Socket requester = context.socket( ZMQ.REQ );
 		requester.connect( "tcp://192.168.1.162:4711" );
@@ -38,7 +38,11 @@ public class SbmrmClient {
 
 		InitialRequest ir = null;
 		if ( trainer != null ) {
-			ir = new InitialRequest( trainer.getDimensionality() );
+			if ( trainer.getParams() != null ) {
+				ir = new InitialRequest( trainer.getParams() );
+			} else {
+				ir = new InitialRequest( trainer.getDimensionality() );
+			}
 		} else {
 			// without trainer being set I assume you simply want to test
 			// the communication to the server, right?

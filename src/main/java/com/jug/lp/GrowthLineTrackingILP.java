@@ -2189,4 +2189,11 @@ public class GrowthLineTrackingILP {
 		}
 	}
 
+	/**
+	 * Returns the CostManager set here.
+	 */
+	public CostManager getCostManager() {
+		return costManager;
+	}
+
 }

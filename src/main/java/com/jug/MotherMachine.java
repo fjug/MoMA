@@ -1805,14 +1805,4 @@ public class MotherMachine {
 		System.out.println( "\n  >> Detected GL_OFFSET_BOTTOM is: " + bottom_offset );
 		GL_OFFSET_BOTTOM = bottom_offset;
 	}
-
-	/**
-	 * Reads a list of current weights out of all cost functions.
-	 * 
-	 * @return the weight vector containing all read weights.
-	 */
-	public double[] getCostFunctionWeights() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }
