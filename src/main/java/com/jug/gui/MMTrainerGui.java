@@ -9,9 +9,13 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import com.jug.MotherMachine;
@@ -30,8 +34,10 @@ public class MMTrainerGui extends JFrame implements ActionListener {
 
 	public MMTrainerGui( final MotherMachineGui mmGui ) {
 		this.mmGui = mmGui;
-		this.trainer = new MMTrainer( MotherMachine.instance );
+
 		buildGui();
+
+		this.trainer = new MMTrainer( MotherMachine.instance, loggingTextArea );
 	}
 
 	private void buildGui() {
@@ -54,10 +60,20 @@ public class MMTrainerGui extends JFrame implements ActionListener {
 		loggingTextArea.setLineWrap( true );
 		loggingTextArea.setWrapStyleWord( true );
 
+		final JScrollPane scrollPane = new JScrollPane( loggingTextArea );
+		scrollPane.setBorder( BorderFactory.createEmptyBorder( 0, 15, 0, 0 ) );
+		// make textarea autoscroll
+		scrollPane.getVerticalScrollBar().addAdjustmentListener( new AdjustmentListener() {
+			@Override
+			public void adjustmentValueChanged( final AdjustmentEvent e ) {
+				e.getAdjustable().setValue( e.getAdjustable().getMaximum() );
+			}
+		} );
+
 		bRun = new JButton( "start training" );
 		bRun.addActionListener( this );
 
-		cp.add( loggingTextArea, BorderLayout.CENTER );
+		cp.add( scrollPane, BorderLayout.CENTER );
 		cp.add( bRun, BorderLayout.SOUTH );
 	}
 
@@ -67,7 +83,8 @@ public class MMTrainerGui extends JFrame implements ActionListener {
 	@Override
 	public void actionPerformed( final ActionEvent e ) {
 		if ( e.getSource().equals( bRun ) ) {
-			trainer.run( loggingTextArea );
+			final Thread t = new Thread( trainer );
+			t.start();
 		}
 	}
 }

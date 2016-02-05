@@ -1,18 +1,24 @@
 /**
  *
  */
-package com.jug.sbmrm;
+package com.jug.sbmrm.zeromq;
 
 import java.util.Arrays;
 
 import org.zeromq.ZMQ;
 
-import com.jug.sbmrm.TypedJsonBytes.TypedObject;
+import com.jug.sbmrm.MMTrainer;
+import com.jug.sbmrm.zeromq.TypedJsonBytes.TypedObject;
+import com.jug.sbmrm.zeromq.protocol.ContinuationRequest;
+import com.jug.sbmrm.zeromq.protocol.EvaluateResponse;
+import com.jug.sbmrm.zeromq.protocol.FinalResponse;
+import com.jug.sbmrm.zeromq.protocol.InitialRequest;
+import com.jug.sbmrm.zeromq.protocol.SbmrmMessageTypes;
 
 /**
  * @author jug
  */
-public class SbmrmClient {
+public class SbmrmClient implements Runnable {
 
 	private final MMTrainer trainer;
 
@@ -25,14 +31,16 @@ public class SbmrmClient {
 		this.trainer = trainer;
 	}
 
+	@Override
 	public void run() {
+		int iterationCounter = 0;
 		final ZMQ.Context context = ZMQ.context( 1 );
 
 		//  Socket to talk to server
 		System.out.println( "Connecting to SBMRM server..." );
 
 		final ZMQ.Socket requester = context.socket( ZMQ.REQ );
-		requester.connect( "tcp://192.168.1.162:4711" );
+		requester.connect( "tcp://192.168.0.20:4711" );
 
 		final TypedJsonBytes json = new TypedJsonBytes( new SbmrmMessageTypes() );
 
@@ -50,19 +58,21 @@ public class SbmrmClient {
 		}
 		requester.send( json.toJson( ir ), 0 );
 
-		double[] finalX;
+		final double[] finalX = new double[ 1 ];
 		a: while ( true ) {
 			final byte[] reply = requester.recv( 0 );
 			final TypedObject to = json.fromJson( reply );
 
 			switch ( to.type() ) {
 			case SbmrmMessageTypes.EVALUATE_RESPONSE:
+				iterationCounter++;
 				final EvaluateResponse qr = ( EvaluateResponse ) to.object();
 				final double[] params = qr.getX();
 				System.out.println( String.format( "current x: %s", Arrays.toString( params ) ) );
 
 				ContinuationRequest cr = null;
 				if ( trainer != null ) {
+					trainer.setStatus( iterationCounter, qr.getX(), qr.getEps() );
 					trainer.updateParametrization( params );
 					cr = new ContinuationRequest( trainer.getValue(), trainer.getGradient() );
 				} else {
@@ -74,7 +84,13 @@ public class SbmrmClient {
 				break;
 			case SbmrmMessageTypes.FINAL_RESPONSE:
 				final FinalResponse finalResponse = ( FinalResponse ) to.object();
-				finalX = finalResponse.getFinalX();
+				if ( trainer != null ) {
+					trainer.setFinalParameters(
+							finalResponse.getFinalX(),
+							finalResponse.getValue(),
+							finalResponse.getEps(),
+							finalResponse.getStatus() );
+				}
 				break a;
 			default:
 				throw new IllegalArgumentException( "Received illegal message type!" );

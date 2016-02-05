@@ -984,8 +984,18 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			propsEditor.setVisible( true );
 		}
 		if ( e.getSource().equals( menuTrain ) ) {
-			this.trainerGui = new MMTrainerGui( this );
-			this.trainerGui.setVisible( true );
+			final MotherMachineGui self = this;
+
+			final Thread t = new Thread( new Runnable() {
+
+				@Override
+				public void run() {
+					self.trainerGui = new MMTrainerGui( self );
+					self.trainerGui.setVisible( true );
+				}
+			} );
+			t.start();
+
 		}
 		if ( e.getSource().equals( menuLoad ) ) {
 

@@ -1,7 +1,7 @@
 /**
  *
  */
-package com.jug.sbmrm;
+package com.jug.sbmrm.zeromq.protocol;
 
 import java.util.HashMap;
 import java.util.Map;

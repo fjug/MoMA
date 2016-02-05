@@ -1,7 +1,7 @@
 /**
  *
  */
-package com.jug.sbmrm;
+package com.jug.sbmrm.zeromq;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -11,6 +11,7 @@ import java.io.OutputStreamWriter;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.jug.sbmrm.zeromq.protocol.MessageTypes;
 
 /**
  * @author jug

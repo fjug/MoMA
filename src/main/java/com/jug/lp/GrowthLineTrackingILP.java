@@ -633,9 +633,9 @@ public class GrowthLineTrackingILP {
 								featureValues[ k++ ] = f;
 							}
 
-							// features = [ HU, HL, L, c(L,0,0), c(0,LT,LT), S, c(S,0,S), cdl, c(1,0,0), c(0,1,0), c(0,0,1) ]
-							// weights = [ 0.1, 0.9, 0.5, 0.5, 0, 1, 1, 0, 1, 1, 0, 0.1, 0.03 ]
-
+							// features = [ fromCost, toCost, HU, HL, L, c(L,0,0), c(0,LT,LT), S, c(S,0,S), cdl, c(1,0,0), c(0,1,0), c(0,0,1) ]
+							// weights =  [ 0.1, 0.9, 0.5, 0.5, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.1, 0.03 ]
+							//             -0.6, 1.1, 0.9, 0.6, 1.6, 1.1, 0.3, 0.4, 0.3, 0.8, 1.6, 1.3, 0.02
 							if ( cost <= CUTOFF_COST ) {
 								final String name = String.format( "a_%d^DIVISION--(%d,%d)", t, i, j );
 								final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, name );

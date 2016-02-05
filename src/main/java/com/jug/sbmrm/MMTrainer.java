@@ -14,6 +14,7 @@ import javax.swing.JTextArea;
 import com.jug.MotherMachine;
 import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.costs.CostManager;
+import com.jug.sbmrm.zeromq.SbmrmClient;
 
 import gurobi.GRB;
 import gurobi.GRBException;
@@ -23,7 +24,7 @@ import gurobi.GRBVar;
 /**
  * @author jug
  */
-public class MMTrainer {
+public class MMTrainer implements Runnable {
 
 	private final MotherMachine mm;
 	private final GRBModel model;
@@ -36,19 +37,22 @@ public class MMTrainer {
 
 	double[] params; // the weights to optimize
 
-	private JTextArea console;
+	private final JTextArea console;
 
-	public MMTrainer( final MotherMachine mm ) {
+	public MMTrainer( final MotherMachine mm, final JTextArea console ) {
 		this.mm = mm;
 		this.ilp = mm.getGui().model.getCurrentGL().getIlp();
 		this.model = ilp.model;
 		params = ilp.getCostManager().getWeights();
 		sbmrm = null;
+		this.console = console;
 	}
 
-	public void run( final JTextArea console ) {
-		this.console = console;
-
+	/**
+	 * @see java.lang.Runnable#run()
+	 */
+	@Override
+	public void run() {
 		this.assmnt = new HashMap< GRBVar, Boolean >();
 		this.assmntGT = new HashMap< GRBVar, Boolean >();
 
@@ -89,7 +93,7 @@ public class MMTrainer {
 	 * @param params
 	 */
 	public void updateParametrization( final double[] params ) {
-		log( "Updating parameters to " + Arrays.toString( params ) );
+		log( "Updating parameters..." );
 
 		// update cost manager
 		final CostManager cm = ilp.getCostManager();
@@ -107,10 +111,10 @@ public class MMTrainer {
 		}
 
 		// solve
-		log( " >> Resolving Loss Augmented Problem..." );
+		log( "\tResolving Loss Augmented Problem..." );
 		ilp.run();
 
-		log( " >> Reading and storing current assignment..." );
+		log( "\tReading and storing current assignment..." );
 		buildAssmnt( assmnt );
 	}
 
@@ -207,6 +211,65 @@ public class MMTrainer {
 	 */
 	public double[] getParams() {
 		return this.params;
+	}
+
+	/**
+	 * @param iteration
+	 *            number of iteration that starts now.
+	 * @param newParams
+	 *            parameter values to test now.
+	 * @param eps
+	 *            current gap.
+	 */
+	public void setStatus( final int iteration, final double[] newParams, final double eps ) {
+		log(
+				String.format(
+						"Initiating iteration %d with following stats:\n\tx     = %s\n\teps   = %.7f",
+						iteration,
+						Arrays.toString( params ),
+						eps ) );
+	}
+
+	/**
+	 * @param finalParams
+	 *            final parameters.
+	 * @param value
+	 *            final value.
+	 * @param eps
+	 *            final gap.
+	 */
+	public void setFinalParameters( final double[] finalParams, final double value, final double eps, final String status ) {
+		log(
+				String.format(
+						"Optimization successfully terminated!\n\tfinal_x = %s\n\tvalue   = %.7f\n\teps     = %.7f\n\tstatus  = %s",
+						Arrays.toString( finalParams ),
+						value,
+						eps,
+						status ) );
+
+		// set final results!
+		this.params = finalParams;
+
+		// update cost manager
+		final CostManager cm = ilp.getCostManager();
+		cm.setWeights( params );
+
+		// remove LAP costs from objective coefficients
+		final GRBVar[] vars = model.getVars();
+		for ( final GRBVar var : vars ) {
+			final double newCost = cm.getCurrentCost( var );
+			try {
+				var.set( GRB.DoubleAttr.Obj, newCost );
+			} catch ( final GRBException e ) {
+				e.printStackTrace();
+			}
+		}
+
+		// solve
+		log( "\tComputing MAP solution using new parameters..." );
+		ilp.run();
+
+		log( "\tEND" );
 	}
 
 }
