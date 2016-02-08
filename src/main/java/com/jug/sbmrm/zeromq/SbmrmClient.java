@@ -40,7 +40,7 @@ public class SbmrmClient implements Runnable {
 		System.out.println( "Connecting to SBMRM server..." );
 
 		final ZMQ.Socket requester = context.socket( ZMQ.REQ );
-		requester.connect( "tcp://192.168.0.20:4711" );
+		requester.connect( "tcp://192.168.250.216:4711" );
 
 		final TypedJsonBytes json = new TypedJsonBytes( new SbmrmMessageTypes() );
 
@@ -64,23 +64,32 @@ public class SbmrmClient implements Runnable {
 			final TypedObject to = json.fromJson( reply );
 
 			switch ( to.type() ) {
-			case SbmrmMessageTypes.EVALUATE_RESPONSE:
+			case SbmrmMessageTypes.EVALUATE_P_RESPONSE:
 				iterationCounter++;
-				final EvaluateResponse qr = ( EvaluateResponse ) to.object();
-				final double[] params = qr.getX();
-				System.out.println( String.format( "current x: %s", Arrays.toString( params ) ) );
+				final EvaluateResponse epr = ( EvaluateResponse ) to.object();
+				final double[] params_p = epr.getX();
+				System.out.println( String.format( "current x: %s", Arrays.toString( params_p ) ) );
 
-				ContinuationRequest cr = null;
+				ContinuationRequest cr1 = null;
 				if ( trainer != null ) {
-					trainer.setStatus( iterationCounter, qr.getX(), qr.getEps() );
-					trainer.updateParametrization( params );
-					cr = new ContinuationRequest( trainer.getValue(), trainer.getGradient() );
+					trainer.setStatus( iterationCounter, epr.getX(), epr.getEps() );
+					trainer.updateParametrization( params_p );
+					cr1 = new ContinuationRequest( trainer.getValue(), trainer.getGradient() );
 				} else {
 					// without trainer being set I assume you simply want to test
 					// the communication to the server, right?
-					cr = new ContinuationRequest( 0.0, new double[ params.length ] );
+					cr1 = new ContinuationRequest( 0.0, new double[ params_p.length ] );
 				}
-				requester.send( json.toJson( cr ), 0 );
+				requester.send( json.toJson( cr1 ), 0 );
+				break;
+			case SbmrmMessageTypes.EVALUATE_R_RESPONSE: // so far just 0 + horizontal gradient
+				final EvaluateResponse err = ( EvaluateResponse ) to.object();
+				final double[] params_r = err.getX();
+				System.out.println( String.format( "current x: %s", Arrays.toString( params_r ) ) );
+
+				ContinuationRequest cr2 = null;
+				cr2 = new ContinuationRequest( 0.0, new double[ params_r.length ] );
+				requester.send( json.toJson( cr2 ), 0 );
 				break;
 			case SbmrmMessageTypes.FINAL_RESPONSE:
 				final FinalResponse finalResponse = ( FinalResponse ) to.object();
