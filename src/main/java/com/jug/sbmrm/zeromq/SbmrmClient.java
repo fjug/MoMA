@@ -40,7 +40,7 @@ public class SbmrmClient implements Runnable {
 		System.out.println( "Connecting to SBMRM server..." );
 
 		final ZMQ.Socket requester = context.socket( ZMQ.REQ );
-		requester.connect( "tcp://192.168.250.216:4711" );
+		requester.connect( "tcp://10.1.202.26:4711" );
 
 		final TypedJsonBytes json = new TypedJsonBytes( new SbmrmMessageTypes() );
 
