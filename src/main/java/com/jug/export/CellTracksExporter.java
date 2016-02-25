@@ -9,17 +9,17 @@ import java.util.Vector;
 import net.imglib2.util.ValuePair;
 
 import com.jug.GrowthLineFrame;
-import com.jug.MotherMachine;
-import com.jug.gui.MotherMachineGui;
+import com.jug.MoMA;
+import com.jug.gui.MoMAGui;
 
 /**
  * @author jug
  */
 public class CellTracksExporter {
 
-	private final MotherMachineGui gui;
+	private final MoMAGui gui;
 
-	public CellTracksExporter( final MotherMachineGui gui ) {
+	public CellTracksExporter( final MoMAGui gui ) {
 		this.gui = gui;
 	}
 
@@ -28,7 +28,7 @@ public class CellTracksExporter {
 		// use US-style number formats! (e.g. '.' as decimal point)
 		Locale.setDefault( new Locale( "en", "US" ) );
 
-		final String loadedDataFolder = MotherMachine.props.getProperty( "import_path", "BUG -- could not get property 'import_path' while exporting tracks..." );
+		final String loadedDataFolder = MoMA.props.getProperty( "import_path", "BUG -- could not get property 'import_path' while exporting tracks..." );
 		final int numCurrGL = gui.sliderGL.getValue();
 		final int numGLFs = gui.model.getCurrentGL().getFrames().size();
 		final Vector< Vector< String >> dataToExport = new Vector< Vector< String >>();

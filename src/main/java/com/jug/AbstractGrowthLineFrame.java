@@ -219,7 +219,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			final Point p = new Point( p_orig );
 			if ( imgIsPreCropped ) {
 				p.setPosition( 0, 2 );
-				p.move( MotherMachine.GL_PIXEL_PADDING_IN_VIEWS + MotherMachine.GL_WIDTH_IN_PIXELS / 2 - getAvgXpos(), 0 );
+				p.move( MoMA.GL_PIXEL_PADDING_IN_VIEWS + MoMA.GL_WIDTH_IN_PIXELS / 2 - getAvgXpos(), 0 );
 			}
 			raImg3d.setPosition( p );
 			ret[ i++ ] = 1.0f - raImg3d.get().get();
@@ -424,7 +424,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 		if ( maximaLocations.length > 0 ) {
 			final int lastMaximaLoc = maximaLocations[ maximaLocations.length - 1 ];
 
-			if ( fkt.length - lastMaximaLoc < MotherMachine.MOTHER_CELL_BOTTOM_TRICK_MAX_PIXELS ) {
+			if ( fkt.length - lastMaximaLoc < MoMA.MOTHER_CELL_BOTTOM_TRICK_MAX_PIXELS ) {
 				for ( int i = lastMaximaLoc; i < fkt.length; i++ ) {
 					fkt[ i ] = Math.max( fkt[ i - 1 ] + 0.005f, fkt[ i ] );
 				}
@@ -445,8 +445,8 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 		// I will pray for forgiveness... in March... I promise... :(
 		IntervalView< FloatType > paramaxflowSumImageFloatTyped = getParamaxflowSumImageFloatTyped( null );
 		if ( paramaxflowSumImageFloatTyped == null ) {
-			final long left = getOffsetX() - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS - MotherMachine.GL_WIDTH_IN_PIXELS / 2;
-			final long right = getOffsetX() + MotherMachine.GL_PIXEL_PADDING_IN_VIEWS + MotherMachine.GL_WIDTH_IN_PIXELS / 2 + MotherMachine.GL_WIDTH_IN_PIXELS % 2;
+			final long left = getOffsetX() - MoMA.GL_PIXEL_PADDING_IN_VIEWS - MoMA.GL_WIDTH_IN_PIXELS / 2;
+			final long right = getOffsetX() + MoMA.GL_PIXEL_PADDING_IN_VIEWS + MoMA.GL_WIDTH_IN_PIXELS / 2 + MoMA.GL_WIDTH_IN_PIXELS % 2;
 			final long top = img.min( 1 );
 			final long bottom = img.max( 1 );
 			final IntervalView< FloatType > viewCropped = Views.interval( Views.hyperSlice( img, 2, getOffsetF() ), new long[] { left, top }, new long[] { right, bottom } );
@@ -457,8 +457,8 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 
 		// special case: simple value is better then trained random forest: leave some simple value in there and
 		// it might help to divide at right spots
-		if ( MotherMachine.SEGMENTATION_MIX_CT_INTO_PMFRF > 0.00001 ) {
-			final float percSimpleToStay = MotherMachine.SEGMENTATION_MIX_CT_INTO_PMFRF;
+		if ( MoMA.SEGMENTATION_MIX_CT_INTO_PMFRF > 0.00001 ) {
+			final float percSimpleToStay = MoMA.SEGMENTATION_MIX_CT_INTO_PMFRF;
 			if ( simpleSepValues == null ) {
 				simpleSepValues = getSimpleGapSeparationValues( img );
 			}
@@ -499,7 +499,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 		int centerZ = imgLocations.get( 0 ).getIntPosition( 2 );
 
 		if ( imgIsPreCropped ) {
-			centerX = MotherMachine.GL_PIXEL_PADDING_IN_VIEWS + MotherMachine.GL_WIDTH_IN_PIXELS / 2;
+			centerX = MoMA.GL_PIXEL_PADDING_IN_VIEWS + MoMA.GL_WIDTH_IN_PIXELS / 2;
 			centerZ = 0;
 		}
 
@@ -575,7 +575,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			if ( view.min( 0 ) == 0 ) {
 				// In case I give the cropped paramaxflow-baby I lost the offset and must do ugly shit...
 				// I promise this is only done because I need to finish the f****** paper!
-				offsetX = -( this.getAvgXpos() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS );
+				offsetX = -( this.getAvgXpos() - MoMA.GL_WIDTH_IN_PIXELS / 2 - MoMA.GL_PIXEL_PADDING_IN_VIEWS );
 				offsetY = view.min( 1 );
 			} else {
 				offsetX = view.min( 0 );
@@ -617,7 +617,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			if ( view.min( 0 ) == 0 ) {
 				// In case I give the cropped paramaxflow-baby I lost the offset and must do ugly shit...
 				// I promise this is only done because I need to finish the f****** paper!
-				offsetX = -( this.getAvgXpos() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS );
+				offsetX = -( this.getAvgXpos() - MoMA.GL_WIDTH_IN_PIXELS / 2 - MoMA.GL_PIXEL_PADDING_IN_VIEWS );
 				offsetY = view.min( 1 );
 			} else {
 				offsetX = view.min( 0 );
@@ -633,19 +633,19 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 						ctn,
 						raAnnotationImg,
 						offsetX + getAvgXpos(),
-						offsetY + MotherMachine.GL_OFFSET_TOP );
+						offsetY + MoMA.GL_OFFSET_TOP );
 			} else if ( hyp.getSegmentSpecificConstraint() != null ) {
 				ArgbDrawingUtils.taintForcedComponentTreeNode(
 						ctn,
 						raAnnotationImg,
 						offsetX + getAvgXpos(),
-						offsetY + MotherMachine.GL_OFFSET_TOP );
+						offsetY + MoMA.GL_OFFSET_TOP );
 			} else {
 				ArgbDrawingUtils.taintComponentTreeNode(
 						ctn,
 						raAnnotationImg,
 						offsetX + getAvgXpos(),
-						offsetY + MotherMachine.GL_OFFSET_TOP );
+						offsetY + MoMA.GL_OFFSET_TOP );
 			}
 		}
 	}
@@ -661,7 +661,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			if ( view.min( 0 ) == 0 ) {
 				// In case I give the cropped paramaxflow-baby I lost the offset and must do ugly shit...
 				// I promise this is only done because I need to finish the f****** paper!
-				offsetX = -( this.getAvgXpos() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS );
+				offsetX = -( this.getAvgXpos() - MoMA.GL_WIDTH_IN_PIXELS / 2 - MoMA.GL_PIXEL_PADDING_IN_VIEWS );
 				offsetY = view.min( 1 );
 			} else {
 				offsetX = view.min( 0 );
@@ -669,7 +669,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			}
 		}
 
-		ArgbDrawingUtils.taintInactiveComponentTreeNode( optionalSegmentation, raAnnotationImg, offsetX + getAvgXpos(), offsetY + MotherMachine.GL_OFFSET_TOP );
+		ArgbDrawingUtils.taintInactiveComponentTreeNode( optionalSegmentation, raAnnotationImg, offsetX + getAvgXpos(), offsetY + MoMA.GL_OFFSET_TOP );
 	}
 
 	/**
@@ -717,7 +717,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	public IntervalView< LongType > getParamaxflowSumImage( final IntervalView< FloatType > viewGLF ) {
 		if ( paramaxflowSumImage == null ) {
 			if ( viewGLF == null ) { return null; }
-			if ( !MotherMachine.USE_CLASSIFIER_FOR_PMF ) {
+			if ( !MoMA.USE_CLASSIFIER_FOR_PMF ) {
 				this.paramaxflowSumImage = GrowthLineSegmentationMagic.returnParamaxflowRegionSums( viewGLF );
 			} else {
 				this.paramaxflowSumImage = GrowthLineSegmentationMagic.returnClassificationBoostedParamaxflowRegionSums( viewGLF );

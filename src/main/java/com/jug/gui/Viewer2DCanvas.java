@@ -29,7 +29,7 @@ import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
 import com.jug.GrowthLineFrame;
-import com.jug.MotherMachine;
+import com.jug.MoMA;
 import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.Hypothesis;
 
@@ -59,11 +59,11 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 	private int dragX;
 	private int dragY;
 
-	private final MotherMachineGui mmgui;
+	private final MoMAGui mmgui;
 
 	private static final int OFFSET_DISPLAY_COSTS = -25;
 
-	public Viewer2DCanvas( final MotherMachineGui mmgui, final int w, final int h ) {
+	public Viewer2DCanvas( final MoMAGui mmgui, final int w, final int h ) {
 		super();
 
 		this.mmgui = mmgui;
@@ -115,7 +115,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 	 *            note that the extension you give determines the file format!
 	 */
 	public void exportSegmentationImage( final String path ) {
-		final RandomAccessibleInterval< ShortType > segmImg = MotherMachine.instance.getCellSegmentedChannelImgs();
+		final RandomAccessibleInterval< ShortType > segmImg = MoMA.instance.getCellSegmentedChannelImgs();
 		final long[] min = new long[ 2 ];
 		final long[] max = new long[ 2 ];
 		screenImage.min( min );
@@ -123,7 +123,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 		final long shift = ( segmImg.dimension( 0 ) - screenImage.dimension( 0 ) ) / 2;
 		min[ 0 ] += shift;
 		max[ 0 ] += shift;
-		final IntervalView< ShortType > imgToExport = Views.interval( Views.hyperSlice( segmImg, 2, MotherMachine.getGui().sliderTime.getValue() ), min, max );
+		final IntervalView< ShortType > imgToExport = Views.interval( Views.hyperSlice( segmImg, 2, MoMA.getGui().sliderTime.getValue() ), min, max );
 		final ImagePlus segImage = ImageJFunctions.wrapFloat( imgToExport, "export" );
 		IJ.save( segImage, path );
 	}

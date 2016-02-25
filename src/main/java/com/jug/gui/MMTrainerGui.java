@@ -18,7 +18,7 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
-import com.jug.MotherMachine;
+import com.jug.MoMA;
 import com.jug.sbmrm.MMTrainer;
 
 /**
@@ -26,18 +26,18 @@ import com.jug.sbmrm.MMTrainer;
  */
 public class MMTrainerGui extends JFrame implements ActionListener {
 
-	private final MotherMachineGui mmGui;
+	private final MoMAGui mmGui;
 	private final MMTrainer trainer;
 
 	private JTextArea loggingTextArea;
 	private JButton bRun;
 
-	public MMTrainerGui( final MotherMachineGui mmGui ) {
+	public MMTrainerGui( final MoMAGui mmGui ) {
 		this.mmGui = mmGui;
 
 		buildGui();
 
-		this.trainer = new MMTrainer( MotherMachine.instance, loggingTextArea );
+		this.trainer = new MMTrainer( MoMA.instance, loggingTextArea );
 	}
 
 	private void buildGui() {

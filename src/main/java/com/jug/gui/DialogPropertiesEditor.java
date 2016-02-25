@@ -23,7 +23,7 @@ import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
-import com.jug.MotherMachine;
+import com.jug.MoMA;
 import com.l2fprod.common.propertysheet.DefaultProperty;
 import com.l2fprod.common.propertysheet.Property;
 import com.l2fprod.common.propertysheet.PropertySheet;
@@ -44,57 +44,57 @@ public class DialogPropertiesEditor extends JDialog implements ActionListener {
 
 			try {
 			if ( sourceName.equals( "GUROBI_TIME_LIMIT" ) ) {
-				MotherMachine.GUROBI_TIME_LIMIT =
+				MoMA.GUROBI_TIME_LIMIT =
 						Double.parseDouble( evt.getNewValue().toString() );
-					MotherMachine.props.setProperty(
+					MoMA.props.setProperty(
 							"GUROBI_TIME_LIMIT",
-							"" + MotherMachine.GUROBI_TIME_LIMIT );
+							"" + MoMA.GUROBI_TIME_LIMIT );
 			} else if ( sourceName.equals( "GUROBI_MAX_OPTIMALITY_GAP" ) ) {
-				MotherMachine.GUROBI_MAX_OPTIMALITY_GAP =
+				MoMA.GUROBI_MAX_OPTIMALITY_GAP =
 						Double.parseDouble( evt.getNewValue().toString() );
-					MotherMachine.props.setProperty(
+					MoMA.props.setProperty(
 							"GUROBI_MAX_OPTIMALITY_GAP",
-							"" + MotherMachine.GUROBI_MAX_OPTIMALITY_GAP );
+							"" + MoMA.GUROBI_MAX_OPTIMALITY_GAP );
 			} else if ( sourceName.equals( "GL_OFFSET_TOP" ) ) {
-				MotherMachine.GL_OFFSET_TOP =
+				MoMA.GL_OFFSET_TOP =
 						Integer.parseInt( evt.getNewValue().toString() );
-				MotherMachine.props.setProperty(
+				MoMA.props.setProperty(
 						"GL_OFFSET_TOP",
-						"" + MotherMachine.GL_OFFSET_TOP );
+						"" + MoMA.GL_OFFSET_TOP );
 				final Thread t = new Thread( new Runnable() {
 
 					@Override
 					public void run() {
-						MotherMachine.instance.restartFromGLSegmentation();
-						MotherMachine.getGui().dataToDisplayChanged();
+						MoMA.instance.restartFromGLSegmentation();
+						MoMA.getGui().dataToDisplayChanged();
 					}
 				} );
 				t.start();
 			} else if ( sourceName.equals( "GL_OFFSET_BOTTOM" ) ) {
-				MotherMachine.GL_OFFSET_BOTTOM =
+				MoMA.GL_OFFSET_BOTTOM =
 						Integer.parseInt( evt.getNewValue().toString() );
-				MotherMachine.props.setProperty(
+				MoMA.props.setProperty(
 						"GL_OFFSET_BOTTOM",
-						"" + MotherMachine.GL_OFFSET_BOTTOM );
+						"" + MoMA.GL_OFFSET_BOTTOM );
 				final Thread t = new Thread( new Runnable() {
 
 					@Override
 					public void run() {
-						MotherMachine.instance.restartFromGLSegmentation();
-						MotherMachine.getGui().dataToDisplayChanged();
+						MoMA.instance.restartFromGLSegmentation();
+						MoMA.getGui().dataToDisplayChanged();
 					}
 				} );
 				t.start();
 			} else {
 				JOptionPane.showMessageDialog(
-						MotherMachine.getGui(),
+						MoMA.getGui(),
 						"Value not changed - NOT YET IMPLEMENTED!",
 							"Warning",
 						JOptionPane.WARNING_MESSAGE );
 			}
 			} catch ( final NumberFormatException e ) {
 				JOptionPane.showMessageDialog(
-						MotherMachine.getGui(),
+						MoMA.getGui(),
 						"Illegal value entered -- value not changed!",
 						"Error",
 						JOptionPane.ERROR_MESSAGE );

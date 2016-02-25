@@ -12,7 +12,7 @@ import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.real.FloatType;
 
-import com.jug.MotherMachine;
+import com.jug.MoMA;
 import com.jug.util.filteredcomponents.FilteredComponent;
 
 /**
@@ -107,7 +107,7 @@ public class ArgbDrawingUtils {
 	@SuppressWarnings( "unchecked" )
 	private static void taint1dComponentTreeNodeFaintGreen( final Component< FloatType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
 
-		final int delta = MotherMachine.GL_WIDTH_IN_PIXELS / 2;
+		final int delta = MoMA.GL_WIDTH_IN_PIXELS / 2;
 		Iterator< Localizable > componentIterator = ctn.iterator();
 
 		int minCoreYpos = Integer.MAX_VALUE;
@@ -219,7 +219,7 @@ public class ArgbDrawingUtils {
 	 */
 	private static void taint1dComponentTreeNodeYellow( final Component< FloatType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
 
-		final int delta = MotherMachine.GL_WIDTH_IN_PIXELS / 2;
+		final int delta = MoMA.GL_WIDTH_IN_PIXELS / 2;
 		Iterator< Localizable > componentIterator = ctn.iterator();
 
 		int minCoreYpos = Integer.MAX_VALUE;
@@ -307,7 +307,7 @@ public class ArgbDrawingUtils {
 			final long offsetX,
 			final long offsetY ) {
 
-		final int delta = MotherMachine.GL_WIDTH_IN_PIXELS / 2;
+		final int delta = MoMA.GL_WIDTH_IN_PIXELS / 2;
 		Iterator< Localizable > componentIterator = ctn.iterator();
 
 		int minCoreYpos = Integer.MAX_VALUE;

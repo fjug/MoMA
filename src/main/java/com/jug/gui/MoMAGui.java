@@ -45,7 +45,7 @@ import org.math.plot.Plot2DPanel;
 
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
-import com.jug.MotherMachine;
+import com.jug.MoMA;
 import com.jug.export.CellStatsExporter;
 import com.jug.export.HtmlOverviewExporter;
 import com.jug.gui.progress.DialogProgress;
@@ -76,14 +76,14 @@ import weka.gui.ExtensionFileFilter;
 /**
  * @author jug
  */
-public class MotherMachineGui extends JPanel implements ChangeListener, ActionListener {
+public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 
 	private static final long serialVersionUID = -1008974839249784873L;
 
 	// -------------------------------------------------------------------------------------
 	// fields
 	// -------------------------------------------------------------------------------------
-	public MotherMachineModel model;
+	public MoMAModel model;
 
 	/**
 	 * The view onto <code>imgRaw</code> that is supposed to be shown on screen
@@ -184,7 +184,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * @param mmm
 	 *            the MotherMachineModel to show
 	 */
-	public MotherMachineGui( final MotherMachineModel mmm ) {
+	public MoMAGui( final MoMAModel mmm ) {
 		super( new BorderLayout() );
 
 		this.model = mmm;
@@ -227,8 +227,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		menuView.add( menuShowImgRaw );
 		menuView.add( menuShowImgTemp );
 		menuBar.add( menuView );
-		if ( !MotherMachine.HEADLESS ) {
-			MotherMachine.getGuiFrame().setMenuBar( menuBar );
+		if ( !MoMA.HEADLESS ) {
+			MoMA.getGuiFrame().setMenuBar( menuBar );
 		}
 
 		final JPanel panelContent = new JPanel( new BorderLayout() );
@@ -255,11 +255,15 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		// --- Slider for TrackingRage ----------
 
+		int max = model.getCurrentGL().size() - 2;
+		if ( MoMA.getInitialOptRange() != -1 ) {
+			max = Math.min( MoMA.getInitialOptRange(), model.getCurrentGL().size() - 2 );
+		}
 		sliderTrackingRange =
 				new RangeSlider( 0, model.getCurrentGL().size() - 2 );
 		sliderTrackingRange.setBorder( BorderFactory.createEmptyBorder( 0, 7, 0, 7 ) );
 		sliderTrackingRange.setValue( 0 );
-		sliderTrackingRange.setUpperValue( model.getCurrentGL().size() - 2 );
+		sliderTrackingRange.setUpperValue( max );
 		sliderTrackingRange.addChangeListener( this );
 		final JLabel lblIgnoreBeyond =
 				new JLabel( String.format( "opt. range:", sliderTrackingRange.getValue() ) );
@@ -561,7 +565,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelHorizontalHelper.add( labelHelper );
 		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
 		// - - - - - -
-		imgCanvasActiveLeft = new Viewer2DCanvas( this, MotherMachine.GL_WIDTH_IN_PIXELS + 2 * MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		imgCanvasActiveLeft = new Viewer2DCanvas( this, MoMA.GL_WIDTH_IN_PIXELS + 2 * MoMA.GL_PIXEL_PADDING_IN_VIEWS, ( int ) model.mm.getImgRaw().dimension( 1 ) );
 		panelVerticalHelper.add( imgCanvasActiveLeft, BorderLayout.CENTER );
 		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
 		panelVerticalHelper.setBackground( Color.BLACK );
@@ -585,7 +589,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelHorizontalHelper.add( labelHelper );
 		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
 		// - - - - - -
-		imgCanvasActiveCenter = new Viewer2DCanvas( this, MotherMachine.GL_WIDTH_IN_PIXELS + 2 * MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		imgCanvasActiveCenter = new Viewer2DCanvas( this, MoMA.GL_WIDTH_IN_PIXELS + 2 * MoMA.GL_PIXEL_PADDING_IN_VIEWS, ( int ) model.mm.getImgRaw().dimension( 1 ) );
 		panelVerticalHelper.add( imgCanvasActiveCenter, BorderLayout.CENTER );
 		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 3, 3, 3, 3, Color.RED ) );
 		panelVerticalHelper.setBackground( Color.BLACK );
@@ -608,7 +612,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelHorizontalHelper.add( labelHelper );
 		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
 		// - - - - - -
-		imgCanvasActiveRight = new Viewer2DCanvas( this, MotherMachine.GL_WIDTH_IN_PIXELS + 2 * MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		imgCanvasActiveRight = new Viewer2DCanvas( this, MoMA.GL_WIDTH_IN_PIXELS + 2 * MoMA.GL_PIXEL_PADDING_IN_VIEWS, ( int ) model.mm.getImgRaw().dimension( 1 ) );
 		panelVerticalHelper.add( imgCanvasActiveRight, BorderLayout.CENTER );
 		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
 		panelVerticalHelper.setBackground( Color.BLACK );
@@ -812,7 +816,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 			if ( model.getCurrentGLFsPredecessor() != null ) {
 				final GrowthLineFrame glf = model.getCurrentGLFsPredecessor();
-				viewImgLeftActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+				viewImgLeftActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - MoMA.GL_WIDTH_IN_PIXELS / 2 - MoMA.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
 				imgCanvasActiveLeft.setScreenImage( glf, viewImgLeftActive );
 			} else {
 				// show something empty
@@ -823,7 +827,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 			if ( model.getCurrentGLFsSuccessor() != null && sliderTime.getValue() < sliderTime.getMaximum() ) { // hence copy of last frame for border-problem avoidance
 				final GrowthLineFrame glf = model.getCurrentGLFsSuccessor();
-				viewImgRightActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+				viewImgRightActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - MoMA.GL_WIDTH_IN_PIXELS / 2 - MoMA.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
 				imgCanvasActiveRight.setScreenImage( glf, viewImgRightActive );
 			} else {
 				// show something empty
@@ -841,7 +845,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 //				imgCanvasActiveCenter.setScreenImage( glf, paramaxflowSumImageFloatTyped );
 //			} else
 			if ( cbWhichImgToShow.getSelectedItem().equals( itemChannel0 ) ) {
-				viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+				viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetF() ), glf.getOffsetX() - MoMA.GL_WIDTH_IN_PIXELS / 2 - MoMA.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
 			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemChannel1 ) ) {
 				final IntervalView< FloatType > viewToShow = Views.hyperSlice( model.mm.getRawChannelImgs().get( 1 ), 2, glf.getOffsetF() );
@@ -852,7 +856,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 										( RandomAccessibleInterval< FloatType > ) viewToShow,
 										new RealFloatNormalizeConverter( max.get() ),
 										new FloatType() ),
-								glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS,
+								glf.getOffsetX() - MoMA.GL_WIDTH_IN_PIXELS / 2 - MoMA.GL_PIXEL_PADDING_IN_VIEWS,
 								glf.getOffsetY() );
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
 			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemChannel2 ) ) {
@@ -864,7 +868,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 										( RandomAccessibleInterval< FloatType > ) viewToShow,
 										new RealFloatNormalizeConverter( max.get() ),
 										new FloatType() ),
-								glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS,
+								glf.getOffsetX() - MoMA.GL_WIDTH_IN_PIXELS / 2 - MoMA.GL_PIXEL_PADDING_IN_VIEWS,
 								glf.getOffsetY() );
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
 //			} else if ( cbWhichImgToShow.getSelectedItem().equals( itemClassified ) ) {
@@ -888,7 +892,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 //				};
 //				t.start();
 			} else { // BG-subtracted Channel 0 selected or PMFRF not available
-				viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgTemp(), 2, glf.getOffsetF() ), glf.getOffsetX() - MotherMachine.GL_WIDTH_IN_PIXELS / 2 - MotherMachine.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
+				viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgTemp(), 2, glf.getOffsetF() ), glf.getOffsetX() - MoMA.GL_WIDTH_IN_PIXELS / 2 - MoMA.GL_PIXEL_PADDING_IN_VIEWS, glf.getOffsetY() );
 				imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
 			}
 
@@ -980,11 +984,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		if ( e.getSource().equals( menuProps ) ) {
 			final DialogPropertiesEditor propsEditor =
-					new DialogPropertiesEditor( this, MotherMachine.props );
+					new DialogPropertiesEditor( this, MoMA.props );
 			propsEditor.setVisible( true );
 		}
 		if ( e.getSource().equals( menuTrain ) ) {
-			final MotherMachineGui self = this;
+			final MoMAGui self = this;
 
 			final Thread t = new Thread( new Runnable() {
 
@@ -999,7 +1003,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		}
 		if ( e.getSource().equals( menuLoad ) ) {
 
-			final MotherMachineGui self = this;
+			final MoMAGui self = this;
 
 			final Thread t = new Thread( new Runnable() {
 
@@ -1009,7 +1013,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 					final File file = OsDependentFileChooser.showLoadFileChooser(
 							self,
-							MotherMachine.STATS_OUTPUT_PATH,
+							MoMA.STATS_OUTPUT_PATH,
 							"Choose tracking to load...",
 							new ExtensionFileFilter( "timm", "Curated TIMM tracking" ) );
 					System.out.println( "File to load tracking from: " + file.getAbsolutePath() );
@@ -1049,21 +1053,21 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 								if ( keyword.equals( "BOTTOM_OFFSET" ) ) {
 									final int newBottomOffset =
 											Integer.parseInt( columns[ 1 ].trim() );
-									if ( MotherMachine.GL_OFFSET_BOTTOM != newBottomOffset ) {
-										MotherMachine.GL_OFFSET_BOTTOM = newBottomOffset;
+									if ( MoMA.GL_OFFSET_BOTTOM != newBottomOffset ) {
+										MoMA.GL_OFFSET_BOTTOM = newBottomOffset;
 
 										final String message =
 												" >> Loaded tracking is based on a different value for GL_OFFSET_BOTTOM...\n >> Segmentation hypotheses need to be rebuild, please be patient...";
 										System.out.println( message );
-										if ( !MotherMachine.HEADLESS ) {
+										if ( !MoMA.HEADLESS ) {
 											JOptionPane.showMessageDialog(
-													MotherMachine.getGui(),
+													MoMA.getGui(),
 													message,
 													"Bottom offset needs adjusting...",
 													JOptionPane.INFORMATION_MESSAGE );
 										}
-										MotherMachine.instance.restartFromGLSegmentation();
-										MotherMachine.getGui().dataToDisplayChanged();
+										MoMA.instance.restartFromGLSegmentation();
+										MoMA.getGui().dataToDisplayChanged();
 									}
 								}
 							}
@@ -1087,7 +1091,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			if ( ilp != null ) { // && ilp.getStatus() != GrowthLineTrackingILP.OPTIMIZATION_NEVER_PERFORMED
 				final File file = OsDependentFileChooser.showSaveFileChooser(
 						this,
-						MotherMachine.STATS_OUTPUT_PATH,
+						MoMA.STATS_OUTPUT_PATH,
 						"Save current tracking to...",
 						new ExtensionFileFilter( "timm", "Curated TIMM tracking" ) );
 				System.out.println( "File to save tracking to: " + file.getAbsolutePath() );
@@ -1101,16 +1105,16 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			}
 		}
 		if ( e.getSource().equals( menuViewShowConsole ) ) {
-			MotherMachine.instance.showConsoleWindow( !MotherMachine.instance.isConsoleVisible() );
-			MotherMachine.getGuiFrame().setVisible( true );
+			MoMA.instance.showConsoleWindow( !MoMA.instance.isConsoleVisible() );
+			MoMA.getGuiFrame().setVisible( true );
 		}
 		if ( e.getSource().equals( menuShowImgTemp ) ) {
 			new ImageJ();
-			ImageJFunctions.show( MotherMachine.instance.getImgTemp(), "BG-subtracted data" );
+			ImageJFunctions.show( MoMA.instance.getImgTemp(), "BG-subtracted data" );
 		}
 		if ( e.getSource().equals( menuShowImgRaw ) ) {
 			new ImageJ();
-			ImageJFunctions.show( MotherMachine.instance.getRawChannelImgs().get( 0 ), "raw data (ch.0)" );
+			ImageJFunctions.show( MoMA.instance.getRawChannelImgs().get( 0 ), "raw data (ch.0)" );
 		}
 //		if ( e.getSource().equals( btnSaveFG ) ) {
 //			final MotherMachineGui self = this;
@@ -1337,12 +1341,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		System.out.println( "Filling in CT hypotheses where needed..." );
 		for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
 			if ( glf.getComponentTree() == null ) {
-				glf.generateSimpleSegmentationHypotheses( MotherMachine.instance.getImgTemp() );
+				glf.generateSimpleSegmentationHypotheses( MoMA.instance.getImgTemp() );
 			}
 		}
 
 		System.out.println( "Generating ILP..." );
-		if ( MotherMachine.HEADLESS ) {
+		if ( MoMA.HEADLESS ) {
 			model.getCurrentGL().generateILP( null );
 		} else {
 			model.getCurrentGL().generateILP(
@@ -1433,7 +1437,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 *
 	 */
 	public void exportHtmlOverview() {
-		final MotherMachineGui self = this;
+		final MoMAGui self = this;
 
 		if ( model.getCurrentGL().getIlp() == null ) {
 			JOptionPane.showMessageDialog( this, "The current GL can only be exported after being tracked (optimized)!" );
@@ -1444,9 +1448,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		int startFrame = 1;
 		int endFrame = sliderTime.getMaximum() + 1;
 
-		File file = new File( String.format( MotherMachine.STATS_OUTPUT_PATH + String.format( "/index.html" ) ) );
+		File file = new File( String.format( MoMA.STATS_OUTPUT_PATH + String.format( "/index.html" ) ) );
 
-		if ( !MotherMachine.HEADLESS ) {
+		if ( !MoMA.HEADLESS ) {
 			final JFileChooser fc = new JFileChooser();
 			fc.setSelectedFile( file );
 			fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "html" }, "HTML-file" ) );
@@ -1456,7 +1460,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				if ( !file.getAbsolutePath().endsWith( ".html" ) && !file.getAbsolutePath().endsWith( ".htm" ) ) {
 					file = new File( file.getAbsolutePath() + ".html" );
 				}
-				MotherMachine.STATS_OUTPUT_PATH = file.getParent();
+				MoMA.STATS_OUTPUT_PATH = file.getParent();
 
 				boolean done = false;
 				while ( !done ) {
@@ -1491,7 +1495,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		}
 		// ----------------------------------------------------------------------------------------------------
 
-		if ( !MotherMachine.HEADLESS ) {
+		if ( !MoMA.HEADLESS ) {
 			dataToDisplayChanged();
 		}
 	}
@@ -1526,7 +1530,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 */
 	private void activateAwesomeHypothesesForGL( final GrowthLine gl ) {
 		// Since I am gonna mix CT and PMFRF, I have to also ensure to have the CT ones available
-		if ( MotherMachine.SEGMENTATION_MIX_CT_INTO_PMFRF > 0.0001 ) {
+		if ( MoMA.SEGMENTATION_MIX_CT_INTO_PMFRF > 0.0001 ) {
 			activateSimpleHypothesesForGL( gl );
 		}
 

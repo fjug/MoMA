@@ -20,7 +20,7 @@ import javax.swing.JOptionPane;
 
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
-import com.jug.MotherMachine;
+import com.jug.MoMA;
 import com.jug.gui.progress.DialogGurobiProgress;
 import com.jug.gui.progress.ProgressListener;
 import com.jug.lp.costs.CostFactory;
@@ -373,7 +373,7 @@ public class GrowthLineTrackingILP {
 	 */
 	public float localIntensityBasedCost( final int t, final Component< ?, ? > ctNode ) {
 		//TODO kotz
-		final float[] gapSepFkt = gl.getFrames().get( t ).getSimpleGapSeparationValues( MotherMachine.instance.getImgTemp() );
+		final float[] gapSepFkt = gl.getFrames().get( t ).getSimpleGapSeparationValues( MoMA.instance.getImgTemp() );
 		return CostFactory.getIntensitySegmentationCost( ctNode, gapSepFkt );
 	}
 
@@ -384,7 +384,7 @@ public class GrowthLineTrackingILP {
 	 */
 	public float localParamaxflowBasedCost( final int t, final Component< ?, ? > ctNode ) {
 		//TODO kotz
-		final float[] gapSepFkt = gl.getFrames().get( t ).getAwesomeGapSeparationValues( MotherMachine.instance.getImgTemp() );
+		final float[] gapSepFkt = gl.getFrames().get( t ).getAwesomeGapSeparationValues( MoMA.instance.getImgTemp() );
 		return CostFactory.getParamaxflowSegmentationCost( ctNode, gapSepFkt );
 	}
 
@@ -462,7 +462,7 @@ public class GrowthLineTrackingILP {
 			for ( final Hypothesis< Component< FloatType, ? >> to : nxtHyps ) {
 				final float toCost = to.getCosts();
 
-				if ( !( ComponentTreeUtils.isBelowByMoreThen( to, from, MotherMachine.MAX_CELL_DROP ) ) ) {
+				if ( !( ComponentTreeUtils.isBelowByMoreThen( to, from, MoMA.MAX_CELL_DROP ) ) ) {
 
 //					cost = 1.0f * ( fromCost + toCost ) + compatibilityCostOfMapping( from, to );
 //					cost = toCost + compatibilityCostOfMapping( from, to );
@@ -610,7 +610,7 @@ public class GrowthLineTrackingILP {
 			final float fromCost = from.getCosts();
 
 			for ( final Hypothesis< Component< FloatType, ? >> to : nxtHyps ) {
-				if ( !( ComponentTreeUtils.isBelowByMoreThen( to, from, MotherMachine.MAX_CELL_DROP ) ) ) {
+				if ( !( ComponentTreeUtils.isBelowByMoreThen( to, from, MoMA.MAX_CELL_DROP ) ) ) {
 					for ( final Component< FloatType, ? > neighborCTN : ComponentTreeUtils.getRightNeighbors( to.getWrappedHypothesis() ) ) {
 						@SuppressWarnings( "unchecked" )
 						final Hypothesis< Component< FloatType, ? > > lowerNeighbor = ( Hypothesis< Component< FloatType, ? >> ) nodes.findHypothesisContaining( neighborCTN );
@@ -975,9 +975,9 @@ public class GrowthLineTrackingILP {
 	 * the MotherMachineGui is checked).
 	 */
 	public void autosave() {
-		if ( !MotherMachine.HEADLESS && MotherMachine.getGui().isAutosaveRequested() ) {
+		if ( !MoMA.HEADLESS && MoMA.getGui().isAutosaveRequested() ) {
 			final File autosaveFile =
-					new File( MotherMachine.props.getProperty( "import_path" ) + "/--autosave.timm" );
+					new File( MoMA.props.getProperty( "import_path" ) + "/--autosave.timm" );
 			saveState( autosaveFile );
 			System.out.println( "Autosave to: " + autosaveFile.getAbsolutePath() );
 		}
@@ -995,10 +995,10 @@ public class GrowthLineTrackingILP {
 //			model.getEnv().set( GRB.DoubleParam.TimeLimit, MotherMachine.GUROBI_TIME_LIMIT ); // now handled by callback!
 			model.getEnv().set( GRB.IntParam.OutputFlag, 0 );
 
-			final DialogGurobiProgress dialog = new DialogGurobiProgress( MotherMachine.getGuiFrame() );
+			final DialogGurobiProgress dialog = new DialogGurobiProgress( MoMA.getGuiFrame() );
 			final GurobiCallback gcb = new GurobiCallback( dialog );
 			model.setCallback( gcb );
-			if ( !MotherMachine.HEADLESS ) {
+			if ( !MoMA.HEADLESS ) {
 				dialog.setVisible( true );
 			}
 
@@ -1006,25 +1006,25 @@ public class GrowthLineTrackingILP {
 			// - - - - - - - - - - - - - - - - - - - - -
 			model.optimize();
 			dialog.notifyGurobiTermination();
-			if ( MotherMachine.getGui() != null ) {
-				MotherMachine.getGui().dataToDisplayChanged();
+			if ( MoMA.getGui() != null ) {
+				MoMA.getGui().dataToDisplayChanged();
 			}
 
 			// Read solution and extract interpretation
 			// - - - - - - - - - - - - - - - - - - - - -
 			if ( model.get( GRB.IntAttr.Status ) == GRB.Status.OPTIMAL ) {
 				status = OPTIMAL;
-				if ( !MotherMachine.HEADLESS ) {
+				if ( !MoMA.HEADLESS ) {
 					dialog.pushStatus( "Optimum was found!" );
-					if ( MotherMachine.getGui() != null ) {
-						MotherMachine.getGui().focusOnSliderTime();
+					if ( MoMA.getGui() != null ) {
+						MoMA.getGui().focusOnSliderTime();
 					}
 					dialog.setVisible( false );
 					dialog.dispose();
 				}
 			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.INFEASIBLE ) {
 				status = INFEASIBLE;
-				if ( !MotherMachine.HEADLESS ) {
+				if ( !MoMA.HEADLESS ) {
 					dialog.pushStatus( "ILP now infeasible. Please reoptimize!" );
 				}
 			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.UNBOUNDED ) {
@@ -1035,7 +1035,7 @@ public class GrowthLineTrackingILP {
 				status = NUMERIC;
 			} else {
 				status = LIMIT_REACHED;
-				if ( !MotherMachine.HEADLESS ) {
+				if ( !MoMA.HEADLESS ) {
 					dialog.pushStatus( String.format( "Timelimit reached, rel. optimality gap: %.2f%%", gcb.getLatestGap() * 100.0 ) );
 				}
 			}
@@ -1714,7 +1714,7 @@ public class GrowthLineTrackingILP {
 		BufferedWriter out;
 		try {
 			out = new BufferedWriter( new FileWriter( file ) );
-			out.write( "# " + MotherMachine.VERSION_STRING );
+			out.write( "# " + MoMA.VERSION_STRING );
 			out.newLine();
 			out.newLine();
 
@@ -1735,12 +1735,12 @@ public class GrowthLineTrackingILP {
 				}
 			}
 			out.write( String.format( "TIME, %d, %d, %d\n", numT,
-					MotherMachine.getMinTime(), MotherMachine.getMaxTime() ) );
+					MoMA.getMinTime(), MoMA.getMaxTime() ) );
 			out.write( String.format( "SIZE, %d, %d\n", numH, numA ) );
-			out.write( String.format( "BOTTOM_OFFSET, %d\n", MotherMachine.GL_OFFSET_BOTTOM ) );
+			out.write( String.format( "BOTTOM_OFFSET, %d\n", MoMA.GL_OFFSET_BOTTOM ) );
 			out.newLine();
 
-			final int timeOffset = MotherMachine.getMinTime();
+			final int timeOffset = MoMA.getMinTime();
 
 			// SegmentsInFrameCountConstraints
 			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1826,7 +1826,7 @@ public class GrowthLineTrackingILP {
 
 		final List< Hypothesis< ? >> pruneRoots = new ArrayList< Hypothesis< ? >>();
 
-		final int timeOffset = MotherMachine.getMinTime();
+		final int timeOffset = MoMA.getMinTime();
 
 		String line;
 		while ( ( line = reader.readLine() ) != null ) {
@@ -1844,10 +1844,10 @@ public class GrowthLineTrackingILP {
 					final int readTmin = Integer.parseInt( columns[ 2 ].trim() );
 					final int readTmax = Integer.parseInt( columns[ 3 ].trim() );
 
-					if ( MotherMachine.getMinTime() != readTmin || MotherMachine.getMaxTime() != readTmax ) {
-						if ( !MotherMachine.HEADLESS ) {
+					if ( MoMA.getMinTime() != readTmin || MoMA.getMaxTime() != readTmax ) {
+						if ( !MoMA.HEADLESS ) {
 							JOptionPane.showMessageDialog(
-									MotherMachine.getGui(),
+									MoMA.getGui(),
 									"Tracking to be loaded is at best a partial fit.\nMatching data will be loaded whereever possible...",
 									"Warning",
 									JOptionPane.WARNING_MESSAGE );
@@ -1961,7 +1961,7 @@ public class GrowthLineTrackingILP {
 		for ( final Hypothesis< ? > hyp : pruneRoots ) {
 			hyp.setPruneRoot( true, this );
 		}
-		MotherMachine.getGui().dataToDisplayChanged();
+		MoMA.getGui().dataToDisplayChanged();
 	}
 
 	/**

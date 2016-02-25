@@ -23,7 +23,7 @@ import net.imglib2.util.ValuePair;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
-import com.jug.MotherMachine;
+import com.jug.MoMA;
 import com.jug.lp.Hypothesis;
 
 /**
@@ -170,9 +170,9 @@ public class Util {
 	 */
 	public static IntervalView< FloatType > getColumnBoxInImg( final IntervalView< FloatType > channelFrame, final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long glMiddleInImg ) {
 		final long[] lt = Util.getTopLeftInSourceImg( hyp, glMiddleInImg );
-		lt[ 0 ] = glMiddleInImg - MotherMachine.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS / 2;
+		lt[ 0 ] = glMiddleInImg - MoMA.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS / 2;
 		final long[] rb = Util.getRightBottomInSourceImg( hyp, glMiddleInImg );
-		rb[ 0 ] = glMiddleInImg + MotherMachine.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS / 2 + MotherMachine.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS % 2 - 1;
+		rb[ 0 ] = glMiddleInImg + MoMA.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS / 2 + MoMA.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS % 2 - 1;
 		return Views.interval( Views.zeroMin( channelFrame ), lt, rb );
 	}
 
@@ -184,9 +184,9 @@ public class Util {
 	 */
 	public static IntervalView< FloatType > getIntensityBoxInImg( final IntervalView< FloatType > channelFrame, final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long glMiddleInImg ) {
 		final long[] lt = Util.getTopLeftInSourceImg( hyp, glMiddleInImg );
-		lt[ 0 ] = glMiddleInImg - MotherMachine.GL_WIDTH_IN_PIXELS / 2;
+		lt[ 0 ] = glMiddleInImg - MoMA.GL_WIDTH_IN_PIXELS / 2;
 		final long[] rb = Util.getRightBottomInSourceImg( hyp, glMiddleInImg );
-		rb[ 0 ] = glMiddleInImg + MotherMachine.GL_WIDTH_IN_PIXELS / 2 + MotherMachine.GL_WIDTH_IN_PIXELS % 2 - 1;
+		rb[ 0 ] = glMiddleInImg + MoMA.GL_WIDTH_IN_PIXELS / 2 + MoMA.GL_WIDTH_IN_PIXELS % 2 - 1;
 		return Views.interval( channelFrame, lt, rb );
 	}
 
@@ -198,9 +198,9 @@ public class Util {
 	 */
 	public static IntervalView< ShortType > getClassificationBoxInImg( final IntervalView< ShortType > segmentedFrame, final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long glMiddleInImg ) {
 		final long[] lt = Util.getTopLeftInSourceImg( hyp, glMiddleInImg );
-		lt[ 0 ] = glMiddleInImg - MotherMachine.GL_WIDTH_IN_PIXELS; // to lazy for an additional param... twice GL_WIDTH should be ok...
+		lt[ 0 ] = glMiddleInImg - MoMA.GL_WIDTH_IN_PIXELS; // to lazy for an additional param... twice GL_WIDTH should be ok...
 		final long[] rb = Util.getRightBottomInSourceImg( hyp, glMiddleInImg );
-		rb[ 0 ] = glMiddleInImg + MotherMachine.GL_WIDTH_IN_PIXELS; // to lazy for an additional param... twice GL_WIDTH should be ok...
+		rb[ 0 ] = glMiddleInImg + MoMA.GL_WIDTH_IN_PIXELS; // to lazy for an additional param... twice GL_WIDTH should be ok...
 //		if ( false ) {
 //			new ImageJ();
 //			ImageJFunctions.showUnsignedShort( Views.interval( segmentedFrame, lt, rb ) );
@@ -236,8 +236,8 @@ public class Util {
 	 */
 	private static long[] getTopLeftInSourceImg( final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long middle ) {
 		final ValuePair< Integer, Integer > limits = hyp.getLocation();
-		final long left = middle - MotherMachine.GL_WIDTH_IN_PIXELS / 2;
-		final long top = limits.getA() + MotherMachine.GL_OFFSET_TOP;;
+		final long left = middle - MoMA.GL_WIDTH_IN_PIXELS / 2;
+		final long top = limits.getA() + MoMA.GL_OFFSET_TOP;;
 		return new long[] { left, top };
 	}
 
@@ -247,8 +247,8 @@ public class Util {
 	 */
 	private static long[] getRightBottomInSourceImg( final Hypothesis< net.imglib2.algorithm.componenttree.Component< FloatType, ? >> hyp, final long middle ) {
 		final ValuePair< Integer, Integer > limits = hyp.getLocation();
-		final long right = middle + MotherMachine.GL_WIDTH_IN_PIXELS / 2 + MotherMachine.GL_WIDTH_IN_PIXELS % 2 - 1;
-		final long bottom = limits.getB() + MotherMachine.GL_OFFSET_TOP;
+		final long right = middle + MoMA.GL_WIDTH_IN_PIXELS / 2 + MoMA.GL_WIDTH_IN_PIXELS % 2 - 1;
+		final long bottom = limits.getB() + MoMA.GL_OFFSET_TOP;
 		return new long[] { right, bottom };
 	}
 

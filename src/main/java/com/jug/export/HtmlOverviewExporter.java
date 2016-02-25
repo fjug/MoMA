@@ -12,7 +12,7 @@ import java.io.Writer;
 
 import javax.swing.JOptionPane;
 
-import com.jug.gui.MotherMachineGui;
+import com.jug.gui.MoMAGui;
 import com.jug.util.Util;
 
 /**
@@ -20,13 +20,13 @@ import com.jug.util.Util;
  */
 public class HtmlOverviewExporter {
 
-	private final MotherMachineGui gui;
+	private final MoMAGui gui;
 	private final File htmlFile;
 	private final String imgpath;
 	private final int startFrame;
 	private final int endFrame;
 
-	public HtmlOverviewExporter( final MotherMachineGui gui, final File htmlFile, final String imgpath, final int startFrame, final int endFrame ) {
+	public HtmlOverviewExporter( final MoMAGui gui, final File htmlFile, final String imgpath, final int startFrame, final int endFrame ) {
 		this.gui = gui;
 		this.htmlFile = htmlFile;
 		this.imgpath = imgpath;

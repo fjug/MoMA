@@ -40,7 +40,7 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 
 	private HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >> data;
 
-	private final MotherMachineGui gui;
+	private final MoMAGui gui;
 
 	// -------------------------------------------------------------------------------------
 	// construction
@@ -48,7 +48,7 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 	/**
 	 * @param dimension
 	 */
-	public AssignmentViewer( final int height, final MotherMachineGui callbackGui ) {
+	public AssignmentViewer( final int height, final MoMAGui callbackGui ) {
 		this.gui = callbackGui;
 		this.setBorder( BorderFactory.createEmptyBorder( 0, 0, 0, 0 ) );
 		buildGui( height );

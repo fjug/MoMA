@@ -14,7 +14,7 @@ import java.util.List;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.FloatType;
 
-import com.jug.MotherMachine;
+import com.jug.MoMA;
 
 /**
  * @author jug
@@ -70,7 +70,7 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< F
 			}
 		}
 
-		if ( !MotherMachine.DISABLE_EXIT_CONSTRAINTS ) {
+		if ( !MoMA.DISABLE_EXIT_CONSTRAINTS ) {
 			ilp.model.addConstr( expr, GRB.LESS_EQUAL, Hup.size(), "dc_" + dcId );
 		}
 		dcId++;

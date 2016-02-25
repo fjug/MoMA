@@ -39,8 +39,8 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.SystemUtils;
 
 import com.apple.eawt.Application;
-import com.jug.gui.MotherMachineGui;
-import com.jug.gui.MotherMachineModel;
+import com.jug.gui.MoMAGui;
+import com.jug.gui.MoMAModel;
 import com.jug.gui.progress.DialogProgress;
 import com.jug.loops.Loops;
 import com.jug.ops.cursor.FindLocalMaxima;
@@ -78,17 +78,17 @@ import net.imglib2.view.Views;
 /**
  * @author jug
  */
-public class MotherMachine {
+public class MoMA {
 
 	/**
 	 * Identifier of current version
 	 */
-	public static final String VERSION_STRING = "TIMM_0.9.6beta";
+	public static final String VERSION_STRING = "MoMA_1.0";
 
 	// -------------------------------------------------------------------------------------
 	// statics
 	// -------------------------------------------------------------------------------------
-	public static MotherMachine instance;
+	public static MoMA instance;
 	public static boolean HEADLESS = false;
 
 	/**
@@ -207,6 +207,7 @@ public class MotherMachine {
 	// - - - - - - - - - - - - - -
 	private static int minTime = -1;
 	private static int maxTime = -1;
+	private static int initOptRange = -1;
 	private static int minChannelIdx = 1;
 	private static int numChannels = 1;
 
@@ -292,7 +293,7 @@ public class MotherMachine {
 	 * Control if ImageJ and loaded data will be shown...
 	 */
 	private static boolean showIJ = false;
-	private static MotherMachineGui gui;
+	private static MoMAGui gui;
 
 	/**
 	 * A properties file that will be used to 'overwrite' default properties in
@@ -333,6 +334,9 @@ public class MotherMachine {
 		final Option timeLast = new Option( "tmax", "max_time", true, "last time-point to be processed" );
 		timeLast.setRequired( false );
 
+		final Option optRange = new Option( "orange", "opt_range", true, "initial optimization range" );
+		optRange.setRequired( false );
+
 		final Option numChannelsOption = new Option( "c", "channels", true, "number of channels to be loaded and analyzed." );
 		numChannelsOption.setRequired( true );
 
@@ -354,6 +358,7 @@ public class MotherMachine {
 		options.addOption( minChannelIdxOption );
 		options.addOption( timeFirst );
 		options.addOption( timeLast );
+		options.addOption( optRange );
 		options.addOption( infolder );
 		options.addOption( outfolder );
 		options.addOption( userProps );
@@ -364,7 +369,7 @@ public class MotherMachine {
 		} catch ( final ParseException e1 ) {
 			final HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp(
-					"... [-p props-file] -i in-folder [-o out-folder] -c <num-channels> [-cmin start-channel-ids] [-tmin idx] [-tmax idx] [-headless]",
+					"... [-p props-file] -i in-folder [-o out-folder] -c <num-channels> [-cmin start-channel-ids] [-tmin idx] [-tmax idx] [-orange num-frames] [-headless]",
 					"",
 					options,
 					"Error: " + e1.getMessage() );
@@ -439,6 +444,10 @@ public class MotherMachine {
 			maxTime = Integer.parseInt( cmd.getOptionValue( "tmax" ) );
 		}
 
+		if ( cmd.hasOption( "orange" ) ) {
+			initOptRange = Integer.parseInt( cmd.getOptionValue( "orange" ) );
+		}
+
 		// ******** CHECK GUROBI ********* CHECK GUROBI ********* CHECK GUROBI *********
 		final String jlp = System.getProperty( "java.library.path" );
 //		System.out.println( jlp );
@@ -450,7 +459,7 @@ public class MotherMachine {
 				System.out.println( msgs );
 			} else {
 				JOptionPane.showMessageDialog(
-						MotherMachine.guiFrame,
+						MoMA.guiFrame,
 						msgs,
 						"Gurobi Error?",
 						JOptionPane.ERROR_MESSAGE );
@@ -463,7 +472,7 @@ public class MotherMachine {
 				System.out.println( msgs );
 			} else {
 				JOptionPane.showMessageDialog(
-						MotherMachine.guiFrame,
+						MoMA.guiFrame,
 						msgs,
 						"Gurobi Error?",
 						JOptionPane.ERROR_MESSAGE );
@@ -474,9 +483,9 @@ public class MotherMachine {
 		}
 		// ******* END CHECK GUROBI **** END CHECK GUROBI **** END CHECK GUROBI ********
 
-		final MotherMachine main = new MotherMachine();
+		final MoMA main = new MoMA();
 		if ( !HEADLESS ) {
-			guiFrame = new JFrame( "Interactive MotherMachine" );
+			guiFrame = new JFrame( "MoMA - the MotherMachine Analyzer" );
 			main.initMainWindow( guiFrame );
 		}
 
@@ -557,7 +566,7 @@ public class MotherMachine {
 
 		// ------------------------------------------------------------------------------------------------------
 		// ------------------------------------------------------------------------------------------------------
-		final MotherMachineModel mmm = new MotherMachineModel( main );
+		final MoMAModel mmm = new MoMAModel( main );
 		instance = main;
 		try {
 			main.processDataFromFolder( path, minTime, maxTime, minChannelIdx, numChannels );
@@ -580,7 +589,7 @@ public class MotherMachine {
 			// ImageJFunctions.show( main.getCellSegmentedChannelImgs(), "Segmentation" );
 		}
 
-		gui = new MotherMachineGui( mmm );
+		gui = new MoMAGui( mmm );
 
 		if ( !HEADLESS ) {
 			System.out.print( "Build GUI..." );
@@ -731,7 +740,7 @@ public class MotherMachine {
 			}
 
 			final SilentWekaSegmenter< FloatType > oldClassifier = GrowthLineSegmentationMagic.getClassifier();
-			GrowthLineSegmentationMagic.setClassifier( MotherMachine.CELLSIZE_CLASSIFIER_MODEL_FILE, "" );
+			GrowthLineSegmentationMagic.setClassifier( MoMA.CELLSIZE_CLASSIFIER_MODEL_FILE, "" );
 
 			imgClassified = new ArrayImgFactory< FloatType >().create( imgTemp, new FloatType() );
 			imgSegmented = new ArrayImgFactory< ShortType >().create( imgTemp, new ShortType() );
@@ -926,10 +935,10 @@ public class MotherMachine {
 		if ( !HEADLESS ) {
 			Image image = null;
 			try {
-				image = new ImageIcon( MotherMachine.class.getClassLoader().getResource( "IconMpiCbg128.png" ) ).getImage();
+				image = new ImageIcon( MoMA.class.getClassLoader().getResource( "IconMpiCbg128.png" ) ).getImage();
 			} catch (final Exception e) {
 				try {
-					image = new ImageIcon( MotherMachine.class.getClassLoader().getResource(
+					image = new ImageIcon( MoMA.class.getClassLoader().getResource(
 									"resources/IconMpiCbg128.png" ) ).getImage();
 				} catch ( final Exception e2 ) {
 					System.out.println( ">>> Error: app icon not found..." );
@@ -1161,7 +1170,7 @@ public class MotherMachine {
 			props.setProperty( "GUROBI_TIME_LIMIT", Double.toString( GUROBI_TIME_LIMIT ) );
 			props.setProperty( "GUROBI_MAX_OPTIMALITY_GAP", Double.toString( GUROBI_MAX_OPTIMALITY_GAP ) );
 
-			if ( !MotherMachine.HEADLESS ) {
+			if ( !MoMA.HEADLESS ) {
 				GUI_POS_X = guiFrame.getX();
 				GUI_POS_Y = guiFrame.getY();
 				GUI_WIDTH = guiFrame.getWidth();
@@ -1294,16 +1303,16 @@ public class MotherMachine {
 				float rowAvgs[] = new float[ glfY2 - glfY1 + 1 ];
 				int colCount = 0;
 				// Look to the left if you are not the first GLF
-				if ( glfX > MotherMachine.BGREM_TEMPLATE_XMAX ) {
-					final IntervalView< FloatType > leftBackgroundWindow = Views.interval( frame, new long[] { glfX - MotherMachine.BGREM_TEMPLATE_XMAX, glfY1 }, new long[] { glfX - MotherMachine.BGREM_TEMPLATE_XMIN, glfY2 } );
+				if ( glfX > MoMA.BGREM_TEMPLATE_XMAX ) {
+					final IntervalView< FloatType > leftBackgroundWindow = Views.interval( frame, new long[] { glfX - MoMA.BGREM_TEMPLATE_XMAX, glfY1 }, new long[] { glfX - MoMA.BGREM_TEMPLATE_XMIN, glfY2 } );
 					rowAvgs = addRowSumsFromInterval( leftBackgroundWindow, rowAvgs );
-					colCount += ( MotherMachine.BGREM_TEMPLATE_XMAX - MotherMachine.BGREM_TEMPLATE_XMIN );
+					colCount += ( MoMA.BGREM_TEMPLATE_XMAX - MoMA.BGREM_TEMPLATE_XMIN );
 				}
 				// Look to the right if you are not the last GLF
-				if ( glfX < imgTemp.dimension( 0 ) - MotherMachine.BGREM_TEMPLATE_XMAX ) {
-					final IntervalView< FloatType > rightBackgroundWindow = Views.interval( frame, new long[] { glfX + MotherMachine.BGREM_TEMPLATE_XMIN, glfY1 }, new long[] { glfX + MotherMachine.BGREM_TEMPLATE_XMAX, glfY2 } );
+				if ( glfX < imgTemp.dimension( 0 ) - MoMA.BGREM_TEMPLATE_XMAX ) {
+					final IntervalView< FloatType > rightBackgroundWindow = Views.interval( frame, new long[] { glfX + MoMA.BGREM_TEMPLATE_XMIN, glfY1 }, new long[] { glfX + MoMA.BGREM_TEMPLATE_XMAX, glfY2 } );
 					rowAvgs = addRowSumsFromInterval( rightBackgroundWindow, rowAvgs );
-					colCount += ( MotherMachine.BGREM_TEMPLATE_XMAX - MotherMachine.BGREM_TEMPLATE_XMIN );
+					colCount += ( MoMA.BGREM_TEMPLATE_XMAX - MoMA.BGREM_TEMPLATE_XMIN );
 				}
 				// compute averages
 				for ( int j = 0; j < rowAvgs.length; j++ ) {
@@ -1312,8 +1321,8 @@ public class MotherMachine {
 
 				// Subtract averages you've seen to your left and/or to your
 				// right
-				final long x1 = Math.max( 0, glfX - MotherMachine.BGREM_X_OFFSET );
-				final long x2 = Math.min( frame.dimension( 0 ) - 1, glfX + MotherMachine.BGREM_X_OFFSET );
+				final long x1 = Math.max( 0, glfX - MoMA.BGREM_X_OFFSET );
+				final long x2 = Math.min( frame.dimension( 0 ) - 1, glfX + MoMA.BGREM_X_OFFSET );
 				final IntervalView< FloatType > growthLineArea = Views.interval( frame, new long[] { x1, glfY1 }, new long[] { x2, glfY2 } );
 				removeValuesFromRows( growthLineArea, rowAvgs );
 				// Normalize the zone we removed the background from...
@@ -1658,7 +1667,7 @@ public class MotherMachine {
 	/**
 	 * @return the MotherMachineGui instance.
 	 */
-	public static MotherMachineGui getGui() {
+	public static MoMAGui getGui() {
 		return gui;
 	}
 
@@ -1674,7 +1683,7 @@ public class MotherMachine {
 	 *            the defaultFilenameDecoration to set
 	 */
 	public static void setDefaultFilenameDecoration( final String defaultFilenameDecoration ) {
-		MotherMachine.defaultFilenameDecoration = defaultFilenameDecoration;
+		MoMA.defaultFilenameDecoration = defaultFilenameDecoration;
 	}
 
 	/**
@@ -1689,6 +1698,13 @@ public class MotherMachine {
 	 */
 	public static int getMaxTime() {
 		return maxTime;
+	}
+
+	/**
+	 * @return the initial optimization range, -1 if it is infinity.
+	 */
+	public static int getInitialOptRange() {
+		return initOptRange;
 	}
 
 	/**
@@ -1742,7 +1758,7 @@ public class MotherMachine {
 		System.out.println( " done!" );
 
 		System.out.print( "Normalize loaded images..." );
-		normalizePerFrame( imgTemp, MotherMachine.GL_OFFSET_TOP, MotherMachine.GL_OFFSET_BOTTOM );
+		normalizePerFrame( imgTemp, MoMA.GL_OFFSET_TOP, MoMA.GL_OFFSET_BOTTOM );
 		System.out.println( " done!" );
 
 		System.out.print( "Generating Segmentation Hypotheses..." );

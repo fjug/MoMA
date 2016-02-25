@@ -11,7 +11,7 @@ import java.util.Map;
 
 import javax.swing.JTextArea;
 
-import com.jug.MotherMachine;
+import com.jug.MoMA;
 import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.costs.CostManager;
 import com.jug.sbmrm.zeromq.SbmrmClient;
@@ -26,7 +26,7 @@ import gurobi.GRBVar;
  */
 public class MMTrainer implements Runnable {
 
-	private final MotherMachine mm;
+	private final MoMA mm;
 	private final GRBModel model;
 	private final GrowthLineTrackingILP ilp;
 
@@ -39,7 +39,7 @@ public class MMTrainer implements Runnable {
 
 	private final JTextArea console;
 
-	public MMTrainer( final MotherMachine mm, final JTextArea console ) {
+	public MMTrainer( final MoMA mm, final JTextArea console ) {
 		this.mm = mm;
 		this.ilp = mm.getGui().model.getCurrentGL().getIlp();
 		this.model = ilp.model;
@@ -60,7 +60,7 @@ public class MMTrainer implements Runnable {
 		buildAssmnt( assmntGT );
 
 		log( "Removing leveraged editing constraints..." );
-		for ( int t = 0; t < MotherMachine.getMaxTime(); t++ ) {
+		for ( int t = 0; t < MoMA.getMaxTime(); t++ ) {
 			ilp.removeAllAssignmentConstraints( t );
 			ilp.removeAllSegmentConstraints( t );
 			ilp.removeSegmentsInFrameCountConstraint( t );

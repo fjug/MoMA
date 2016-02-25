@@ -37,7 +37,7 @@ public class GrowthLineFrame extends AbstractGrowthLineFrame< FilteredComponent<
 		return FilteredComponentTree.buildComponentTree(
 				raiFkt,
 				new FloatType(),
-				MotherMachine.MIN_CELL_LENGTH,
+				MoMA.MIN_CELL_LENGTH,
 				Long.MAX_VALUE,
 				noFilterFilter, //maxGrowthPerStepRatioWithMinimalAbsoluteIncrease,
 				true );

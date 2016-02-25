@@ -4,7 +4,7 @@ import gurobi.GRB;
 import gurobi.GRBCallback;
 import gurobi.GRBException;
 
-import com.jug.MotherMachine;
+import com.jug.MoMA;
 import com.jug.gui.progress.DialogGurobiProgress;
 
 public class GurobiCallback extends GRBCallback {
@@ -73,8 +73,8 @@ public class GurobiCallback extends GRBCallback {
 					final int cutcnt = getIntInfo( GRB.CB_MIP_CUTCNT );
 					System.out.println( nodecnt + " " + actnodes + " " + itcnt + " " + objbst + " " + objbnd + " " + solcnt + " " + cutcnt );
 				}
-				if ( runtime > MotherMachine.GUROBI_TIME_LIMIT ) {
-					if ( Math.abs( objbst - objbnd ) < MotherMachine.GUROBI_MAX_OPTIMALITY_GAP * ( 1.0 + Math.abs( objbst ) ) ) {
+				if ( runtime > MoMA.GUROBI_TIME_LIMIT ) {
+					if ( Math.abs( objbst - objbnd ) < MoMA.GUROBI_MAX_OPTIMALITY_GAP * ( 1.0 + Math.abs( objbst ) ) ) {
 						abort();
 					}
 				}

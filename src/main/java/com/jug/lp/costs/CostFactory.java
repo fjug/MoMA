@@ -5,7 +5,7 @@ package com.jug.lp.costs;
 
 import java.util.List;
 
-import com.jug.MotherMachine;
+import com.jug.MoMA;
 import com.jug.lp.Hypothesis;
 import com.jug.util.ComponentTreeUtils;
 import com.jug.util.SimpleFunctionAnalysis;
@@ -137,7 +137,7 @@ public class CostFactory {
 		final float reducedMaxHeight = maxReduced - min;
 		final float averageSegmentValue = SimpleFunctionAnalysis.getAvg( gapSepFkt, a, b );
 
-		float cost = -( maxRimHeight - reducedMaxHeight ) + MotherMachine.MIN_GAP_CONTRAST;
+		float cost = -( maxRimHeight - reducedMaxHeight ) + MoMA.MIN_GAP_CONTRAST;
 		if ( cost < 0 ) {
 			cost /= avgBorderGradientDivisor;
 		}
@@ -155,7 +155,7 @@ public class CostFactory {
 		}
 
 		// cell is too small
-		if ( a > 0 && b + 1 < gapSepFkt.length && b - a < MotherMachine.MIN_CELL_LENGTH ) { // if a==0 or b==gapSepFkt.len, only a part of the cell is seen!
+		if ( a > 0 && b + 1 < gapSepFkt.length && b - a < MoMA.MIN_CELL_LENGTH ) { // if a==0 or b==gapSepFkt.len, only a part of the cell is seen!
 			cost = 100;
 		}
 		return cost * 2f;
@@ -194,7 +194,7 @@ public class CostFactory {
 		float cost = ( penaltyHeight * segmentLengthInPercentGL ) - ( incentiveHeight * segmentLengthInPercentGL );
 
 		// cell is too small
-		if ( a > 0 && b + 1 < gapSepFkt.length && b - a < MotherMachine.MIN_CELL_LENGTH ) { // if a==0 or b==gapSepFkt.len, only a part of the cell is seen!
+		if ( a > 0 && b + 1 < gapSepFkt.length && b - a < MoMA.MIN_CELL_LENGTH ) { // if a==0 or b==gapSepFkt.len, only a part of the cell is seen!
 			cost = 100;
 		}
 		return cost;

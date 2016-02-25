@@ -19,9 +19,9 @@ import java.util.Vector;
 import javax.swing.JOptionPane;
 
 import com.jug.GrowthLineFrame;
-import com.jug.MotherMachine;
+import com.jug.MoMA;
 import com.jug.gui.DialogCellStatsExportSetup;
-import com.jug.gui.MotherMachineGui;
+import com.jug.gui.MoMAGui;
 import com.jug.gui.OsDependentFileChooser;
 import com.jug.gui.progress.DialogProgress;
 import com.jug.lp.AbstractAssignment;
@@ -203,8 +203,8 @@ public class CellStatsExporter {
 		 * @return
 		 */
 		public float[] computeChannelColumnIntensities( final IntervalView< FloatType > columnBoxInChannel ) {
-			if ( MotherMachine.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS != columnBoxInChannel.dimension( 0 ) ) {
-				System.out.println( "EXPORT WARNING: intensity columns to be exported are " + columnBoxInChannel.dimension( 0 ) + " instead of " + MotherMachine.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS );
+			if ( MoMA.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS != columnBoxInChannel.dimension( 0 ) ) {
+				System.out.println( "EXPORT WARNING: intensity columns to be exported are " + columnBoxInChannel.dimension( 0 ) + " instead of " + MoMA.GL_FLUORESCENCE_COLLECTION_WIDTH_IN_PIXELS );
 			}
 
 			final float ret[] = new float[ ( int ) columnBoxInChannel.dimension( 0 ) ];
@@ -261,7 +261,7 @@ public class CellStatsExporter {
 
 	// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	private final MotherMachineGui gui;
+	private final MoMAGui gui;
 	private boolean doTrackExport = false;
 	private boolean doExportUserInputs = true;
 	private boolean includeHistograms = true;
@@ -269,7 +269,7 @@ public class CellStatsExporter {
 	private boolean includeColIntensitySums = true;
 	private boolean includePixelIntensities = false;
 
-	public CellStatsExporter( final MotherMachineGui gui ) {
+	public CellStatsExporter( final MoMAGui gui ) {
 		this.gui = gui;
 	}
 
@@ -291,9 +291,9 @@ public class CellStatsExporter {
 	}
 
 	public void export() {
-		if ( !MotherMachine.HEADLESS ) {
+		if ( !MoMA.HEADLESS ) {
 			if ( showConfigDialog() ) {
-				final File folderToUse = OsDependentFileChooser.showSaveFolderChooser( gui, MotherMachine.STATS_OUTPUT_PATH, "Choose export folder..." );
+				final File folderToUse = OsDependentFileChooser.showSaveFolderChooser( gui, MoMA.STATS_OUTPUT_PATH, "Choose export folder..." );
 				if ( folderToUse == null ) {
 					JOptionPane.showMessageDialog(
 							gui,
@@ -303,43 +303,43 @@ public class CellStatsExporter {
 					return;
 				}
 				if ( doTrackExport ) {
-					exportTracks( new File( folderToUse, "ExportedTracks_" + MotherMachine.getDefaultFilenameDecoration() + ".csv" ) );
+					exportTracks( new File( folderToUse, "ExportedTracks_" + MoMA.getDefaultFilenameDecoration() + ".csv" ) );
 				}
 				if ( doExportUserInputs ) {
-					final int tmin = MotherMachine.getMinTime();
-					final int tmax = MotherMachine.getMaxTime();
+					final int tmin = MoMA.getMinTime();
+					final int tmax = MoMA.getMaxTime();
 					final File file =
 							new File( folderToUse, String.format(
 									"--[%d-%d]_%s.timm",
 									tmin,
 									tmax,
-									MotherMachine.getDefaultFilenameDecoration() ) );
-					MotherMachine.getGui().model.getCurrentGL().getIlp().saveState( file );
+									MoMA.getDefaultFilenameDecoration() ) );
+					MoMA.getGui().model.getCurrentGL().getIlp().saveState( file );
 				}
 				try {
-					exportCellStats( new File( folderToUse, "ExportedCellStats_" + MotherMachine.getDefaultFilenameDecoration() + ".csv" ) );
+					exportCellStats( new File( folderToUse, "ExportedCellStats_" + MoMA.getDefaultFilenameDecoration() + ".csv" ) );
 				} catch ( final GRBException e ) {
 					e.printStackTrace();
 				}
 			}
 		} else {
 			if ( doTrackExport ) {
-				exportTracks( new File( MotherMachine.STATS_OUTPUT_PATH, "ExportedTracks_" + MotherMachine.getDefaultFilenameDecoration() + ".csv" ) );
+				exportTracks( new File( MoMA.STATS_OUTPUT_PATH, "ExportedTracks_" + MoMA.getDefaultFilenameDecoration() + ".csv" ) );
 			}
 			if ( doExportUserInputs ) {
-				final int tmin = MotherMachine.getMinTime();
-				final int tmax = MotherMachine.getMaxTime();
+				final int tmin = MoMA.getMinTime();
+				final int tmax = MoMA.getMaxTime();
 				final File file =
-						new File( MotherMachine.STATS_OUTPUT_PATH, String.format(
+						new File( MoMA.STATS_OUTPUT_PATH, String.format(
 								"--[%d-%d]_%s.timm",
 								tmin,
 								tmax,
-								MotherMachine.getDefaultFilenameDecoration() ) );
-				MotherMachine.getGui().model.getCurrentGL().getIlp().saveState( file );
+								MoMA.getDefaultFilenameDecoration() ) );
+				MoMA.getGui().model.getCurrentGL().getIlp().saveState( file );
 			}
 
 			try {
-				exportCellStats( new File( MotherMachine.STATS_OUTPUT_PATH, "ExportedCellStats_" + MotherMachine.getDefaultFilenameDecoration() + ".csv" ) );
+				exportCellStats( new File( MoMA.STATS_OUTPUT_PATH, "ExportedCellStats_" + MoMA.getDefaultFilenameDecoration() + ".csv" ) );
 			} catch ( final GRBException e ) {
 				e.printStackTrace();
 			}
@@ -380,7 +380,7 @@ public class CellStatsExporter {
 		// use US-style number formats! (e.g. '.' as decimal point)
 		Locale.setDefault( new Locale( "en", "US" ) );
 
-		final String loadedDataFolder = MotherMachine.props.getProperty( "import_path", "BUG -- could not get property 'import_path' while exporting cell statistics..." );
+		final String loadedDataFolder = MoMA.props.getProperty( "import_path", "BUG -- could not get property 'import_path' while exporting cell statistics..." );
 		final int numCurrGL = gui.sliderGL.getValue();
 		final Vector< String > linesToExport = new Vector< String >();
 
@@ -458,7 +458,7 @@ public class CellStatsExporter {
 
 		// INITIALIZE PROGRESS-BAR if not run headless
 		final DialogProgress dialogProgress = new DialogProgress( gui, "Exporting selected cell-statistics...", startingPoints.size() );
-		if ( !MotherMachine.HEADLESS ) {
+		if ( !MoMA.HEADLESS ) {
 			dialogProgress.setVisible( true );
 		}
 
@@ -472,18 +472,18 @@ public class CellStatsExporter {
 		linesToExport.add( "numCells = " + startingPoints.size() );
 
 		// Line 4: #channels
-		linesToExport.add( "numChannels = " + MotherMachine.instance.getRawChannelImgs().size() );
+		linesToExport.add( "numChannels = " + MoMA.instance.getRawChannelImgs().size() );
 
 		// Line 5: imageHeight
-		final long h = MotherMachine.instance.getImgRaw().dimension( 1 );
+		final long h = MoMA.instance.getImgRaw().dimension( 1 );
 		linesToExport.add( "imageHeight = " + h + "\n" );
 
 		// Line 6: bottomOffset
 		linesToExport.add(
-				"glHeight = " + ( h - MotherMachine.GL_OFFSET_BOTTOM - MotherMachine.GL_OFFSET_TOP ) + "\n" );
+				"glHeight = " + ( h - MoMA.GL_OFFSET_BOTTOM - MoMA.GL_OFFSET_TOP ) + "\n" );
 
 		// Line 7: track region (pixel row interval we perform tracking within -- this is all but top and bottom offset areas)
-		linesToExport.add( String.format("trackRegionInterval = [%d,%d]", MotherMachine.GL_OFFSET_TOP, h - 1 - MotherMachine.GL_OFFSET_BOTTOM ) );
+		linesToExport.add( String.format("trackRegionInterval = [%d,%d]", MoMA.GL_OFFSET_TOP, h - 1 - MoMA.GL_OFFSET_BOTTOM ) );
 
 		// Export all cells (we found all their starting segments above)
 		for ( int cid = 0; cid < startingPoints.size(); cid++ ) {
@@ -537,8 +537,8 @@ public class CellStatsExporter {
 						genealogy ) );
 
 				// export info per image channel
-				for ( int c = 0; c < MotherMachine.instance.getRawChannelImgs().size(); c++ ) {
-					final IntervalView< FloatType > channelFrame = Views.hyperSlice( MotherMachine.instance.getRawChannelImgs().get( c ), 2, segmentRecord.frame );
+				for ( int c = 0; c < MoMA.instance.getRawChannelImgs().size(); c++ ) {
+					final IntervalView< FloatType > channelFrame = Views.hyperSlice( MoMA.instance.getRawChannelImgs().get( c ), 2, segmentRecord.frame );
 					final IterableInterval< FloatType > segmentBoxInChannel = Util.getSegmentBoxInImg( channelFrame, segmentRecord.hyp, firstGLF.getAvgXpos() );
 
 					final FloatType min = new FloatType();
@@ -612,13 +612,13 @@ public class CellStatsExporter {
 			}
 
 			// REPORT PROGRESS if needbe
-			if ( !MotherMachine.HEADLESS ) {
+			if ( !MoMA.HEADLESS ) {
 				dialogProgress.hasProgressed();
 			}
 		}
 
 		// Dispose ProgressBar in needbe
-		if ( !MotherMachine.HEADLESS ) {
+		if ( !MoMA.HEADLESS ) {
 			dialogProgress.setVisible( false );
 			dialogProgress.dispose();
 		}
@@ -643,12 +643,12 @@ public class CellStatsExporter {
 			}
 			out.close();
 		} catch ( final FileNotFoundException e1 ) {
-			if ( !MotherMachine.HEADLESS )
+			if ( !MoMA.HEADLESS )
 				JOptionPane.showMessageDialog( gui, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
 			System.err.println( "Export Error: File not found!" );
 			e1.printStackTrace();
 		} catch ( final IOException e1 ) {
-			if ( !MotherMachine.HEADLESS )
+			if ( !MoMA.HEADLESS )
 				JOptionPane.showMessageDialog( gui, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
 			System.err.println( "Export Error: Selected file could not be written!" );
 			e1.printStackTrace();
@@ -661,7 +661,7 @@ public class CellStatsExporter {
 		// use US-style number formats! (e.g. '.' as decimal point)
 		Locale.setDefault( new Locale( "en", "US" ) );
 
-		final String loadedDataFolder = MotherMachine.props.getProperty( "import_path", "BUG -- could not get property 'import_path' while exporting tracks..." );
+		final String loadedDataFolder = MoMA.props.getProperty( "import_path", "BUG -- could not get property 'import_path' while exporting tracks..." );
 		final int numCurrGL = gui.sliderGL.getValue();
 		final int numGLFs = gui.model.getCurrentGL().getFrames().size();
 		final Vector< Vector< String >> dataToExport = new Vector< Vector< String >>();

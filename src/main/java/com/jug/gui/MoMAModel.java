@@ -5,7 +5,7 @@ package com.jug.gui;
 
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
-import com.jug.MotherMachine;
+import com.jug.MoMA;
 
 
 /**
@@ -13,7 +13,7 @@ import com.jug.MotherMachine;
  *
  * @author jug
  */
-public class MotherMachineModel {
+public class MoMAModel {
 
 	// -------------------------------------------------------------------------------------
 	// fields
@@ -21,7 +21,7 @@ public class MotherMachineModel {
 	/**
 	 * The MotherMachine instance we wrap here
 	 */
-	protected MotherMachine mm;
+	protected MoMA mm;
 
 	private int currentGLidx;
 	private int currentGLFidx;
@@ -35,7 +35,7 @@ public class MotherMachineModel {
 	 * @param mm
 	 *            the instance of MotherMachine to be wrapped by this GUI model
 	 */
-	public MotherMachineModel( final MotherMachine mm ) {
+	public MoMAModel( final MoMA mm ) {
 		this.mm = mm;
 		currentGLidx = 0;
 		currentGLFidx = 0;
