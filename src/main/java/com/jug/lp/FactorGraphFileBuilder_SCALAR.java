@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * @author jug
  */
-public class FactorGraphFileBuilder {
+public class FactorGraphFileBuilder_SCALAR {
 
 	int next_var_id = 0;
 	int next_fkt_id = 0;

@@ -3,13 +3,13 @@
  */
 package com.jug.lp;
 
+import java.util.List;
+
 import gurobi.GRB;
 import gurobi.GRBConstr;
 import gurobi.GRBException;
 import gurobi.GRBLinExpr;
 import gurobi.GRBVar;
-
-import java.util.List;
 
 /**
  * Partially implemented class for everything that wants to be an assignment.
@@ -26,7 +26,7 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 
 	protected GrowthLineTrackingILP ilp;
 
-//	private int exportVarIdx = -1;
+	private int exportVarIdx = -1;
 	private GRBVar ilpVar;
 
 	private boolean isGroundTruth = false;
@@ -72,12 +72,12 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 //	 *         variable used for this assignment.
 //	 * @throws Exception
 //	 */
-//	public int getVarIdx() {
-//		if ( exportVarIdx == -1 ) {
-//			System.out.println( "AAAAACHTUNG!!! Variable index not initialized before export was attempted!" );
-//		}
-//		return exportVarIdx;
-//	}
+	public int getVarIdx() {
+		if ( exportVarIdx == -1 ) {
+			System.out.println( "AAAAACHTUNG!!! Variable index not initialized before export was attempted!" );
+		}
+		return exportVarIdx;
+	}
 
 	/**
 	 * @return the ilpVar
@@ -101,9 +101,9 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 //	 *
 //	 * @param varId
 //	 */
-//	public void setVarId( final int varId ) {
-//		this.exportVarIdx = varId;
-//	}
+	public void setVarId( final int varId ) {
+		this.exportVarIdx = varId;
+	}
 
 	/**
 	 * @param model
@@ -117,8 +117,15 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 * @return the cost
 	 * @throws GRBException
 	 */
-	public float getCost() throws GRBException {
-		return ( float ) getGRBVar().get( GRB.DoubleAttr.Obj );
+	public float getCost() {
+		float cost = 0;
+		try {
+			cost = ( float ) getGRBVar().get( GRB.DoubleAttr.Obj );
+		} catch ( final GRBException e ) {
+			System.err.println( "CRITICAL: cost could not be read out of Gurobi ILP!" );
+//			e.printStackTrace();
+		}
+		return cost;
 	}
 
 	/**
@@ -147,11 +154,19 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	public abstract void addConstraintsToLP() throws GRBException;
 
 	/**
+	 * Abstract method that will, once implemented, build the constraint
+	 * representations needed to save the FG.
+	 *
+	 * @throws GRBException
+	 */
+	public abstract List< String > getConstraintsToSave_PASCAL();
+
+	/**
 	 * Adds a list of functions and factors to the FactorGraphFileBuilder.
 	 * This fkt and fac is used to save a FactorGraph describing the
 	 * optimization problem at hand.
 	 */
-	public abstract void addFunctionsAndFactors( FactorGraphFileBuilder fgFile, final List< Integer > regionIds );
+	public abstract void addFunctionsAndFactors( FactorGraphFileBuilder_SCALAR fgFile, final List< Integer > regionIds );
 
 	/**
 	 * @return

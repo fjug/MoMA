@@ -3,18 +3,17 @@
  */
 package com.jug.lp;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.jug.MoMA;
+
 import gurobi.GRB;
 import gurobi.GRBException;
 import gurobi.GRBLinExpr;
 import gurobi.GRBVar;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.FloatType;
-
-import com.jug.MoMA;
 
 /**
  * @author jug
@@ -77,12 +76,40 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< F
 	}
 
 	/**
+	 * @see com.jug.lp.AbstractAssignment#getConstraintsToSave_PASCAL()
+	 */
+	@Override
+	public List< String > getConstraintsToSave_PASCAL() {
+		final ArrayList< String > ret = new ArrayList< String >();
+
+		String constraint = "";
+		constraint += String.format( "(%d,%d,1)", Hup.size(), this.getVarIdx() );
+
+		for ( final Hypothesis< Component< FloatType, ? >> upperHyp : Hup ) {
+			if ( edges.getRightNeighborhood( upperHyp ) != null ) {
+				for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> a_j : edges.getRightNeighborhood( upperHyp ) ) {
+					if ( a_j.getType() == GrowthLineTrackingILP.ASSIGNMENT_EXIT ) {
+						continue;
+					}
+					// add term if assignment is NOT another exit-assignment
+					constraint += String.format( "+(1,%d,1)", a_j.getVarIdx() );
+				}
+			}
+		}
+
+		constraint += String.format( " <= %d", Hup.size() );
+
+		ret.add( constraint );
+		return ret;
+	}
+
+	/**
 	 * Adds a list of constraints and factors as strings.
 	 *
 	 * @see com.jug.lp.AbstractAssignment#getConstraint()
 	 */
 	@Override
-	public void addFunctionsAndFactors( final FactorGraphFileBuilder fgFile, final List< Integer > regionIds ) {
+	public void addFunctionsAndFactors( final FactorGraphFileBuilder_SCALAR fgFile, final List< Integer > regionIds ) {
 		final List< Integer > varIds = new ArrayList< Integer >();
 		final List< Integer > coeffs = new ArrayList< Integer >();
 
@@ -126,5 +153,4 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< F
 	public int getId() {
 		return who.getId();
 	}
-
 }

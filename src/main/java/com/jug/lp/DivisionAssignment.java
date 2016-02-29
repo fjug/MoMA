@@ -3,11 +3,11 @@
  */
 package com.jug.lp;
 
-import gurobi.GRBException;
-import gurobi.GRBVar;
-
+import java.util.ArrayList;
 import java.util.List;
 
+import gurobi.GRBException;
+import gurobi.GRBVar;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.FloatType;
 
@@ -61,7 +61,7 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	 * @see com.jug.lp.AbstractAssignment#getConstraint()
 	 */
 	@Override
-	public void addFunctionsAndFactors( final FactorGraphFileBuilder fgFile, final List< Integer > regionIds ) {}
+	public void addFunctionsAndFactors( final FactorGraphFileBuilder_SCALAR fgFile, final List< Integer > regionIds ) {}
 
 	/**
 	 * Returns the segmentation hypothesis this division-assignment comes from
@@ -101,5 +101,13 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	@Override
 	public int getId() {
 		return from.getId() + toUpper.getId() + toLower.getId();
+	}
+
+	/**
+	 * @see com.jug.lp.AbstractAssignment#getConstraintsToSave_PASCAL()
+	 */
+	@Override
+	public List< String > getConstraintsToSave_PASCAL() {
+		return new ArrayList< String >();
 	}
 }

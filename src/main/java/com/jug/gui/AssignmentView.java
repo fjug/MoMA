@@ -3,8 +3,6 @@
  */
 package com.jug.gui;
 
-import gurobi.GRBException;
-
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -20,10 +18,6 @@ import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import javax.swing.event.MouseInputListener;
 
-import net.imglib2.algorithm.componenttree.Component;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.util.ValuePair;
-
 import com.jug.MoMA;
 import com.jug.lp.AbstractAssignment;
 import com.jug.lp.DivisionAssignment;
@@ -31,6 +25,11 @@ import com.jug.lp.ExitAssignment;
 import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.Hypothesis;
 import com.jug.lp.MappingAssignment;
+
+import gurobi.GRBException;
+import net.imglib2.algorithm.componenttree.Component;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.ValuePair;
 
 /**
  * @author jug
@@ -250,12 +249,8 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 				if ( doFilterDataByType && assignment.getType() != filterAssignmentType ) {
 					continue;
 				}
-				try {
-					if ( doFilterDataByCost && ( assignment.getCost() < this.getCostFilterMin() || assignment.getCost() > this.getCostFilterMax() ) ) {
-						continue;
-					}
-				} catch ( final GRBException e ) {
-					e.printStackTrace();
+				if ( doFilterDataByCost && ( assignment.getCost() < this.getCostFilterMin() || assignment.getCost() > this.getCostFilterMax() ) ) {
+					continue;
 				}
 				drawAssignment( g, assignment );
 			}
@@ -362,21 +357,19 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 					}
 				} );
 			} else {
-				// otherwise we show the costs by hovering over
-				try {
-					final float cost = ma.getCost();
-					if ( ma.isGroundTruth() ) {
-						g2.setPaint( Color.GREEN.darker() );
-					} else if ( ma.isGroundUntruth() ) {
-						g2.setPaint( Color.RED.darker() );
-					} else {
-						g2.setPaint( new Color( 25 / 256f, 65 / 256f, 165 / 256f, 1.0f ).darker().darker() );
-					}
-					g2.drawString( String.format( "c=%.4f", cost ), DISPLAY_COSTS_ABSOLUTE_X, this.mousePosY + OFFSET_DISPLAY_COSTS - this.currentCostLine * LINEHEIGHT_DISPLAY_COSTS );
-					this.currentCostLine++;
-				} catch ( final GRBException e ) {
-//					e.printStackTrace();
+				final float cost = ma.getCost();
+				if ( ma.isGroundTruth() ) {
+					g2.setPaint( Color.GREEN.darker() );
+				} else if ( ma.isGroundUntruth() ) {
+					g2.setPaint( Color.RED.darker() );
+				} else {
+					g2.setPaint( new Color( 25 / 256f, 65 / 256f, 165 / 256f, 1.0f ).darker().darker() );
 				}
+				g2.drawString(
+						String.format( "c=%.4f", cost ),
+						DISPLAY_COSTS_ABSOLUTE_X,
+						this.mousePosY + OFFSET_DISPLAY_COSTS - this.currentCostLine * LINEHEIGHT_DISPLAY_COSTS );
+				this.currentCostLine++;
 			}
 		}
 
@@ -473,21 +466,19 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 					}
 				} );
 			} else {
-				// otherwise we show the costs by hovering over
-				try {
-					final float cost = da.getCost();
-					if ( da.isGroundTruth() ) {
-						g2.setPaint( Color.GREEN.darker() );
-					} else if ( da.isGroundUntruth() ) {
-						g2.setPaint( Color.RED.darker() );
-					} else {
-						g2.setPaint( new Color( 250 / 256f, 150 / 256f, 40 / 256f, 1.0f ).darker().darker() );
-					}
-					g2.drawString( String.format( "c=%.4f", cost ), DISPLAY_COSTS_ABSOLUTE_X, this.mousePosY + OFFSET_DISPLAY_COSTS - this.currentCostLine * LINEHEIGHT_DISPLAY_COSTS );
-					this.currentCostLine++;
-				} catch ( final GRBException e ) {
-//					e.printStackTrace();
+				final float cost = da.getCost();
+				if ( da.isGroundTruth() ) {
+					g2.setPaint( Color.GREEN.darker() );
+				} else if ( da.isGroundUntruth() ) {
+					g2.setPaint( Color.RED.darker() );
+				} else {
+					g2.setPaint( new Color( 250 / 256f, 150 / 256f, 40 / 256f, 1.0f ).darker().darker() );
 				}
+				g2.drawString(
+						String.format( "c=%.4f", cost ),
+						DISPLAY_COSTS_ABSOLUTE_X,
+						this.mousePosY + OFFSET_DISPLAY_COSTS - this.currentCostLine * LINEHEIGHT_DISPLAY_COSTS );
+				this.currentCostLine++;
 			}
 		}
 
@@ -557,14 +548,9 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 					}
 				} );
 			} else {
-				// otherwise we show the costs by hovering over
-				try {
-					final float cost = ea.getCost();
-					g2.drawString( String.format( "c=%.4f", cost ), 10, this.mousePosY - 10 - this.currentCostLine * 20 );
-					this.currentCostLine++;
-				} catch ( final GRBException e ) {
-//					e.printStackTrace();
-				}
+				final float cost = ea.getCost();
+				g2.drawString( String.format( "c=%.4f", cost ), 10, this.mousePosY - 10 - this.currentCostLine * 20 );
+				this.currentCostLine++;
 			}
 		}
 

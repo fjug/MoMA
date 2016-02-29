@@ -133,7 +133,6 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 	private JButton btnOptimizeMore;
 	private JButton btnExportHtml;
 	private JButton btnExportData;
-//	private JButton btnSaveFG;
 
 	String itemChannel0BGSubtr = "BG-subtr. Ch.0";
 	String itemChannel0 = "Raw Channel 0";
@@ -169,6 +168,8 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 	private MenuItem menuProps;
 	private MenuItem menuLoad;
 	private MenuItem menuSave;
+
+	private MenuItem menuSaveFG;
 
 	private MenuItem menuTrain;
 
@@ -206,10 +207,14 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 		menuLoad.addActionListener( this );
 		menuSave = new MenuItem( "Save tracking..." );
 		menuSave.addActionListener( this );
+		menuSaveFG = new MenuItem( "Save FG..." );
+		menuSaveFG.addActionListener( this );
 		menuFile.add( menuProps );
 		menuFile.addSeparator();
 		menuFile.add( menuLoad );
 		menuFile.add( menuSave );
+		menuFile.addSeparator();
+		menuFile.add( menuSaveFG );
 		menuBar.add( menuFile );
 
 		final Menu menuView = new Menu( "View" );
@@ -327,8 +332,6 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 		btnExportHtml.addActionListener( this );
 		btnExportData = new JButton( "Export Data" );
 		btnExportData.addActionListener( this );
-//		btnSaveFG = new JButton( "Save FG" );
-//		btnSaveFG.addActionListener( this );
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.RIGHT, 5, 0 ) );
 		panelHorizontalHelper.setBorder( BorderFactory.createEmptyBorder( 3, 0, 5, 0 ) );
 		panelHorizontalHelper.add( cbAutosave );
@@ -337,7 +340,6 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 		panelHorizontalHelper.add( btnOptimizeMore );
 		panelHorizontalHelper.add( btnExportHtml );
 		panelHorizontalHelper.add( btnExportData );
-//		panelHorizontalHelper.add( btnSaveFG );
 		add( panelHorizontalHelper, BorderLayout.SOUTH );
 
 		// --- Final adding and layout steps -------------
@@ -1116,37 +1118,28 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 			new ImageJ();
 			ImageJFunctions.show( MoMA.instance.getRawChannelImgs().get( 0 ), "raw data (ch.0)" );
 		}
-//		if ( e.getSource().equals( btnSaveFG ) ) {
-//			final MotherMachineGui self = this;
-//			final Thread t = new Thread( new Runnable() {
-//
-//				@Override
-//				public void run() {
-//					final JFileChooser fc = new JFileChooser( MotherMachine.DEFAULT_PATH );
-//					fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "txt", "TXT" }, "TXT-file" ) );
-//
-//					if ( fc.showSaveDialog( self ) == JFileChooser.APPROVE_OPTION ) {
-//						File file = fc.getSelectedFile();
-//						if ( !file.getAbsolutePath().endsWith( ".txt" ) && !file.getAbsolutePath().endsWith( ".TXT" ) ) {
-//							file = new File( file.getAbsolutePath() + ".txt" );
-//						}
-//						MotherMachine.DEFAULT_PATH = file.getParent();
-//
-//						if ( model.getCurrentGL().getIlp() == null ) {
-//							System.out.println( "Generating ILP..." );
-//							model.getCurrentGL().generateILP( new DialogProgress( self, "Building tracking model...", ( model.getCurrentGL().size() - 1 ) * 2 ) );
-//						} else {
-//							System.out.println( "Using existing ILP (possibly containing user-defined ground-truth bits)..." );
-//						}
-//						System.out.println( "Saving ILP as FactorGraph..." );
-//						model.getCurrentGL().getIlp().exportFG( file );
-//						System.out.println( "...done!" );
-//					}
-//
-//				}
-//			} );
-//			t.start();
-//		}
+		if ( e.getSource().equals( menuSaveFG ) ) {
+			final File file = OsDependentFileChooser.showSaveFileChooser(
+					this,
+					MoMA.DEFAULT_PATH,
+					"Save Factor Graph...",
+					new ExtensionFileFilter( new String[] { "txt", "TXT" }, "TXT-file" ) );
+
+			if ( file != null ) {
+				MoMA.DEFAULT_PATH = file.getParent();
+
+				if ( model.getCurrentGL().getIlp() == null ) {
+					System.out.println( "Generating ILP..." );
+					model.getCurrentGL().generateILP(
+							new DialogProgress( this, "Building tracking model...", ( model.getCurrentGL().size() - 1 ) * 2 ) );
+				} else {
+					System.out.println( "Using existing ILP (possibly containing user-defined ground-truth bits)..." );
+				}
+				System.out.println( "Saving ILP as FactorGraph..." );
+				model.getCurrentGL().getIlp().exportFG_PASCAL( file );
+				System.out.println( "...done!" );
+			}
+		}
 //		if ( e.getSource().equals( btnRedoAllHypotheses ) ) {
 //
 ////			final int choiceAwesome = JOptionPane.showOptionDialog( this, "Do you want to reset to PMFRF segmentations?\n(Otherwise fast CT segments will be built.)", "PMFRF or CT?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null );
