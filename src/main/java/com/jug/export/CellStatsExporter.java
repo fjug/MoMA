@@ -54,15 +54,16 @@ public class CellStatsExporter {
 		private static final int ENDOFTRACKING = 1234;
 		private static final int USER_PRUNING = 4321;
 
+		// Note: if daughterTypeOrPosition is set to a positive value $i$ -- the given cell is the i-th cell in the growth line (with the mother cell being i=1.
 		private static final int UNKNOWN = 0;
-		private static final int LOWER = 1;
-		private static final int UPPER = 2;
+		private static final int LOWER = -1;
+		private static final int UPPER = -2;
 
 		public boolean exists = true;
 		public int id = -1;
 		public int pid = -1;
 		public int tbirth = -1;
-		public int daughterType = SegmentRecord.UNKNOWN;
+		public int daughterTypeOrPosition = SegmentRecord.UNKNOWN;
 		public int frame = 0;
 
 		public List< Integer > genealogy;
@@ -75,13 +76,13 @@ public class CellStatsExporter {
 				final int id,
 				final int pid,
 				final int tbirth,
-				final int daughterType,
+				final int daughterTypeOrPosition,
 				final List< Integer > genealogy ) {
 			this.hyp = hyp;
 			this.id = id;
 			this.pid = pid;
 			this.tbirth = tbirth;
-			this.daughterType = daughterType;
+			this.daughterTypeOrPosition = daughterTypeOrPosition;
 			this.genealogy = genealogy;
 			this.frame = 0;
 		}
@@ -91,14 +92,14 @@ public class CellStatsExporter {
 				final int id,
 				final int pid,
 				final int tbirth,
-				final int daughterType ) {
+				final int daughterTypeOrPosition ) {
 			this.hyp = hyp;
 			this.id = id;
 			this.pid = pid;
 			this.tbirth = tbirth;
-			this.daughterType = daughterType;
+			this.daughterTypeOrPosition = daughterTypeOrPosition;
 			this.genealogy = new ArrayList< Integer >();
-			genealogy.add( UNKNOWN );
+			genealogy.add( daughterTypeOrPosition );
 			this.frame = 0;
 		}
 
@@ -107,7 +108,7 @@ public class CellStatsExporter {
 			this.id = point.id;
 			this.pid = point.pid;
 			this.tbirth = point.tbirth;
-			this.daughterType = point.daughterType;
+			this.daughterTypeOrPosition = point.daughterTypeOrPosition;
 			this.frame = point.frame + frameOffset;
 			this.genealogy = new ArrayList< Integer >( point.genealogy );
 		}
@@ -115,7 +116,7 @@ public class CellStatsExporter {
 		@Override
 		public SegmentRecord clone() {
 			final SegmentRecord ret =
-					new SegmentRecord( this.hyp, this.id, this.pid, this.tbirth, this.daughterType, this.genealogy );
+					new SegmentRecord( this.hyp, this.id, this.pid, this.tbirth, this.daughterTypeOrPosition, this.genealogy );
 			ret.exists = this.exists;
 			ret.frame = this.frame;
 			ret.terminated_by = this.terminated_by;
@@ -125,8 +126,9 @@ public class CellStatsExporter {
 		@Override
 		public String toString() {
 			String dt = "UNKNOWN";
-			if ( daughterType == SegmentRecord.UPPER ) dt = "TOP";
-			if ( daughterType == SegmentRecord.LOWER ) dt = "BOTTOM";
+			if ( daughterTypeOrPosition == SegmentRecord.UPPER ) dt = "TOP";
+			if ( daughterTypeOrPosition == SegmentRecord.LOWER ) dt = "BOTTOM";
+			if ( daughterTypeOrPosition > 0 ) dt = "CELL#" + daughterTypeOrPosition;
 			return String.format( "id=%d; pid=%d; birth_frame=%d; daughter_type=%s", id, pid, tbirth, dt );
 		}
 
@@ -247,12 +249,14 @@ public class CellStatsExporter {
 			for ( final int dt : genealogy ) {
 				if ( dt == SegmentRecord.UPPER ) {
 					ret = ret + "T";
-				}
+				} else
 				if ( dt == SegmentRecord.LOWER ) {
 					ret = ret + "B";
-				}
+				} else
 				if ( dt == SegmentRecord.UNKNOWN ) {
 					ret = ret + "U";
+				} else {
+					ret = ret + dt;
 				}
 			}
 			return ret;
@@ -386,17 +390,19 @@ public class CellStatsExporter {
 
 		final GrowthLineFrame firstGLF = gui.model.getCurrentGL().getFrames().get( 0 );
 		final GrowthLineTrackingILP ilp = firstGLF.getParent().getIlp();
-		final Vector< ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> > segmentsInFirstFrame =
+		final Vector< ValuePair< Integer, Hypothesis< Component< FloatType, ? > > > > segmentsInFirstFrameSorted =
 				firstGLF.getSortedActiveHypsAndPos();
 		final List< SegmentRecord > startingPoints = new ArrayList< SegmentRecord >();
 
 		int nextCellId = 0;
 		final LinkedList< SegmentRecord > queue = new LinkedList< SegmentRecord >();
 
-		for ( final ValuePair< Integer, Hypothesis< Component< FloatType, ? >>> valuePair : segmentsInFirstFrame ) {
+		int cellNum = 0;
+		for ( final ValuePair< Integer, Hypothesis< Component< FloatType, ? > > > valuePair : segmentsInFirstFrameSorted ) {
 
+			cellNum++;
 			final SegmentRecord point =
-					new SegmentRecord( valuePair.b, nextCellId++, -1, -1, SegmentRecord.UNKNOWN );
+					new SegmentRecord( valuePair.b, nextCellId++, -1, -1, cellNum );
 			startingPoints.add( point );
 
 			final SegmentRecord prepPoint = new SegmentRecord( point, 1 );
@@ -432,7 +438,7 @@ public class CellStatsExporter {
 
 				prepPoint.id = nextCellId;
 				prepPoint.hyp = da.getLowerDesinationHypothesis();
-				prepPoint.daughterType = SegmentRecord.LOWER;
+				prepPoint.daughterTypeOrPosition = SegmentRecord.LOWER;
 				if ( !prepPoint.hyp.isPruned() && !( prepPoint.tbirth > gui.sliderTime.getMaximum() ) ) {
 					final SegmentRecord newPoint = new SegmentRecord( prepPoint, 0 );
 					newPoint.genealogy.add( SegmentRecord.LOWER );
@@ -444,7 +450,7 @@ public class CellStatsExporter {
 
 				prepPoint.id = nextCellId;
 				prepPoint.hyp = da.getUpperDesinationHypothesis();
-				prepPoint.daughterType = SegmentRecord.UPPER;
+				prepPoint.daughterTypeOrPosition = SegmentRecord.UPPER;
 				if ( !prepPoint.hyp.isPruned() && !( prepPoint.tbirth > gui.sliderTime.getMaximum() ) ) {
 					final SegmentRecord newPoint = new SegmentRecord( prepPoint, 0 );
 					newPoint.genealogy.add( SegmentRecord.UPPER );
@@ -497,7 +503,6 @@ public class CellStatsExporter {
 					limits = ComponentTreeUtils.getExtendedTreeNodeInterval( ( FilteredComponent< ? > ) segmentRecord.hyp.getWrappedHypothesis() );
 				}
 
-//				final int height = limits.getB() - limits.getA() + 1;  // OLD - wish was to replace it by length of green center line...
 				final GrowthLineFrame glf = gui.model.getCurrentGL().getFrames().get( segmentRecord.frame );
 				final List< Point > centerLine = glf.getImgLocations();
 				final double height = Util.evaluatePolygonLength( centerLine, limits.getA(), limits.getB() );
@@ -506,23 +511,6 @@ public class CellStatsExporter {
 				final int cellPos = glf.getSolutionStats_cellPos( segmentRecord.hyp );
 
 				final String genealogy = segmentRecord.getGenealogyString();
-
-//				final IntervalView< ShortType > segmentedFrame = Views.hyperSlice( MotherMachine.instance.getCellSegmentedChannelImgs(), 2, segmentRecord.frame );
-//				if ( cid == 6 && segmentRecord.frame >= 35 ) {
-//					System.out.println( "BREAKPOINT" );
-//				}
-
-//				final IntervalView< ShortType > ivSegmentationSnippet = Util.getClassificationBoxInImg( segmentedFrame, segmentRecord.hyp, firstGLF.getAvgXpos() );
-//				final int estimatedSize = Util.countPixelsAboveThreshold( ivSegmentationSnippet, 0 );
-//
-//				linesToExport.add( String.format(
-//						"\tframe=%d; pixel_limits=[%d,%d]; cell_height=%.2f; num_pixels_in_box=%d; estimated_area_in_pixels=%d",
-//						segmentRecord.frame,
-//						limits.getA(),
-//						limits.getB(),
-//						height,
-//						Util.getSegmentBoxPixelCount( segmentRecord.hyp, firstGLF.getAvgXpos() ),
-//						estimatedSize ) );
 
 				// WARNING -- if you change substring 'frame' you need also to change the last-row-deletion procedure below for the ENDOFTRACKING case... yes, this is not clean... ;)
 				linesToExport.add( String.format(
