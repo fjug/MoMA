@@ -47,15 +47,15 @@ public class GrowthLineFrame extends AbstractGrowthLineFrame< FilteredComponent<
 	/**
 	 * @see com.jug.AbstractGrowthLineFrame#buildParaMaxFlowSumTree(net.imglib2.RandomAccessibleInterval)
 	 */
-	@Override
-	protected ComponentForest< FilteredComponent< FloatType >> buildParaMaxFlowSumTree( final RandomAccessibleInterval< FloatType > raiFkt ) {
-		return FilteredComponentTree.buildComponentTree(
-				raiFkt,
-				new FloatType(),
-				3,
-				Long.MAX_VALUE,
-				noFilterFilter, //maxGrowthPerStepRatioWithMinimalAbsoluteIncrease,
-				true );
-	}
+//	@Override
+//	protected ComponentForest< FilteredComponent< FloatType >> buildParaMaxFlowSumTree( final RandomAccessibleInterval< FloatType > raiFkt ) {
+//		return FilteredComponentTree.buildComponentTree(
+//				raiFkt,
+//				new FloatType(),
+//				3,
+//				Long.MAX_VALUE,
+//				noFilterFilter, //maxGrowthPerStepRatioWithMinimalAbsoluteIncrease,
+//				true );
+//	}
 
 }

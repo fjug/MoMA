@@ -53,28 +53,28 @@ public class GrowthLineSegmentationMagic {
 		return subsampleGapClass;
 	}
 
-	private static RandomAccessibleInterval< LongType > returnParamaxflowBaby( final RandomAccessibleInterval< FloatType > rai, final boolean withClassificationOfGaps ) {
-		final ParaMaxFlow< FloatType > paramaxflow = new ParaMaxFlow< FloatType >( rai, ( withClassificationOfGaps ) ? returnClassification( rai ) : null, false, -1.0, 0.45, 0.15, 1.0, 1.0, 1.0, 0.10, 0.0, 0.5, 10.0, 0.0, 0.5, 10.0 );
-
-		numSolutions = paramaxflow.solve( -1000000, 1000000 );
-
-		final Img< LongType > sumRegions = paramaxflow.getRegionsImg();
-
-//		ImageJFunctions.show( paramaxflow.getUnariesImg() );
-//		ImageJFunctions.show( paramaxflow.getBinariesInXImg() );
-//		ImageJFunctions.show( paramaxflow.getBinariesInYImg() );
-//		ImageJFunctions.show( sumRegions );
-
-		return sumRegions;
-	}
-
-	public static RandomAccessibleInterval< LongType > returnParamaxflowRegionSums( final RandomAccessibleInterval< FloatType > rai ) {
-		return returnParamaxflowBaby( rai, false );
-	}
-
-	public static RandomAccessibleInterval< LongType > returnClassificationBoostedParamaxflowRegionSums( final RandomAccessibleInterval< FloatType > rai ) {
-		return returnParamaxflowBaby( rai, true );
-	}
+//	private static RandomAccessibleInterval< LongType > returnParamaxflowBaby( final RandomAccessibleInterval< FloatType > rai, final boolean withClassificationOfGaps ) {
+//		final ParaMaxFlow< FloatType > paramaxflow = new ParaMaxFlow< FloatType >( rai, ( withClassificationOfGaps ) ? returnClassification( rai ) : null, false, -1.0, 0.45, 0.15, 1.0, 1.0, 1.0, 0.10, 0.0, 0.5, 10.0, 0.0, 0.5, 10.0 );
+//
+//		numSolutions = paramaxflow.solve( -1000000, 1000000 );
+//
+//		final Img< LongType > sumRegions = paramaxflow.getRegionsImg();
+//
+////		ImageJFunctions.show( paramaxflow.getUnariesImg() );
+////		ImageJFunctions.show( paramaxflow.getBinariesInXImg() );
+////		ImageJFunctions.show( paramaxflow.getBinariesInYImg() );
+////		ImageJFunctions.show( sumRegions );
+//
+//		return sumRegions;
+//	}
+//
+//	public static RandomAccessibleInterval< LongType > returnParamaxflowRegionSums( final RandomAccessibleInterval< FloatType > rai ) {
+//		return returnParamaxflowBaby( rai, false );
+//	}
+//
+//	public static RandomAccessibleInterval< LongType > returnClassificationBoostedParamaxflowRegionSums( final RandomAccessibleInterval< FloatType > rai ) {
+//		return returnParamaxflowBaby( rai, true );
+//	}
 
 	public static long getNumSolutions() {
 		return numSolutions;

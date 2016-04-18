@@ -452,7 +452,7 @@ public class MoMA {
 		final String jlp = System.getProperty( "java.library.path" );
 //		System.out.println( jlp );
 		try {
-			new GRBEnv( "MotherMachineILPs.log" );
+			new GRBEnv( "MoMA_gurobi.log" );
 		} catch ( final GRBException e ) {
 			final String msgs = "Initial Gurobi test threw exception... check your Gruobi setup!\n\nJava library path: " + jlp;
 			if ( HEADLESS ) {

@@ -390,7 +390,7 @@ public class GrowthLineTrackingILP {
 		final GrowthLineFrame glf = gl.getFrames().get( t );
 
 		for ( final Component< FloatType, ? > ctRoot : glf.getComponentTree().roots() ) {
-			recursivelyAddCTNsAsHypotheses( t, ctRoot, glf.isParaMaxFlowComponentTree() );
+			recursivelyAddCTNsAsHypotheses( t, ctRoot ); //, glf.isParaMaxFlowComponentTree()
 		}
 
 		this.reportProgress();
@@ -405,19 +405,19 @@ public class GrowthLineTrackingILP {
 	 * @param t
 	 *            the time-index the ctNode comes from.
 	 */
-	private void recursivelyAddCTNsAsHypotheses( final int t, final Component< FloatType, ? > ctNode, final boolean isForParaMaxFlowSumImg ) {
+	private void recursivelyAddCTNsAsHypotheses( final int t, final Component< FloatType, ? > ctNode ) { //, final boolean isForParaMaxFlowSumImg
 
 		float cost;
-		if ( isForParaMaxFlowSumImg ) {
-			cost = localParamaxflowBasedCost( t, ctNode );
-		} else {
+//		if ( isForParaMaxFlowSumImg ) {
+//			cost = localParamaxflowBasedCost( t, ctNode );
+//		} else {
 			cost = localIntensityBasedCost( t, ctNode );
-		}
+//		}
 		nodes.addHypothesis( t, new Hypothesis< Component< FloatType, ? > >( t, ctNode, cost ) );
 
 		// do the same for all children
 		for ( final Component< FloatType, ? > ctChild : ctNode.getChildren() ) {
-			recursivelyAddCTNsAsHypotheses( t, ctChild, isForParaMaxFlowSumImg );
+			recursivelyAddCTNsAsHypotheses( t, ctChild ); //, isForParaMaxFlowSumImg
 		}
 	}
 
@@ -437,11 +437,11 @@ public class GrowthLineTrackingILP {
 	 * @param ctNode
 	 * @return
 	 */
-	public float localParamaxflowBasedCost( final int t, final Component< ?, ? > ctNode ) {
-		//TODO kotz
-		final float[] gapSepFkt = gl.getFrames().get( t ).getAwesomeGapSeparationValues( MoMA.instance.getImgTemp() );
-		return CostFactory.getParamaxflowSegmentationCost( ctNode, gapSepFkt );
-	}
+//	public float localParamaxflowBasedCost( final int t, final Component< ?, ? > ctNode ) {
+//		//TODO kotz
+//		final float[] gapSepFkt = gl.getFrames().get( t ).getAwesomeGapSeparationValues( MoMA.instance.getImgTemp() );
+//		return CostFactory.getParamaxflowSegmentationCost( ctNode, gapSepFkt );
+//	}
 
 	/**
 	 * For time-points t and t+1, enumerates all potentially

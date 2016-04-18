@@ -839,7 +839,7 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 			// - -  t  - - - - - -
 
 			final GrowthLineFrame glf = model.getCurrentGLF();
-			final IntervalView< FloatType > paramaxflowSumImageFloatTyped = model.getCurrentGLF().getParamaxflowSumImageFloatTyped( null );
+//			final IntervalView< FloatType > paramaxflowSumImageFloatTyped = model.getCurrentGLF().getParamaxflowSumImageFloatTyped( null );
 			final FloatType min = new FloatType();
 			final FloatType max = new FloatType();
 
@@ -1513,72 +1513,72 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 	 * Goes over all glfs of the current gl and activates the awesome,
 	 * RF-classified + paramaxflow hypotheses.
 	 */
-	private void activateAwesomeHypothesesForCurrentGL() {
-		activateAwesomeHypothesesForGL( model.getCurrentGL() );
-	}
+//	private void activateAwesomeHypothesesForCurrentGL() {
+//		activateAwesomeHypothesesForGL( model.getCurrentGL() );
+//	}
 
 	/**
 	 * Goes over all glfs of the given gl and activates the awesome,
 	 * RF-classified + paramaxflow hypotheses.
 	 */
-	private void activateAwesomeHypothesesForGL( final GrowthLine gl ) {
-		// Since I am gonna mix CT and PMFRF, I have to also ensure to have the CT ones available
-		if ( MoMA.SEGMENTATION_MIX_CT_INTO_PMFRF > 0.0001 ) {
-			activateSimpleHypothesesForGL( gl );
-		}
-
-		final int numProcessors = Prefs.getThreads();
-		final int numThreads = Math.min( model.getCurrentGL().getFrames().size(), numProcessors );
-		final Thread[] threads = new Thread[ numThreads ];
-
-		class ImageProcessingThread extends Thread {
-
-			final int numThread;
-			final int numThreads;
-
-			public ImageProcessingThread( final int numThread, final int numThreads ) {
-				this.numThread = numThread;
-				this.numThreads = numThreads;
-			}
-
-			@Override
-			public void run() {
-
-				for ( int i = numThread; i < model.getCurrentGL().getFrames().size(); i += numThreads ) {
-					gl.getFrames().get( i ).generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
-				}
-			}
-		}
-
-		// start threads
-		for ( int i = 0; i < numThreads; i++ ) {
-			threads[ i ] = new ImageProcessingThread( i, numThreads );
-			threads[ i ].start();
-		}
-
-		// wait for all threads to terminate
-		for ( final Thread thread : threads ) {
-			try {
-				thread.join();
-			} catch ( final InterruptedException e ) {}
-		}
-
-		// OLD SINGLETHREADED VERSION
-//		for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
-//			System.out.println( ">>>>> Generating PMFRF hypotheses for GLF #" + glf.getTime() );
-//			glf.generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
+//	private void activateAwesomeHypothesesForGL( final GrowthLine gl ) {
+//		// Since I am gonna mix CT and PMFRF, I have to also ensure to have the CT ones available
+//		if ( MoMA.SEGMENTATION_MIX_CT_INTO_PMFRF > 0.0001 ) {
+//			activateSimpleHypothesesForGL( gl );
 //		}
-//		System.out.print( "" );
-
-		// NEW SINGLETHREADED VERSION
-//		for ( int i = this.sliderTime.getMinimum(); i <= this.sliderTime.getMaximum(); i++ ) {
-//			sliderTime.setValue( i );
-//			if ( model.getCurrentGLF().getAwesomeGapSeparationValues( null ) == null ) {
-//				btnExchangeSegHyps.doClick();
+//
+//		final int numProcessors = Prefs.getThreads();
+//		final int numThreads = Math.min( model.getCurrentGL().getFrames().size(), numProcessors );
+//		final Thread[] threads = new Thread[ numThreads ];
+//
+//		class ImageProcessingThread extends Thread {
+//
+//			final int numThread;
+//			final int numThreads;
+//
+//			public ImageProcessingThread( final int numThread, final int numThreads ) {
+//				this.numThread = numThread;
+//				this.numThreads = numThreads;
 //			}
-//			dataToDisplayChanged();
+//
+//			@Override
+//			public void run() {
+//
+//				for ( int i = numThread; i < model.getCurrentGL().getFrames().size(); i += numThreads ) {
+//					gl.getFrames().get( i ).generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
+//				}
+//			}
 //		}
-	}
+//
+//		// start threads
+//		for ( int i = 0; i < numThreads; i++ ) {
+//			threads[ i ] = new ImageProcessingThread( i, numThreads );
+//			threads[ i ].start();
+//		}
+//
+//		// wait for all threads to terminate
+//		for ( final Thread thread : threads ) {
+//			try {
+//				thread.join();
+//			} catch ( final InterruptedException e ) {}
+//		}
+//
+//		// OLD SINGLETHREADED VERSION
+////		for ( final GrowthLineFrame glf : model.getCurrentGL().getFrames() ) {
+////			System.out.println( ">>>>> Generating PMFRF hypotheses for GLF #" + glf.getTime() );
+////			glf.generateAwesomeSegmentationHypotheses( model.mm.getImgTemp() );
+////		}
+////		System.out.print( "" );
+//
+//		// NEW SINGLETHREADED VERSION
+////		for ( int i = this.sliderTime.getMinimum(); i <= this.sliderTime.getMaximum(); i++ ) {
+////			sliderTime.setValue( i );
+////			if ( model.getCurrentGLF().getAwesomeGapSeparationValues( null ) == null ) {
+////				btnExchangeSegHyps.doClick();
+////			}
+////			dataToDisplayChanged();
+////		}
+//	}
 
 	/**
 	 * Exports current tracking solution as individual PNG images in the given

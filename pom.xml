@@ -31,11 +31,6 @@
 			<artifactId>scifio</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>net.imglib2</groupId>
-			<artifactId>paramaxflow-jni</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
 			<groupId>edu.ucar</groupId>
 			<artifactId>netcdf</artifactId>
 			<version>4.2.20</version>
@@ -51,6 +46,11 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>Trainable_Segmentation</artifactId>
 			<version>2.1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.apple</groupId>
+			<artifactId>AppleJavaExtensions</artifactId>
+			<version>1.4</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-cli</groupId>
@@ -133,10 +133,10 @@
 	</repositories>
 
 	<scm>
-		<connection>scm:git:git://github.com/fjug/MotherMachineMvn.git</connection>
-		<developerConnection>scm:git:git@github.com:fjug/MotherMachineMvn.git</developerConnection>
+		<connection>scm:git:git://github.com/fjug/MoMA.git</connection>
+		<developerConnection>scm:git:git@github.com:fjug/MoMAn.git</developerConnection>
 		<tag>HEAD</tag>
-		<url>https://github.com/fjug/MotherMachineMvn.git</url>
+		<url>https://github.com/fjug/MoMA.git</url>
 	</scm>
 
 </project>

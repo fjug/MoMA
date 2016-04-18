@@ -302,26 +302,26 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	 *
 	 * @param img
 	 */
-	public void generateAwesomeSegmentationHypotheses( final Img< FloatType > img ) {
-
-		final float[] fkt = getAwesomeGapSeparationValues( img );
-
-		if ( fkt.length > 0 ) {
-			final RandomAccessibleInterval< FloatType > raiFkt = new ArrayImgFactory< FloatType >().create( new int[] { fkt.length }, new FloatType() );
-			final RandomAccess< FloatType > ra = raiFkt.randomAccess();
-			for ( int i = 0; i < fkt.length; i++ ) {
-				ra.setPosition( i, 0 );
-				ra.get().set( fkt[ i ] );
-			}
-
-			isParaMaxFlowComponentTree = true;
-			componentTree = buildParaMaxFlowSumTree( raiFkt );
-		}
-	}
+//	public void generateAwesomeSegmentationHypotheses( final Img< FloatType > img ) {
+//
+//		final float[] fkt = getAwesomeGapSeparationValues( img );
+//
+//		if ( fkt.length > 0 ) {
+//			final RandomAccessibleInterval< FloatType > raiFkt = new ArrayImgFactory< FloatType >().create( new int[] { fkt.length }, new FloatType() );
+//			final RandomAccess< FloatType > ra = raiFkt.randomAccess();
+//			for ( int i = 0; i < fkt.length; i++ ) {
+//				ra.setPosition( i, 0 );
+//				ra.get().set( fkt[ i ] );
+//			}
+//
+//			isParaMaxFlowComponentTree = true;
+//			componentTree = buildParaMaxFlowSumTree( raiFkt );
+//		}
+//	}
 
 	protected abstract ComponentForest< C > buildIntensityTree( final RandomAccessibleInterval< FloatType > raiFkt );
 
-	protected abstract ComponentForest< C > buildParaMaxFlowSumTree( final RandomAccessibleInterval< FloatType > raiFkt );
+//	protected abstract ComponentForest< C > buildParaMaxFlowSumTree( final RandomAccessibleInterval< FloatType > raiFkt );
 
 	/**
 	 * So far this function is pretty stupid: I traverse the entire component
@@ -439,36 +439,36 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	 * @param img
 	 * @return
 	 */
-	public float[] getAwesomeGapSeparationValues( final Img< FloatType > img ) {
-		if ( img == null ) return null;
-
-		// I will pray for forgiveness... in March... I promise... :(
-		IntervalView< FloatType > paramaxflowSumImageFloatTyped = getParamaxflowSumImageFloatTyped( null );
-		if ( paramaxflowSumImageFloatTyped == null ) {
-			final long left = getOffsetX() - MoMA.GL_PIXEL_PADDING_IN_VIEWS - MoMA.GL_WIDTH_IN_PIXELS / 2;
-			final long right = getOffsetX() + MoMA.GL_PIXEL_PADDING_IN_VIEWS + MoMA.GL_WIDTH_IN_PIXELS / 2 + MoMA.GL_WIDTH_IN_PIXELS % 2;
-			final long top = img.min( 1 );
-			final long bottom = img.max( 1 );
-			final IntervalView< FloatType > viewCropped = Views.interval( Views.hyperSlice( img, 2, getOffsetF() ), new long[] { left, top }, new long[] { right, bottom } );
-			paramaxflowSumImageFloatTyped = getParamaxflowSumImageFloatTyped( viewCropped );
-		}
-
-		awesomeSepValues = getInvertedIntensitiesAtImgLocations( paramaxflowSumImageFloatTyped, true );
-
-		// special case: simple value is better then trained random forest: leave some simple value in there and
-		// it might help to divide at right spots
-		if ( MoMA.SEGMENTATION_MIX_CT_INTO_PMFRF > 0.00001 ) {
-			final float percSimpleToStay = MoMA.SEGMENTATION_MIX_CT_INTO_PMFRF;
-			if ( simpleSepValues == null ) {
-				simpleSepValues = getSimpleGapSeparationValues( img );
-			}
-			for ( int i = 0; i < Math.min( simpleSepValues.length, awesomeSepValues.length ); i++ ) {
-				awesomeSepValues[ i ] = percSimpleToStay * simpleSepValues[ i ] + ( 1.0f - percSimpleToStay ) * awesomeSepValues[ i ];
-			}
-		}
-
-		return awesomeSepValues;
-	}
+//	public float[] getAwesomeGapSeparationValues( final Img< FloatType > img ) {
+//		if ( img == null ) return null;
+//
+//		// I will pray for forgiveness... in March... I promise... :(
+//		IntervalView< FloatType > paramaxflowSumImageFloatTyped = getParamaxflowSumImageFloatTyped( null );
+//		if ( paramaxflowSumImageFloatTyped == null ) {
+//			final long left = getOffsetX() - MoMA.GL_PIXEL_PADDING_IN_VIEWS - MoMA.GL_WIDTH_IN_PIXELS / 2;
+//			final long right = getOffsetX() + MoMA.GL_PIXEL_PADDING_IN_VIEWS + MoMA.GL_WIDTH_IN_PIXELS / 2 + MoMA.GL_WIDTH_IN_PIXELS % 2;
+//			final long top = img.min( 1 );
+//			final long bottom = img.max( 1 );
+//			final IntervalView< FloatType > viewCropped = Views.interval( Views.hyperSlice( img, 2, getOffsetF() ), new long[] { left, top }, new long[] { right, bottom } );
+//			paramaxflowSumImageFloatTyped = getParamaxflowSumImageFloatTyped( viewCropped );
+//		}
+//
+//		awesomeSepValues = getInvertedIntensitiesAtImgLocations( paramaxflowSumImageFloatTyped, true );
+//
+//		// special case: simple value is better then trained random forest: leave some simple value in there and
+//		// it might help to divide at right spots
+//		if ( MoMA.SEGMENTATION_MIX_CT_INTO_PMFRF > 0.00001 ) {
+//			final float percSimpleToStay = MoMA.SEGMENTATION_MIX_CT_INTO_PMFRF;
+//			if ( simpleSepValues == null ) {
+//				simpleSepValues = getSimpleGapSeparationValues( img );
+//			}
+//			for ( int i = 0; i < Math.min( simpleSepValues.length, awesomeSepValues.length ); i++ ) {
+//				awesomeSepValues[ i ] = percSimpleToStay * simpleSepValues[ i ] + ( 1.0f - percSimpleToStay ) * awesomeSepValues[ i ];
+//			}
+//		}
+//
+//		return awesomeSepValues;
+//	}
 
 	/**
 	 * Trying to look there a bit smarter... ;)
@@ -714,35 +714,35 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	/**
 	 * @return
 	 */
-	public IntervalView< LongType > getParamaxflowSumImage( final IntervalView< FloatType > viewGLF ) {
-		if ( paramaxflowSumImage == null ) {
-			if ( viewGLF == null ) { return null; }
-			if ( !MoMA.USE_CLASSIFIER_FOR_PMF ) {
-				this.paramaxflowSumImage = GrowthLineSegmentationMagic.returnParamaxflowRegionSums( viewGLF );
-			} else {
-				this.paramaxflowSumImage = GrowthLineSegmentationMagic.returnClassificationBoostedParamaxflowRegionSums( viewGLF );
-			}
-			this.paramaxflowSolutions = GrowthLineSegmentationMagic.getNumSolutions();
-		}
+//	public IntervalView< LongType > getParamaxflowSumImage( final IntervalView< FloatType > viewGLF ) {
+//		if ( paramaxflowSumImage == null ) {
+//			if ( viewGLF == null ) { return null; }
+//			if ( !MoMA.USE_CLASSIFIER_FOR_PMF ) {
+//				this.paramaxflowSumImage = GrowthLineSegmentationMagic.returnParamaxflowRegionSums( viewGLF );
+//			} else {
+//				this.paramaxflowSumImage = GrowthLineSegmentationMagic.returnClassificationBoostedParamaxflowRegionSums( viewGLF );
+//			}
+//			this.paramaxflowSolutions = GrowthLineSegmentationMagic.getNumSolutions();
+//		}
+//
+//		return Views.interval( paramaxflowSumImage, Views.zeroMin( viewGLF ) );
+//	}
 
-		return Views.interval( paramaxflowSumImage, Views.zeroMin( viewGLF ) );
-	}
-
-	public IntervalView< FloatType > getParamaxflowSumImageFloatTyped( final IntervalView< FloatType > viewGLF ) {
-		if ( paramaxflowSumImage == null ) {
-			if ( viewGLF == null ) { return null; }
-			getParamaxflowSumImage( viewGLF );
-		}
-
-		return Views.interval( Converters.convert( paramaxflowSumImage, new RealFloatNormalizeConverter( this.paramaxflowSolutions ), new FloatType() ), paramaxflowSumImage );
-	}
-
-	/**
-	 * @return the isParaMaxFlowComponentTree
-	 */
-	public boolean isParaMaxFlowComponentTree() {
-		return isParaMaxFlowComponentTree;
-	}
+//	public IntervalView< FloatType > getParamaxflowSumImageFloatTyped( final IntervalView< FloatType > viewGLF ) {
+//		if ( paramaxflowSumImage == null ) {
+//			if ( viewGLF == null ) { return null; }
+//			getParamaxflowSumImage( viewGLF );
+//		}
+//
+//		return Views.interval( Converters.convert( paramaxflowSumImage, new RealFloatNormalizeConverter( this.paramaxflowSolutions ), new FloatType() ), paramaxflowSumImage );
+//	}
+//
+//	/**
+//	 * @return the isParaMaxFlowComponentTree
+//	 */
+//	public boolean isParaMaxFlowComponentTree() {
+//		return isParaMaxFlowComponentTree;
+//	}
 
 	/**
 	 * Returns the number of cells in this GLF.
