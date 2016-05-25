@@ -111,20 +111,20 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 */
 	public AssignmentView( final int height, final float filterMinCost, final float filterMaxCost ) {
 		if ( OSValidator.isUnix() ) {
-			HEIGHT_OFFSET = 10;
+			HEIGHT_OFFSET = -10;
 			ASSIGNMENT_DISPLAY_OFFSET = -7;
 		}
 		if ( OSValidator.isMac() ) {
-			HEIGHT_OFFSET = 35;
-			ASSIGNMENT_DISPLAY_OFFSET = 0;
+			HEIGHT_OFFSET = -60;
+			ASSIGNMENT_DISPLAY_OFFSET = -9;
 		}
 		if ( OSValidator.isWindows() ) {
-			HEIGHT_OFFSET = 35;
+			HEIGHT_OFFSET = -35;
 			ASSIGNMENT_DISPLAY_OFFSET = 0;
 		}
-		
+
 		this.width = 90;
-		this.setPreferredSize( new Dimension( width, height - HEIGHT_OFFSET ) );
+		this.setPreferredSize( new Dimension( width, height + HEIGHT_OFFSET ) );
 
 		this.addMouseListener( this );
 		this.addMouseMotionListener( this );
