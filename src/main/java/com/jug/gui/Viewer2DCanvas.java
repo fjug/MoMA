@@ -3,10 +3,6 @@
  */
 package com.jug.gui;
 
-import gurobi.GRBException;
-import ij.IJ;
-import ij.ImagePlus;
-
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -16,6 +12,15 @@ import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.event.MouseInputListener;
 
+import com.jug.GrowthLineFrame;
+import com.jug.MoMA;
+import com.jug.lp.GrowthLineTrackingILP;
+import com.jug.lp.Hypothesis;
+import com.jug.util.OSValidator;
+
+import gurobi.GRBException;
+import ij.IJ;
+import ij.ImagePlus;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.converter.RealARGBConverter;
@@ -27,11 +32,6 @@ import net.imglib2.type.numeric.integer.ShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
-
-import com.jug.GrowthLineFrame;
-import com.jug.MoMA;
-import com.jug.lp.GrowthLineTrackingILP;
-import com.jug.lp.Hypothesis;
 
 /**
  * @author jug
@@ -62,9 +62,20 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 	private final MoMAGui mmgui;
 
 	private static final int OFFSET_DISPLAY_COSTS = -25;
+	private static int SYSTEM_SPECIFIC_POINTER_CORRECTION;
 
 	public Viewer2DCanvas( final MoMAGui mmgui, final int w, final int h ) {
 		super();
+
+		if ( OSValidator.isUnix() ) {
+			SYSTEM_SPECIFIC_POINTER_CORRECTION = -0;
+		}
+		if ( OSValidator.isMac() ) {
+			SYSTEM_SPECIFIC_POINTER_CORRECTION = -30;
+		}
+		if ( OSValidator.isWindows() ) {
+			SYSTEM_SPECIFIC_POINTER_CORRECTION = 0;
+		}
 
 		this.mmgui = mmgui;
 
@@ -177,14 +188,15 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 			float cost = Float.NaN;
 			//TODO NOT nice... do something against that, please!
 			final int t = glf.getTime();
-			Hypothesis< Component< FloatType, ? >> hyp = glf.getParent().getIlp().getOptimalSegmentationAtLocation( t, this.mousePosY );
+			Hypothesis< Component< FloatType, ? > > hyp =
+					glf.getParent().getIlp().getOptimalSegmentationAtLocation( t, this.mousePosY + SYSTEM_SPECIFIC_POINTER_CORRECTION );
 			if ( hyp != null ) {
 				cost = hyp.getCosts();
 				strToShow = String.format( "c=%.4f", cost );
 				str2ToShow = "-";
 			}
 			// figure out which hyps are at current location
-			hyp = glf.getParent().getIlp().getLowestInTreeHypAt( t, this.mousePosY );
+			hyp = glf.getParent().getIlp().getLowestInTreeHypAt( t, this.mousePosY + SYSTEM_SPECIFIC_POINTER_CORRECTION );
 			if ( hyp != null ) {
 				final Component< FloatType, ? > comp = hyp.getWrappedHypothesis();
 				glf.drawOptionalSegmentation( screenImage, view, comp );
@@ -232,7 +244,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 				// ctrl + shift == PRUNING
 				// -----------------------
 				final List< Hypothesis< Component< FloatType, ? >>> hypsUnderMouse =
-						ilp.getSegmentsAtLocation( t, this.mousePosY );
+						ilp.getSegmentsAtLocation( t, this.mousePosY + SYSTEM_SPECIFIC_POINTER_CORRECTION );
 				for ( final Hypothesis< Component< FloatType, ? >> hyp : hypsUnderMouse ) {
 					if ( ilp.isSelected( hyp ) ) {
 						hyp.setPruneRoot( !hyp.isPruneRoot(), ilp );
@@ -244,7 +256,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 				// ctrl alone == AVOIDING
 				// ----------------------
 				final List< Hypothesis< Component< FloatType, ? >>> hyps2avoid =
-						ilp.getSegmentsAtLocation( t, this.mousePosY );
+						ilp.getSegmentsAtLocation( t, this.mousePosY + SYSTEM_SPECIFIC_POINTER_CORRECTION );
 				try {
 					for ( final Hypothesis< Component< FloatType, ? >> hyp2avoid : hyps2avoid ) {
 						if ( hyp2avoid.getSegmentSpecificConstraint() != null ) {
@@ -259,7 +271,8 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 		} else {
 			// simple click == SELECTING
 			// -------------------------
-			final Hypothesis< Component< FloatType, ? >> hyp2add = ilp.getLowestInTreeHypAt( t, this.mousePosY );
+			final Hypothesis< Component< FloatType, ? > > hyp2add =
+					ilp.getLowestInTreeHypAt( t, this.mousePosY + SYSTEM_SPECIFIC_POINTER_CORRECTION );
 			final List< Hypothesis< Component< FloatType, ? >>> hyps2remove = ilp.getOptimalSegmentationsInConflict( t, hyp2add );
 
 			try {
