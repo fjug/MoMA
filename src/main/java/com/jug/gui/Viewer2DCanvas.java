@@ -68,7 +68,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 		super();
 
 		if ( OSValidator.isUnix() ) {
-			SYSTEM_SPECIFIC_POINTER_CORRECTION = -0;
+			SYSTEM_SPECIFIC_POINTER_CORRECTION = 5;
 		}
 		if ( OSValidator.isMac() ) {
 			SYSTEM_SPECIFIC_POINTER_CORRECTION = -30;
