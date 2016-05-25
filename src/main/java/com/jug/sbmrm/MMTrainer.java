@@ -41,7 +41,7 @@ public class MMTrainer implements Runnable {
 
 	public MMTrainer( final MoMA mm, final JTextArea console ) {
 		this.mm = mm;
-		this.ilp = mm.getGui().model.getCurrentGL().getIlp();
+		this.ilp = MoMA.getGui().model.getCurrentGL().getIlp();
 		this.model = ilp.model;
 		params = ilp.getCostManager().getWeights();
 		sbmrm = null;

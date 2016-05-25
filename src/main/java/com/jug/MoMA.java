@@ -734,7 +734,7 @@ public class MoMA {
 	 */
 	public RandomAccessibleInterval< ShortType > getCellSegmentedChannelImgs() {
 		if ( this.imgSegmented == null ) {
-			final DialogProgress dialogProgress = new DialogProgress( this.getGui(), "Estimating cell-area using RF classifier...", this.getGui().model.getCurrentGL().size() );
+			final DialogProgress dialogProgress = new DialogProgress( MoMA.getGui(), "Estimating cell-area using RF classifier...", MoMA.getGui().model.getCurrentGL().size() );
 			if ( !HEADLESS ) {
 				dialogProgress.setVisible( true );
 			}

@@ -11,7 +11,6 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.ops.operation.UnaryOutputOperation;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
-import net.imglib2.view.Views;
 
 /**
  * @author jug

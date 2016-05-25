@@ -37,6 +37,7 @@ import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -60,7 +61,6 @@ import com.jug.util.filteredcomponents.FilteredComponent;
 
 import gurobi.GRBException;
 import ij.ImageJ;
-import ij.Prefs;
 import net.imglib2.Localizable;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.componenttree.Component;
@@ -242,7 +242,7 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 
 		// --- Slider for time and GL -------------
 
-		sliderTime = new JSlider( JSlider.HORIZONTAL, 0, model.getCurrentGL().size() - 2, 0 );
+		sliderTime = new JSlider( SwingConstants.HORIZONTAL, 0, model.getCurrentGL().size() - 2, 0 );
 		sliderTime.setValue( 1 );
 		model.setCurrentGLF( sliderTime.getValue() );
 		sliderTime.addChangeListener( this );
@@ -287,7 +287,7 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 		panelContent.add( panelHorizontalHelper, BorderLayout.SOUTH );
 
 		// Does not exist any more...
-		sliderGL = new JSlider( JSlider.VERTICAL, 0, model.mm.getGrowthLines().size() - 1, 0 );
+		sliderGL = new JSlider( SwingConstants.VERTICAL, 0, model.mm.getGrowthLines().size() - 1, 0 );
 		sliderGL.setValue( 0 );
 		sliderGL.addChangeListener( this );
 		sliderGL.setMajorTickSpacing( 5 );
@@ -311,7 +311,7 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 
 		panelCountingView = new CountOverviewPanel();
 		panelSegmentationAndAssignmentView = new JScrollPane( buildSegmentationAndAssignmentView() );
-		panelSegmentationAndAssignmentView.setHorizontalScrollBarPolicy( JScrollPane.HORIZONTAL_SCROLLBAR_NEVER );
+		panelSegmentationAndAssignmentView.setHorizontalScrollBarPolicy( ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER );
 		panelDetailedDataView = buildDetailedDataView();
 
 		tabsViews.add( "Cell Counting", panelCountingView );

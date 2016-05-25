@@ -4,8 +4,6 @@
 package com.jug.segmentation;
 
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.Img;
-import net.imglib2.type.numeric.integer.LongType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.SubsampleIntervalView;
 import net.imglib2.view.Views;

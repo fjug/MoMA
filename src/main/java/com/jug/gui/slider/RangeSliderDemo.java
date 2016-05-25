@@ -10,6 +10,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
@@ -32,8 +33,8 @@ public class RangeSliderDemo extends JPanel {
         
         rangeSliderLabel1.setText("Lower value:");
         rangeSliderLabel2.setText("Upper value:");
-        rangeSliderValue1.setHorizontalAlignment(JLabel.LEFT);
-        rangeSliderValue2.setHorizontalAlignment(JLabel.LEFT);
+        rangeSliderValue1.setHorizontalAlignment(SwingConstants.LEFT);
+        rangeSliderValue2.setHorizontalAlignment(SwingConstants.LEFT);
         
         rangeSlider.setPreferredSize(new Dimension(240, rangeSlider.getPreferredSize().height));
         rangeSlider.setMinimum(0);
@@ -41,7 +42,8 @@ public class RangeSliderDemo extends JPanel {
         
         // Add listener to update display.
         rangeSlider.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
+            @Override
+			public void stateChanged(ChangeEvent e) {
                 RangeSlider slider = (RangeSlider) e.getSource();
                 rangeSliderValue1.setText(String.valueOf(slider.getValue()));
                 rangeSliderValue2.setText(String.valueOf(slider.getUpperValue()));
@@ -97,7 +99,8 @@ public class RangeSliderDemo extends JPanel {
         }
 
         SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
+            @Override
+			public void run() {
                 new RangeSliderDemo().display();
             }
         });
