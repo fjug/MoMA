@@ -74,7 +74,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 			SYSTEM_SPECIFIC_POINTER_CORRECTION = -30;
 		}
 		if ( OSValidator.isWindows() ) {
-			SYSTEM_SPECIFIC_POINTER_CORRECTION = 0;
+			SYSTEM_SPECIFIC_POINTER_CORRECTION = -25;
 		}
 
 		this.mmgui = mmgui;

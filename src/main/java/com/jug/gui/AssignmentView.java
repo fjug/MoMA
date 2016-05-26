@@ -119,8 +119,8 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 			ASSIGNMENT_DISPLAY_OFFSET = -9;
 		}
 		if ( OSValidator.isWindows() ) {
-			HEIGHT_OFFSET = -35;
-			ASSIGNMENT_DISPLAY_OFFSET = 0;
+			HEIGHT_OFFSET = -10;
+			ASSIGNMENT_DISPLAY_OFFSET = -7;
 		}
 
 		this.width = 90;
