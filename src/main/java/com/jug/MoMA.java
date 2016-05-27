@@ -83,7 +83,7 @@ public class MoMA {
 	/**
 	 * Identifier of current version
 	 */
-	public static final String VERSION_STRING = "MoMA_1.0";
+	public static final String VERSION_STRING = "MoMA_0.9.6";
 
 	// -------------------------------------------------------------------------------------
 	// statics
@@ -408,6 +408,10 @@ public class MoMA {
 
 		File outputFolder = null;
 		if ( !cmd.hasOption( "o" ) ) {
+			if ( inputFolder == null ) {
+				System.out.println( "Error: Output folder would be set to a 'null' input folder! Please check your command line arguments..." );
+				System.exit( 3 );
+			}
 			outputFolder = inputFolder;
 			STATS_OUTPUT_PATH = outputFolder.getAbsolutePath();
 		} else {
