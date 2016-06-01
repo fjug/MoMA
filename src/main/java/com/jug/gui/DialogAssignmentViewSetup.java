@@ -46,9 +46,12 @@ public class DialogAssignmentViewSetup extends JDialog implements ActionListener
 		if ( OSValidator.isMac() ) {
 			sizeX = 250;
 			sizeY = 125;
-		} else {
+		} else if (OSValidator.isUnix()) {
 			sizeX = 230;
 			sizeY = 85;
+		} else {
+			sizeX = 230;
+			sizeY = 130;
 		}
 		this.setBounds( x - sizeX/2, y - sizeY/2, sizeX, sizeY );
 
