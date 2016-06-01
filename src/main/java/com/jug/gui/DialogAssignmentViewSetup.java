@@ -41,10 +41,10 @@ public class DialogAssignmentViewSetup extends JDialog implements ActionListener
 		super( SwingUtilities.windowForComponent( av ), "Cost-Filter Setup" );
 		this.dialogInit();
 		this.setModal( true );
-		
+
 		int sizeX, sizeY;
 		if ( OSValidator.isMac() ) {
-			sizeX = 230;
+			sizeX = 250;
 			sizeY = 125;
 		} else {
 			sizeX = 230;
