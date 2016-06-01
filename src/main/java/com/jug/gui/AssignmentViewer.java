@@ -40,12 +40,12 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 	private AssignmentView inactiveExitAssignments;
 	private AssignmentView fixedAssignments;
 
+	private int curTabIdx = 0;
+	private JPanel nextHackTab;
+
 	private HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >> data;
 
 	private final MoMAGui gui;
-
-	private int curTabIdx = 0;
-	private JPanel nextHackTab;
 
 	// -------------------------------------------------------------------------------------
 	// construction
@@ -98,7 +98,6 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 				}
 			}
 		};
-		this.addChangeListener( changeListener );
 
 		activeAssignments.display( data, true );
 		inactiveMappingAssignments.display( data, false, GrowthLineTrackingILP.ASSIGNMENT_MAPPING );
@@ -110,6 +109,8 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 		if ( !OSValidator.isMac() ) {
 			this.add( ">", nextHackTab );
 			this.add( namesToRoll[ curTabIdx ], tabsToRoll[ curTabIdx ] );
+			this.setSelectedIndex( 1 );
+			this.addChangeListener( changeListener );
 		} else {
 			for ( int i = 0; i < tabsToRoll.length; i++ ) {
 				this.add( namesToRoll[ i ], tabsToRoll[ i ] );
