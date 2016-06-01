@@ -18,6 +18,9 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
+
+import com.jug.util.OSValidator;
 
 /**
  * @author jug
@@ -32,12 +35,22 @@ public class DialogAssignmentViewSetup extends JDialog implements ActionListener
 	private JTextField tfMax;
 	private JButton bOk;
 	private JButton bCancel;
+	private JButton bReset;
 
 	public DialogAssignmentViewSetup( final AssignmentView av, final int x, final int y ) {
 		super( SwingUtilities.windowForComponent( av ), "Cost-Filter Setup" );
 		this.dialogInit();
 		this.setModal( true );
-		this.setBounds( x - 100, y - 50, 200, 125 );
+		
+		int sizeX, sizeY;
+		if ( OSValidator.isMac() ) {
+			sizeX = 230;
+			sizeY = 125;
+		} else {
+			sizeX = 230;
+			sizeY = 85;
+		}
+		this.setBounds( x - sizeX/2, y - sizeY/2, sizeX, sizeY );
 
 		this.model = av;
 		buildGui();
@@ -46,6 +59,7 @@ public class DialogAssignmentViewSetup extends JDialog implements ActionListener
 
 	private void buildGui() {
 		this.rootPane.setLayout( new BorderLayout() );
+		this.rootPane.setBorder( new EmptyBorder(0, 0, 5, 0) );
 
 		final JLabel labelMin = new JLabel( "min. cost: " );
 		tfMin = new JTextField( String.format( "%.4f", model.getCostFilterMin() ), 7 );
@@ -66,13 +80,16 @@ public class DialogAssignmentViewSetup extends JDialog implements ActionListener
 		horizontalHelper.add( tfMax );
 		verticalHelper.add( horizontalHelper );
 
-		bOk = new JButton( "OK" );
+		bOk = new JButton( "ok" );
 		bOk.addActionListener( this );
 		this.rootPane.setDefaultButton( bOk );
-		bCancel = new JButton( "Cancel" );
+		bCancel = new JButton( "cancel" );
 		bCancel.addActionListener( this );
+		bReset = new JButton( "reset");
+		bReset.addActionListener( this );
 		horizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
 		horizontalHelper.add( bCancel );
+		horizontalHelper.add( bReset );
 		horizontalHelper.add( bOk );
 
 		this.rootPane.add( verticalHelper, BorderLayout.CENTER );
@@ -114,6 +131,12 @@ public class DialogAssignmentViewSetup extends JDialog implements ActionListener
 			}
 		}
 		if ( e.getSource().equals( bCancel ) ) {
+			this.setVisible( false );
+			this.dispose();
+		}
+		if ( e.getSource().equals( bReset ) ) {
+			model.setCostFilterMin( -5 );
+			model.setCostFilterMax( 5 );
 			this.setVisible( false );
 			this.dispose();
 		}

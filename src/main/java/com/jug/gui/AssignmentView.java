@@ -86,6 +86,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	private boolean isDragging = false;
 	private int dragX;
 	private int dragY;
+	private int dragInitiatingMouseButton = 0;
 	private float dragStepWeight = 0;
 
 	private boolean doAddAsGroundTruth;
@@ -675,6 +676,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 			this.isDragging = true;
 			this.dragX = e.getX();
 			this.dragY = e.getY();
+			this.dragInitiatingMouseButton = e.getButton();
 		}
 	}
 
@@ -723,10 +725,12 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 			this.dragStepWeight = minstep / fac;
 		}
 
-		if ( e.getButton() == MouseEvent.BUTTON1 ) {
+		if ( this.dragInitiatingMouseButton == MouseEvent.BUTTON1 ) {
+			System.out.println(" b1");
 			this.setCostFilterMax( this.getCostFilterMax() + dY * this.dragStepWeight );
 		}
-		if ( e.getButton() == MouseEvent.BUTTON3 ) {
+		if ( this.dragInitiatingMouseButton == MouseEvent.BUTTON3 ) {
+			System.out.println(" b3");
 			this.setCostFilterMin( this.getCostFilterMin() + dY * this.dragStepWeight );
 		}
 
