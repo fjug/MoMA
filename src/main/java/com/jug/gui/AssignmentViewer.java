@@ -7,17 +7,19 @@ import java.util.HashMap;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import net.imglib2.algorithm.componenttree.Component;
-import net.imglib2.type.numeric.real.FloatType;
 
 import com.jug.lp.AbstractAssignment;
 import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.lp.Hypothesis;
 import com.jug.util.OSValidator;
+
+import net.imglib2.algorithm.componenttree.Component;
+import net.imglib2.type.numeric.real.FloatType;
 
 /**
  * @author jug
@@ -41,6 +43,9 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 	private HashMap< Hypothesis< Component< FloatType, ? >>, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? >>> >> data;
 
 	private final MoMAGui gui;
+
+	private int curTabIdx = 0;
+	private JPanel nextHackTab;
 
 	// -------------------------------------------------------------------------------------
 	// construction
@@ -71,6 +76,30 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 		inactiveExitAssignments = new AssignmentView( height, gui );
 		fixedAssignments = new AssignmentView( height, gui );
 
+		// Hack to enable non-Mac MoMA to only use one row of tabs
+		nextHackTab = new JPanel();
+		final JComponent[] tabsToRoll =
+				{ activeAssignments, inactiveMappingAssignments, inactiveDivisionAssignments, inactiveExitAssignments, fixedAssignments };
+		final String[] namesToRoll =
+				{ "OPT", "M", "D", "E", "GT" };
+		final AssignmentViewer me = this;
+		final ChangeListener changeListener = new ChangeListener() {
+
+			@Override
+			public void stateChanged( final ChangeEvent changeEvent ) {
+				final JTabbedPane sourceTabbedPane = ( JTabbedPane ) changeEvent.getSource();
+				if ( sourceTabbedPane.getSelectedComponent().equals( nextHackTab ) ) {
+					final int oldIdx = curTabIdx;
+					curTabIdx++;
+					if ( curTabIdx >= tabsToRoll.length ) curTabIdx = 0;
+					me.add( namesToRoll[ curTabIdx ], tabsToRoll[ curTabIdx ] );
+					me.remove( tabsToRoll[ oldIdx ] );
+					me.setSelectedIndex( 1 );
+				}
+			}
+		};
+		this.addChangeListener( changeListener );
+
 		activeAssignments.display( data, true );
 		inactiveMappingAssignments.display( data, false, GrowthLineTrackingILP.ASSIGNMENT_MAPPING );
 		inactiveDivisionAssignments.display( data, false, GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
@@ -78,18 +107,19 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 		fixedAssignments.display( data, false );
 		fixedAssignments.setFilterGroundTruth( true );
 
-		this.add( "OPT", activeAssignments );
-		if ( OSValidator.isMac() ) {
-			this.add( "M", inactiveMappingAssignments );
-			this.add( "D", inactiveDivisionAssignments );
-			this.add( "E", inactiveExitAssignments );
-			this.add( "GT", fixedAssignments );
+		if ( !OSValidator.isMac() ) {
+			this.add( ">", nextHackTab );
+			this.add( namesToRoll[ curTabIdx ], tabsToRoll[ curTabIdx ] );
+		} else {
+			for ( int i = 0; i < tabsToRoll.length; i++ ) {
+				this.add( namesToRoll[ i ], tabsToRoll[ i ] );
+			}
 		}
 	}
 
 	/**
 	 * Receives and visualizes a new HashMap of assignments.
-	 * 
+	 *
 	 * @param hashMap
 	 *            a <code>HashMap</code> containing pairs of segmentation
 	 *            hypothesis at some time-point t and assignments towards t+1.
@@ -124,7 +154,7 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 	/**
 	 * Returns the <code>AssignmentView</code> that holds all active
 	 * assignments.
-	 * 
+	 *
 	 * @return
 	 */
 	public AssignmentView getActiveAssignments() {
