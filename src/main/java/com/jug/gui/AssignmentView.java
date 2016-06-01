@@ -669,7 +669,8 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		repaint();
 
 		// plain click to initiate dragging
-		if ( !e.isShiftDown() && !e.isControlDown() && !e.isAltDown() && e.getButton() == MouseEvent.BUTTON1 || e.getButton() == MouseEvent.BUTTON3 ) {
+		if ( !e.isShiftDown() && !e.isControlDown() && !e.isAltDown() &&
+				( e.getButton() == MouseEvent.BUTTON1 || e.getButton() == MouseEvent.BUTTON3 ) ) {
 			System.out.println( "Dragging!" );
 			this.isDragging = true;
 			this.dragX = e.getX();
@@ -710,8 +711,8 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	public void mouseDragged( final MouseEvent e ) {
 		this.doFilterDataByCost = true;
 
-		final float minstep = 0.1f;
-		final float xsensitivity = 15.0f;
+		final float minstep = 0.01f;
+		final float xsensitivity = 30.0f;
 		final int dX = e.getX() - this.dragX;
 		final int dY = this.dragY - e.getY();
 
