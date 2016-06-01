@@ -317,6 +317,21 @@ public class MoMA {
 	public static void main( final String[] args ) {
 		if ( showIJ ) new ImageJ();
 
+//		// ===== set look and feel ========================================================================
+//		try {
+//			// Set cross-platform Java L&F (also called "Metal")
+//			UIManager.setLookAndFeel(
+//					UIManager.getCrossPlatformLookAndFeelClassName() );
+//		} catch ( final UnsupportedLookAndFeelException e ) {
+//			// handle exception
+//		} catch ( final ClassNotFoundException e ) {
+//			// handle exception
+//		} catch ( final InstantiationException e ) {
+//			// handle exception
+//		} catch ( final IllegalAccessException e ) {
+//			// handle exception
+//		}
+
 		// ===== command line parsing ======================================================================
 
 		// create Options object & the parser
