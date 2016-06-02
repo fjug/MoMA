@@ -504,7 +504,7 @@ public class MoMA {
 
 		final MoMA main = new MoMA();
 		if ( !HEADLESS ) {
-			guiFrame = new JFrame( "MoMA - the MotherMachine Analyzer" );
+			guiFrame = new JFrame();
 			main.initMainWindow( guiFrame );
 		}
 
@@ -683,6 +683,11 @@ public class MoMA {
 	 */
 	private JTextArea consoleWindowTextArea;
 
+	/**
+	 * String denoting the name of the loaded dataset (e.g. used in GUI)
+	 */
+	private String datasetName;
+
 	// -------------------------------------------------------------------------------------
 	// setters and getters
 	// -------------------------------------------------------------------------------------
@@ -848,7 +853,7 @@ public class MoMA {
 	 * System.err to it.
 	 */
 	private void initConsoleWindow() {
-		frameConsoleWindow = new JFrame( "MotherMachine Console Window" );
+		frameConsoleWindow = new JFrame( String.format( "%s Console Window", this.VERSION_STRING ) );
 		// frameConsoleWindow.setResizable( false );
 		consoleWindowTextArea = new JTextArea();
 		consoleWindowTextArea.setLineWrap( true );
@@ -942,6 +947,8 @@ public class MoMA {
 	 *            the JFrame containing the MotherMachine.
 	 */
 	private void initMainWindow( final JFrame guiFrame ) {
+		setDatasetName( datasetName );
+
 		guiFrame.addWindowListener( new WindowAdapter() {
 
 			@Override
@@ -1228,6 +1235,10 @@ public class MoMA {
 	private void processDataFromFolder( final String path, final int minTime, final int maxTime, final int minChannelIdx, final int numChannels ) throws Exception {
 
 		if ( numChannels == 0 ) { throw new Exception( "At least one color channel must be loaded!" ); }
+
+		// extract dataset name and set in GUI
+		final File folder = new File( path );
+		setDatasetName( String.format( "%s >> %s", folder.getParentFile().getName(), folder.getName() ) );
 
 		// load channels separately into Img objects
 		rawChannelImgs = new ArrayList< Img< FloatType >>();
@@ -1839,5 +1850,22 @@ public class MoMA {
 
 		System.out.println( "\n  >> Detected GL_OFFSET_BOTTOM is: " + bottom_offset );
 		GL_OFFSET_BOTTOM = bottom_offset;
+	}
+
+	/**
+	 * @return the datasetName
+	 */
+	public String getDatasetName() {
+		return datasetName;
+	}
+
+	/**
+	 * @param datasetName the datasetName to set
+	 */
+	public void setDatasetName( final String datasetName ) {
+		this.datasetName = datasetName;
+		if ( this.getGuiFrame() != null ) {
+			this.getGuiFrame().setTitle( String.format( "%s -- %s", this.VERSION_STRING, this.datasetName ) );
+		}
 	}
 }
