@@ -575,7 +575,7 @@ public class MoMA {
 		path = inputFolder.getAbsolutePath();
 		props.setProperty( "import_path", path );
 
-		GrowthLineSegmentationMagic.setClassifier( SEGMENTATION_CLASSIFIER_MODEL_FILE, "" );
+//		GrowthLineSegmentationMagic.setClassifier( SEGMENTATION_CLASSIFIER_MODEL_FILE, "" );
 
 		if ( !HEADLESS ) {
 			// Setting up console window...
@@ -1595,25 +1595,41 @@ public class MoMA {
 				getGrowthLines().get( offset + i ).prepand( collectionOfFrames.get( j ).get( i ) );
 			}
 		}
-		// go forwards and append into GL
-		for ( int j = maxGLsPerFrameIdx + 1; j < collectionOfFrames.size(); j++ ) {
-			final int deltaL = maxGLsPerFrame - collectionOfFrames.get( j ).size();
-			int offset = 0; // here we would like to have the shift to consider
-							// when copying GLFrames into GLs
-			double minDist = Double.MAX_VALUE;
-			for ( int i = 0; i <= deltaL; i++ ) {
-				double dist = collectionOfFrames.get( maxGLsPerFrameIdx ).get( i ).getAvgXpos();
-				dist -= collectionOfFrames.get( j ).get( 0 ).getAvgXpos();
-				if ( dist < minDist ) {
-					minDist = dist;
-					offset = i;
+		if ( maxGLsPerFrame > 0 ) {
+			// go forwards and append into GL
+			for ( int j = maxGLsPerFrameIdx + 1; j < collectionOfFrames.size(); j++ ) {
+				final int deltaL = maxGLsPerFrame - collectionOfFrames.get( j ).size();
+				int offset = 0; // here we would like to have the shift to consider
+							   // when copying GLFrames into GLs
+				double minDist = Double.MAX_VALUE;
+				for ( int i = 0; i <= deltaL; i++ ) {
+					double dist = collectionOfFrames.get( maxGLsPerFrameIdx ).get( i ).getAvgXpos();
+					dist -= collectionOfFrames.get( j ).get( 0 ).getAvgXpos();
+					if ( dist < minDist ) {
+						minDist = dist;
+						offset = i;
+					}
+				}
+				for ( int i = 0; i < collectionOfFrames.get( j ).size(); i++ ) {
+					getGrowthLines().get( offset + i ).add( collectionOfFrames.get( j ).get( i ) );
 				}
 			}
-			for ( int i = 0; i < collectionOfFrames.get( j ).size(); i++ ) {
-				getGrowthLines().get( offset + i ).add( collectionOfFrames.get( j ).get( i ) );
+		} else {
+			final String msgs = "No GLs where found in loaded dataset. Please check properties file and user properties file!";
+			if ( HEADLESS ) {
+				System.out.println( msgs );
+			} else {
+				JOptionPane.showMessageDialog(
+						MoMA.guiFrame,
+						msgs,
+						"No GLs found...",
+						JOptionPane.ERROR_MESSAGE );
 			}
+			new ImageJ();
+			ImageJFunctions.show( imgTemp );
+			return;
+			//System.exit( 555 );
 		}
-
 	}
 
 	/**

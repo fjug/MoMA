@@ -147,7 +147,7 @@ public class CostFactory {
 		// * sometimes there are some cells in a brighter band on top fraction of GL.
 		final int localA = Math.max( a - 150, 0 );
 		final int localB = Math.min( b + 150, gapSepFkt.length - 1 );
-		final float avgFktValue = SimpleFunctionAnalysis.getSum( gapSepFkt, localA, localB ) / ( localB-localA );
+		final float avgFktValue = SimpleFunctionAnalysis.getSum( gapSepFkt, localA, localB ) / ( localB - localA );
 		final float medianSegmentValue = SimpleFunctionAnalysis.getMedian( gapSepFkt, a, b );
 		final float distAboveMedian = medianSegmentValue - avgFktValue;
 		if ( distAboveMedian > 0f ) {

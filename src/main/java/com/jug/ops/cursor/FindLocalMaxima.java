@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.jug.ops.cursor;
 
@@ -20,13 +20,13 @@ import net.imglib2.view.Views;
 
 /**
  * @author jug
- * 
+ *
  */
 public class FindLocalMaxima< IMG_T extends Type< IMG_T > & Comparable< IMG_T >> implements UnaryOutputOperation< RandomAccessibleInterval< IMG_T >, List< Point > > {
 
 	/**
 	 * Returns an instance of the return type of function 'compute'.
-	 * 
+	 *
 	 * @see net.imglib2.ops.operation.UnaryOutputOperation#createEmptyOutput(java.lang.Object)
 	 */
 	@Override
@@ -37,7 +37,7 @@ public class FindLocalMaxima< IMG_T extends Type< IMG_T > & Comparable< IMG_T >>
 	/**
 	 * Iterates input and returns the position of the first occurrence of a
 	 * local maximum.
-	 * 
+	 *
 	 * @see net.imglib2.ops.operation.UnaryOutputOperation#compute(java.lang.Object)
 	 */
 	@Override
@@ -48,7 +48,7 @@ public class FindLocalMaxima< IMG_T extends Type< IMG_T > & Comparable< IMG_T >>
 	/**
 	 * Iterates input and returns the position of the first occurrence of a
 	 * local maximum.
-	 * 
+	 *
 	 * @see net.imglib2.ops.operation.UnaryOutputOperation#compute(java.lang.Object,
 	 *      java.lang.Object)
 	 */
