@@ -588,13 +588,11 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			}
 			final int centerY = imgLocations.get( i ).getIntPosition( 1 );
 			retVals[ i ] = getShortestPathValueThroughGL( raImg, centerX, centerY );
-			if ( Float.isNaN( retVals[ i ] ) ) {
-				System.out.println( "Muhuhuuuu!!!" );
-			}
 		}
 
 //		return SimpleFunctionAnalysis.normalizeFloatArray( retVals, 0f, 1f );
-		return SimpleFunctionAnalysis.elementWiseDivide( retVals, SimpleFunctionAnalysis.getMax( retVals ).b );
+		return SimpleFunctionAnalysis.elementWiseDivide( retVals, SimpleFunctionAnalysis.getMax(
+				SimpleFunctionAnalysis.elementWiseAdd( retVals, SimpleFunctionAnalysis.getMin( retVals ).b ) ).b );
 	}
 
 	/**
@@ -615,8 +613,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 				final int y = centerY - pixelOffsetFromCenter + yMatrix;
 
 				raImg.setPosition( new int[] { x, y } );
-//				costMatrix[ xMatrix ][ yMatrix ] = 1f - raImg.get().get(); // inverse intensities (shortest path needed)
-				costMatrix[ xMatrix ][ yMatrix ] = raImg.get().get(); // huh!
+				costMatrix[ xMatrix ][ yMatrix ] = raImg.get().get(); // huh... someone seems to have inverted the img already!
 
 				// force cutting line to go through cener pixel
 				if ( xMatrix == pixelOffsetFromCenter ) {
@@ -625,11 +622,9 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 						costMatrix[ xMatrix ][ yMatrix ] = 0f;
 					}
 				}
-//				minCostMatrix[ xMatrix ][ yMatrix ] = Float.MAX_VALUE; //1f * 2 * pixelOffsetFromCenter + 1f;
 				minCostMatrix[ xMatrix ][ yMatrix ] = ( xMatrix == 0 ) ? 0f : Float.MAX_VALUE;
 			}
 		}
-//		minCostMatrix[ 0 ][ pixelOffsetFromCenter ] = 0f; // force start in middle (on left side)
 
 		//dynamic programming part (shortest path from left to right)
 		for ( int xMatrix = 1; xMatrix < 2 * pixelOffsetFromCenter + 1; xMatrix++ ) {
