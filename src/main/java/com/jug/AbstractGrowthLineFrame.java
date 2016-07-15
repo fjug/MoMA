@@ -594,9 +594,6 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 		}
 
 //		return SimpleFunctionAnalysis.normalizeFloatArray( retVals, 0f, 1f );
-		if ( SimpleFunctionAnalysis.getMax( retVals ).b.equals( 0f ) ) {
-			System.out.println( "ZEROSHIT" );
-		}
 		return SimpleFunctionAnalysis.elementWiseDivide( retVals, SimpleFunctionAnalysis.getMax( retVals ).b );
 	}
 
@@ -620,10 +617,19 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 				raImg.setPosition( new int[] { x, y } );
 //				costMatrix[ xMatrix ][ yMatrix ] = 1f - raImg.get().get(); // inverse intensities (shortest path needed)
 				costMatrix[ xMatrix ][ yMatrix ] = raImg.get().get(); // huh!
-				minCostMatrix[ xMatrix ][ yMatrix ] = Float.MAX_VALUE; //1f * 2 * pixelOffsetFromCenter + 1f;
+
+				// force cutting line to go through cener pixel
+				if ( xMatrix == pixelOffsetFromCenter ) {
+					costMatrix[ xMatrix ][ yMatrix ] = Float.MAX_VALUE;
+					if ( yMatrix == pixelOffsetFromCenter ) {
+						costMatrix[ xMatrix ][ yMatrix ] = 0f;
+					}
+				}
+//				minCostMatrix[ xMatrix ][ yMatrix ] = Float.MAX_VALUE; //1f * 2 * pixelOffsetFromCenter + 1f;
+				minCostMatrix[ xMatrix ][ yMatrix ] = ( xMatrix == 0 ) ? 0f : Float.MAX_VALUE;
 			}
 		}
-		minCostMatrix[ 0 ][ pixelOffsetFromCenter ] = 0f; // force start in middle (on left side)
+//		minCostMatrix[ 0 ][ pixelOffsetFromCenter ] = 0f; // force start in middle (on left side)
 
 		//dynamic programming part (shortest path from left to right)
 		for ( int xMatrix = 1; xMatrix < 2 * pixelOffsetFromCenter + 1; xMatrix++ ) {
@@ -640,7 +646,11 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			}
 		}
 
-		return minCostMatrix[ 2 * pixelOffsetFromCenter ][ pixelOffsetFromCenter ]; // return shortest path to middle (on right side)
+		float ret = Float.MAX_VALUE;
+		for ( int yMatrix = 0; yMatrix < 2 * pixelOffsetFromCenter + 1; yMatrix++ ) {
+			ret = Math.min( ret, minCostMatrix[ 2 * pixelOffsetFromCenter ][ yMatrix ] );
+		}
+		return ret;
 	}
 
 	/**
