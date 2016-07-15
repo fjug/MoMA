@@ -573,7 +573,10 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			ivImg = Views.addDimension( ivImg, 0, 0 );
 		}
 
-		final RandomAccessible< FloatType > rImg = Views.extendZero( Views.hyperSlice( ivImg, 2, centerZ ) );
+		final FloatType borderValue = ivImg.firstElement().createVariable();
+		borderValue.set( Float.MAX_VALUE );
+		final RandomAccessible< FloatType > rImg =
+				Views.extendValue( Views.hyperSlice( ivImg, 2, centerZ ), borderValue );
 		final RandomAccess< FloatType > raImg = rImg.randomAccess();
 
 		final float[] retVals = new float[ imgLocations.size() ];
@@ -585,9 +588,15 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			}
 			final int centerY = imgLocations.get( i ).getIntPosition( 1 );
 			retVals[ i ] = getShortestPathValueThroughGL( raImg, centerX, centerY );
+			if ( Float.isNaN( retVals[ i ] ) ) {
+				System.out.println( "Muhuhuuuu!!!" );
+			}
 		}
 
 //		return SimpleFunctionAnalysis.normalizeFloatArray( retVals, 0f, 1f );
+		if ( SimpleFunctionAnalysis.getMax( retVals ).b.equals( 0f ) ) {
+			System.out.println( "ZEROSHIT" );
+		}
 		return SimpleFunctionAnalysis.elementWiseDivide( retVals, SimpleFunctionAnalysis.getMax( retVals ).b );
 	}
 
@@ -607,11 +616,11 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 			for ( int xMatrix = 0; xMatrix < 2 * pixelOffsetFromCenter + 1; xMatrix++ ) {
 				final int x = centerX - pixelOffsetFromCenter + xMatrix;
 				final int y = centerY - pixelOffsetFromCenter + yMatrix;
-				raImg.setPosition( new int[] { x, y } );
 
+				raImg.setPosition( new int[] { x, y } );
 //				costMatrix[ xMatrix ][ yMatrix ] = 1f - raImg.get().get(); // inverse intensities (shortest path needed)
 				costMatrix[ xMatrix ][ yMatrix ] = raImg.get().get(); // huh!
-				minCostMatrix[ xMatrix ][ yMatrix ] = Float.MAX_VALUE;
+				minCostMatrix[ xMatrix ][ yMatrix ] = Float.MAX_VALUE; //1f * 2 * pixelOffsetFromCenter + 1f;
 			}
 		}
 		minCostMatrix[ 0 ][ pixelOffsetFromCenter ] = 0f; // force start in middle (on left side)
@@ -619,12 +628,15 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 		//dynamic programming part (shortest path from left to right)
 		for ( int xMatrix = 1; xMatrix < 2 * pixelOffsetFromCenter + 1; xMatrix++ ) {
 			for ( int yMatrix = 0; yMatrix < 2 * pixelOffsetFromCenter + 1; yMatrix++ ) {
-				float currCost = minCostMatrix[ xMatrix - 1 ][ yMatrix ];
-				for ( int yFrom = 0; yFrom != yMatrix; ) {
-					currCost += costMatrix[ xMatrix - 1 ][ yFrom ];
-					yFrom = ( yFrom < yMatrix ) ? yFrom + 1 : yFrom - 1;
+				for ( int yFrom = 0; yFrom < 2 * pixelOffsetFromCenter + 1; yFrom++ ) {
+					float currCost = minCostMatrix[ xMatrix - 1 ][ yFrom ];
+					for ( int yAlongTheWay = yFrom; yAlongTheWay != yMatrix; ) {
+						currCost += costMatrix[ xMatrix - 1 ][ yAlongTheWay ];
+						yAlongTheWay = ( yAlongTheWay < yMatrix ) ? yAlongTheWay + 1 : yAlongTheWay - 1;
+					}
+					currCost += costMatrix[ xMatrix - 1 ][ yMatrix ]; // last one should not be forgotten!
+					minCostMatrix[ xMatrix ][ yMatrix ] = Math.min( minCostMatrix[ xMatrix ][ yMatrix ], currCost );
 				}
-				minCostMatrix[ xMatrix ][ yMatrix ] = Math.min( minCostMatrix[ xMatrix ][ yMatrix ], currCost );
 			}
 		}
 

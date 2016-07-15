@@ -1654,7 +1654,7 @@ public class MoMA {
 		// ------ GAUSS -----------------------------
 
 		if ( SIGMA_PRE_SEGMENTATION_X + SIGMA_PRE_SEGMENTATION_Y > 0.000001 ) {
-			System.out.print( " ...Note: smoothing performed before building GapHypotheses... " );
+			System.out.print( " [Note!] Smoothing performed before building GapHypotheses... " );
 			final int n = imgTemp.numDimensions();
 			final double[] sigmas = new double[ n ];
 			sigmas[ 0 ] = SIGMA_PRE_SEGMENTATION_X;
