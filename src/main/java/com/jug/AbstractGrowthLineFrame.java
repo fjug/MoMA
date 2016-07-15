@@ -27,6 +27,7 @@ import com.jug.util.filteredcomponents.FilteredComponent;
 import net.imglib2.Localizable;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
@@ -271,8 +272,8 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	}
 
 	/**
-	 * Using the imglib2 component tree to find the most stable components
-	 * (bacteria).
+	 * Values computed by finding avg intensity along varios tilted lines
+	 * through GL.
 	 *
 	 * @param img
 	 */
@@ -388,7 +389,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	}
 
 	/**
-	 * GapSep guesses based on the intensity image alone
+	 * GapSep guesses based on the intensity image alone.
 	 *
 	 * @param img
 	 * @return
@@ -400,7 +401,8 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 	public float[] getSimpleGapSeparationValues( final Img< FloatType > img, final boolean forceRecomputation ) {
 		if ( simpleSepValues == null ) {
 			if ( img == null ) return null;
-			simpleSepValues = getMaxTiltedLineAveragesInRectangleAlongAvgCenter( img );
+//			simpleSepValues = getMaxTiltedLineAveragesInRectangleAlongAvgCenter( img );
+			simpleSepValues = getShortestPathValuesThroughGL( img );
 			simpleSepValues = avoidMotherCellSegmentationFlickering( simpleSepValues );
 //			sepValues = getInvertedIntensities( img );
 		}
@@ -510,7 +512,7 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 				Views.interpolate( Views.extendZero( Views.hyperSlice( ivImg, 2, centerZ ) ), new NLinearInterpolatorFactory< FloatType >() );
 		final RealRandomAccess< FloatType > rraImg = rrImg.realRandomAccess();
 
-		final float[] dIntensity = new float[ imgLocations.size() ]; //  + 1
+		final float[] dIntensity = new float[ imgLocations.size() ];
 		for ( int i = 0; i < imgLocations.size(); i++ ) {
 			final int centerY = imgLocations.get( i ).getIntPosition( 1 );
 
@@ -539,6 +541,94 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 //		dIntensity = SimpleFunctionAnalysis.normalizeDoubleArray( dIntensity, 0.0, 1.0 );
 
 		return dIntensity;
+	}
+
+	/**
+	 * Trying to look there a bit smarter... ;)
+	 *
+	 * @param img
+	 * @param wellPoints
+	 * @return
+	 */
+	private float[] getShortestPathValuesThroughGL( final Img< FloatType > img ) {
+		return getShortestPathValuesThroughGL( img, false );
+	}
+
+	/**
+	 * Trying to look there a bit smarter... ;)
+	 *
+	 * @param img
+	 * @param wellPoints
+	 * @return
+	 */
+	private float[] getShortestPathValuesThroughGL( final RandomAccessibleInterval< FloatType > img, final boolean imgIsPreCropped ) {
+		// special case: growth line does not exist in this frame
+		if ( imgLocations.size() == 0 ) return new float[ 0 ];
+
+		int centerZ = imgLocations.get( 0 ).getIntPosition( 2 );
+
+		//here now a trick to make <3d images also comply to the code below
+		IntervalView< FloatType > ivImg = Views.interval( img, img );
+		for ( int i = 0; i < 3 - img.numDimensions(); i++ ) {
+			ivImg = Views.addDimension( ivImg, 0, 0 );
+		}
+
+		final RandomAccessible< FloatType > rImg = Views.extendZero( Views.hyperSlice( ivImg, 2, centerZ ) );
+		final RandomAccess< FloatType > raImg = rImg.randomAccess();
+
+		final float[] retVals = new float[ imgLocations.size() ];
+		for ( int i = 0; i < imgLocations.size(); i++ ) {
+			int centerX = imgLocations.get( i ).getIntPosition( 0 );
+			if ( imgIsPreCropped ) {
+				centerX = MoMA.GL_PIXEL_PADDING_IN_VIEWS + MoMA.GL_WIDTH_IN_PIXELS / 2;
+				centerZ = 0;
+			}
+			final int centerY = imgLocations.get( i ).getIntPosition( 1 );
+			retVals[ i ] = getShortestPathValueThroughGL( raImg, centerX, centerY );
+		}
+
+//		return SimpleFunctionAnalysis.normalizeFloatArray( retVals, 0f, 1f );
+		return SimpleFunctionAnalysis.elementWiseDivide( retVals, SimpleFunctionAnalysis.getMax( retVals ).b );
+	}
+
+	/**
+	 * @param raImg
+	 * @param centerX
+	 * @param centerY
+	 * @return
+	 */
+	private float getShortestPathValueThroughGL( final RandomAccess< FloatType > raImg, final int centerX, final int centerY ) {
+		final int pixelOffsetFromCenter = ( int ) Math.floor( MoMA.GL_WIDTH_IN_PIXELS / 2.0 );
+		final float[][] costMatrix = new float[ 2 * pixelOffsetFromCenter + 1 ][ 2 * pixelOffsetFromCenter + 1 ];
+		final float[][] minCostMatrix = new float[ 2 * pixelOffsetFromCenter + 1 ][ 2 * pixelOffsetFromCenter + 1 ];
+
+		// prepare cost matrix
+		for ( int yMatrix = 0; yMatrix < 2 * pixelOffsetFromCenter + 1; yMatrix++ ) {
+			for ( int xMatrix = 0; xMatrix < 2 * pixelOffsetFromCenter + 1; xMatrix++ ) {
+				final int x = centerX - pixelOffsetFromCenter + xMatrix;
+				final int y = centerY - pixelOffsetFromCenter + yMatrix;
+				raImg.setPosition( new int[] { x, y } );
+
+//				costMatrix[ xMatrix ][ yMatrix ] = 1f - raImg.get().get(); // inverse intensities (shortest path needed)
+				costMatrix[ xMatrix ][ yMatrix ] = raImg.get().get(); // huh!
+				minCostMatrix[ xMatrix ][ yMatrix ] = Float.MAX_VALUE;
+			}
+		}
+		minCostMatrix[ 0 ][ pixelOffsetFromCenter ] = 0f; // force start in middle (on left side)
+
+		//dynamic programming part (shortest path from left to right)
+		for ( int xMatrix = 1; xMatrix < 2 * pixelOffsetFromCenter + 1; xMatrix++ ) {
+			for ( int yMatrix = 0; yMatrix < 2 * pixelOffsetFromCenter + 1; yMatrix++ ) {
+				float currCost = minCostMatrix[ xMatrix - 1 ][ yMatrix ];
+				for ( int yFrom = 0; yFrom != yMatrix; ) {
+					currCost += costMatrix[ xMatrix - 1 ][ yFrom ];
+					yFrom = ( yFrom < yMatrix ) ? yFrom + 1 : yFrom - 1;
+				}
+				minCostMatrix[ xMatrix ][ yMatrix ] = Math.min( minCostMatrix[ xMatrix ][ yMatrix ], currCost );
+			}
+		}
+
+		return minCostMatrix[ 2 * pixelOffsetFromCenter ][ pixelOffsetFromCenter ]; // return shortest path to middle (on right side)
 	}
 
 	/**
