@@ -8,9 +8,14 @@
  	<parent>
 		<groupId>net.imagej</groupId>
 		<artifactId>pom-imagej</artifactId>
-		<version>5.12.3</version>
+		<version>15.8.0</version>
 	</parent>
  
+ 	<properties>
+<!-- 		<enforcer.skip>true</enforcer.skip> -->
+		<scijava.jvm.version>1.8</scijava.jvm.version>
+	</properties>
+
 	<groupId>com.jug</groupId>
 	<artifactId>MotherMachine</artifactId>
 	<version>0.9.6</version>
