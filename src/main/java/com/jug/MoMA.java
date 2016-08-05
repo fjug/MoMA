@@ -471,34 +471,52 @@ public class MoMA {
 		final String jlp = System.getProperty( "java.library.path" );
 //		System.out.println( jlp );
 		try {
-			new GRBEnv( "MoMA_gurobi.log" );
-		} catch ( final GRBException e ) {
-			final String msgs = "Initial Gurobi test threw exception... check your Gruobi setup!\n\nJava library path: " + jlp;
+			try {
+				new GRBEnv( "MoMA_gurobi.log" );
+			} catch ( final GRBException e ) {
+				final String msgs = "Initial Gurobi test threw exception... check your Gruobi setup!\n\nJava library path: " + jlp;
+				if ( HEADLESS ) {
+					System.out.println( msgs );
+				} else {
+					JOptionPane.showMessageDialog(
+							MoMA.guiFrame,
+							msgs,
+							"Gurobi Error?",
+							JOptionPane.ERROR_MESSAGE );
+				}
+				e.printStackTrace();
+				System.exit( 98 );
+			} catch ( final UnsatisfiedLinkError ulr ) {
+				final String msgs =
+						"Could initialize Gurobi.\n" + "You might not have installed Gurobi properly or you miss a valid license.\n" + "Please visit 'www.gurobi.com' for further information.\n\n" + ulr
+								.getMessage() + "\nJava library path: " + jlp;
+				if ( HEADLESS ) {
+					System.out.println( msgs );
+				} else {
+					JOptionPane.showMessageDialog(
+							MoMA.guiFrame,
+							msgs,
+							"Gurobi Error?",
+							JOptionPane.ERROR_MESSAGE );
+					ulr.printStackTrace();
+				}
+				System.out.println( "\n>>>>> Java library path: " + jlp + "\n" );
+				System.exit( 99 );
+			}
+		} catch ( final Exception e ) {
+			final String msgs =
+					"Gurobi seems to be not installed on your system.\n" + "Please visit 'www.gurobi.com' for further information.\n\n" + "Java library path: " + jlp;
 			if ( HEADLESS ) {
 				System.out.println( msgs );
 			} else {
 				JOptionPane.showMessageDialog(
 						MoMA.guiFrame,
 						msgs,
-						"Gurobi Error?",
+						"Gurobi not installed?",
 						JOptionPane.ERROR_MESSAGE );
 			}
 			e.printStackTrace();
-			System.exit( 98 );
-		} catch ( final UnsatisfiedLinkError ulr ) {
-			final String msgs = "Could initialize Gurobi.\n" + "You might not have installed Gurobi properly or you miss a valid license.\n" + "Please visit 'www.gurobi.com' for further information.\n\n" + ulr.getMessage() + "\nJava library path: " + jlp;
-			if ( HEADLESS ) {
-				System.out.println( msgs );
-			} else {
-				JOptionPane.showMessageDialog(
-						MoMA.guiFrame,
-						msgs,
-						"Gurobi Error?",
-						JOptionPane.ERROR_MESSAGE );
-				ulr.printStackTrace();
-			}
-			System.out.println( "\n>>>>> Java library path: " + jlp + "\n" );
-			System.exit( 99 );
+			System.exit( 100 );
 		}
 		// ******* END CHECK GUROBI **** END CHECK GUROBI **** END CHECK GUROBI ********
 
