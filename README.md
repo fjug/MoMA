@@ -32,6 +32,11 @@ BAMBI@MICCAI, 2014
 F Jug, T Pietzsch, D Kainmüller, G Myers
 IMIC@MICCAI, 2014
 
+## Inatallations
+
+1. Download Gurobi binary in [Gurobi Download Center](http://www.gurobi.com/downloads/download-center) - (The current version is 6.5.2 supporting Windows 32/64, Linux 64, MacOSX 64, AIX 64 architectures)
+2. Get the right license for you from [Gurobi](http://www.gurobi.com)
+3. Install & run MoMA
 
 ## Wiki
 Find more information [here](https://github.com/fjug/MoMA/wiki).
