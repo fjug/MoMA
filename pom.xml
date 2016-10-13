@@ -42,6 +42,13 @@
 			<scope>system</scope>
 			<systemPath>${project.basedir}/lib/jmathplot.jar</systemPath>
 		</dependency>
+        <dependency>
+            <groupId>gurobi</groupId>
+            <artifactId>gurobi</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/gurobi.jar</systemPath>
+        </dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Trainable_Segmentation</artifactId>
@@ -71,8 +78,13 @@
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.2.4</version>
-		</dependency>		
-	</dependencies>
+		</dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.3.2</version>
+        </dependency>
+    </dependencies>
 
 	<build>
 		<resources>
