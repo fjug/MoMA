@@ -29,49 +29,56 @@ public class MotherMachineAnalyserPlugin implements PlugIn {
     */
 
     @Override
-    public void run(String s) {
-        String currentDir = Prefs.getDefaultDirectory();
+    public void run(String s)
+	{
+		IJ.log( "Hello Mother!" );
 
-        GenericDialogPlus gd = new GenericDialogPlus("MoMA configuration");
-        gd.addDirectoryField("Input_folder", currentDir);
-        gd.addDirectoryField("Output_folder", currentDir);
-        gd.addNumericField("Number_of_Channels", 2, 0);
-        gd.showDialog();
-        if (gd.wasCanceled()) {
-            return;
-        }
-        String inputFolder = gd.getNextString();
-        String outputFolder = gd.getNextString();
-        int numberOfChannels = (int)gd.getNextNumber();
+//		System.out.println( s );
 
-        IJ.log("Hello Mother!");
+		String[] args;
 
-        String[] args = {
-                "moma",
-                "-i",
-                inputFolder,
-                "-o",
-                outputFolder,
-                "-c",
-                "" + numberOfChannels
-        };
-                /*new String[5];
-        args[0] = "moma";
-        args[1] = "-i";
-        args[2] = "/Users/rhaase/Projects/Florian_Jug_Myers_MoMA_Deployment/data/MoMA_example";
-        args[3] = "-c";
-        args[4] = "2";*/
+		if ( !s.isEmpty() )
+		{
+			// In case of using command-line arguments
+			args = s.split( " " );
+		}
+		else
+		{
+			// In case of using Fiji
+			String currentDir = Prefs.getDefaultDirectory();
 
-        MoMA.running_as_Fiji_plugin = true;
-        MoMA.main(args);
-    }
+			GenericDialogPlus gd = new GenericDialogPlus( "MoMA configuration" );
+			gd.addDirectoryField( "Input_folder", currentDir );
+			gd.addDirectoryField( "Output_folder", currentDir );
+			gd.addNumericField( "Number_of_Channels", 2, 0 );
+			gd.showDialog();
+			if ( gd.wasCanceled() )
+			{
+				return;
+			}
+			String inputFolder = gd.getNextString();
+			String outputFolder = gd.getNextString();
+			int numberOfChannels = ( int ) gd.getNextNumber();
+
+			args = new String[] {
+					"-i",
+					inputFolder,
+					"-o",
+					outputFolder,
+					"-c",
+					"" + numberOfChannels
+			};
+			MoMA.running_as_Fiji_plugin = true;
+		}
+
+		MoMA.main( args );
+	}
 
     public static void main(String... args)
     {
         new ImageJ();
 
-
-        new MotherMachineAnalyserPlugin().run(null);
+        new MotherMachineAnalyserPlugin().run(String.join( " ", args ));
     }
 
 }
