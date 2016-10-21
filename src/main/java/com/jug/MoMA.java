@@ -393,6 +393,8 @@ public class MoMA {
 					"Error: " + e1.getMessage() );
 			if (!running_as_Fiji_plugin) {
 				System.exit( 0 );
+			} else {
+				return;
 			}
 		}
 
@@ -401,6 +403,8 @@ public class MoMA {
 			formatter.printHelp( "... -i <in-folder> -o [out-folder] [-headless]", options );
 			if (!running_as_Fiji_plugin) {
 				System.exit( 0 );
+			} else {
+				return;
 			}
 		}
 
@@ -412,6 +416,8 @@ public class MoMA {
 				formatter.printHelp( "Headless-mode requires option '-i <in-folder>'...", options );
 				if (!running_as_Fiji_plugin) {
 					System.exit( 0 );
+				} else {
+					return;
 				}
 			}
 		}
@@ -424,12 +430,16 @@ public class MoMA {
 				System.out.println( "Error: Input folder is not a directory!" );
 				if (!running_as_Fiji_plugin) {
 					System.exit( 2 );
+				} else {
+					return;
 				}
 			}
 			if ( !inputFolder.canRead() ) {
 				System.out.println( "Error: Input folder cannot be read!" );
 				if (!running_as_Fiji_plugin) {
 					System.exit( 2 );
+				} else {
+					return;
 				}
 			}
 		}
@@ -440,6 +450,8 @@ public class MoMA {
 				System.out.println( "Error: Output folder would be set to a 'null' input folder! Please check your command line arguments..." );
 				if (!running_as_Fiji_plugin) {
 					System.exit( 3 );
+				} else {
+					return;
 				}
 			}
 			outputFolder = inputFolder;
@@ -451,12 +463,16 @@ public class MoMA {
 				System.out.println( "Error: Output folder is not a directory!" );
 				if (!running_as_Fiji_plugin) {
 					System.exit( 3 );
+				} else {
+					return;
 				}
 			}
 			if ( !outputFolder.canWrite() ) {
 				System.out.println( "Error: Output folder cannot be written to!" );
 				if (!running_as_Fiji_plugin) {
 					System.exit( 3 );
+				} else {
+					return;
 				}
 			}
 
@@ -505,6 +521,8 @@ public class MoMA {
 			e.printStackTrace();
 			if (!running_as_Fiji_plugin) {
 				System.exit( 98 );
+			} else {
+				return;
 			}
 		} catch ( final UnsatisfiedLinkError ulr ) {
 			final String msgs = "Could initialize Gurobi.\n" + "You might not have installed Gurobi properly or you miss a valid license.\n" + "Please visit 'www.gurobi.com' for further information.\n\n" + ulr.getMessage() + "\nJava library path: " + jlp;
@@ -521,6 +539,8 @@ public class MoMA {
 			System.out.println( "\n>>>>> Java library path: " + jlp + "\n" );
 			if (!running_as_Fiji_plugin) {
 				System.exit( 99 );
+			} else {
+				return;
 			}
 		}
 		// ******* END CHECK GUROBI **** END CHECK GUROBI **** END CHECK GUROBI ********
@@ -598,49 +618,10 @@ public class MoMA {
 		path = inputFolder.getAbsolutePath();
 		props.setProperty( "import_path", path );
 
-		final String tempFolder = System.getProperty("java.io.tmpdir");
-		final String tempFilename = "test.model";
 
-		final InputStream inputStream = MoMA.class.getClassLoader().getResourceAsStream(SEGMENTATION_CLASSIFIER_MODEL_FILE);
-		try {
-			OutputStream outputStream = new FileOutputStream(tempFolder + File.separator + tempFilename);
+		//GrowthLineSegmentationMagic.setClassifier( tempfilename , "" );
 
 
-			int bufferSize = 4096;
-			byte[] buffer = new byte[bufferSize];
-
-			int readBytes = 0;
-			try {
-				while ((readBytes = inputStream.read(buffer, 0, bufferSize)) > 0) {
-					outputStream.write(buffer, 0, readBytes);
-				}
-				outputStream.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-
-		/*
-		URL classifierUrl = MoMA.class.getClassLoader().getResource(SEGMENTATION_CLASSIFIER_MODEL_FILE);
-		try {
-			System.out.println("file len" + new File(classifierUrl.toURI()).length());
-		}
-		catch (URISyntaxException e)
-		{
-			e.printStackTrace();
-		}
-
-		String classifierFolder = classifierUrl.getPath();
-		if (classifierFolder.startsWith("file:"))
-		{
-			classifierFolder = classifierFolder.substring(5, classifierFolder.length());
-		}*/
-
-		GrowthLineSegmentationMagic.setClassifier( tempFolder , tempFilename );
 
 		if ( !HEADLESS ) {
 			// Setting up console window...
@@ -658,6 +639,8 @@ public class MoMA {
 			e.printStackTrace();
 			if (!running_as_Fiji_plugin) {
 				System.exit( 11 );
+			} else {
+				return;
 			}
 		}
 		// ------------------------------------------------------------------------------------------------------
@@ -709,6 +692,8 @@ public class MoMA {
 
 			if (!running_as_Fiji_plugin) {
 				System.exit( 11 );
+			} else {
+				return;
 			}
 		}
 	}
@@ -1025,6 +1010,8 @@ public class MoMA {
 				saveParams();
 				if (!running_as_Fiji_plugin) {
 					System.exit(0);
+				} else {
+					return;
 				}
 			}
 		} );

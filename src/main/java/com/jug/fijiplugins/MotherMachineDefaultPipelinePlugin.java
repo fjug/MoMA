@@ -17,10 +17,19 @@ import java.io.File;
  */
 public class MotherMachineDefaultPipelinePlugin implements PlugIn {
 
+    private static String currentDir = Prefs.getDefaultDirectory();
+
+    public MotherMachineDefaultPipelinePlugin()
+    {
+        currentDir = Prefs.getDefaultDirectory();
+
+        IJ.register(this.getClass());
+    }
+
 
     @Override
     public void run(String s) {
-        String currentDir = Prefs.getDefaultDirectory();
+
 
         GenericDialogPlus gd = new GenericDialogPlus("MoMA configuration");
         gd.addDirectoryField("Input folder", currentDir);
@@ -34,6 +43,9 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
             inputFolder = inputFolder + "/";
         }
         int numberOfChannels = (int) gd.getNextNumber();
+
+
+        currentDir = inputFolder;
 
         File inputFolderFile = new File(inputFolder);
         if (!inputFolderFile.exists() || !inputFolderFile.isDirectory()) {
@@ -153,9 +165,11 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         // -------------------------------------------------------------------------------
         // Running actual MoMA
         String momaParameters =
-                "input_folder=" + momaInputFolder +
-                "output_folder=" + momaOutputFolder +
-                "number_of_channels=" + numberOfChannels;
+                "input_folder=[" + momaInputFolder + "]" +
+                " output_folder=[" + momaOutputFolder + "]" +
+                " number_of_channels=" + numberOfChannels;
+
+        IJ.log("MoMA params: " + momaParameters);
 
         IJ.run("MoMA", momaParameters);
 
@@ -178,7 +192,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         }
         int count = 0;
         for (File subfile : file.listFiles()) {
-            if (!subfile.isDirectory())
+            if (!subfile.isDirectory() && !subfile.isHidden())
             {
                 IJ.log(subfile.getName());
                 count++;

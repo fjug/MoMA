@@ -16,63 +16,61 @@ import ij.process.ImageProcessor;
  * Date: October 2016
  */
 public class MotherMachineAnalyserPlugin implements PlugIn {
-/*
-    @Override
-    public int setup(String s, ImagePlus imagePlus) {
-        return DOES_8G + DOES_16 + DOES_32;
+
+    private static String inputFolder;
+    private static String outputFolder;
+
+    public MotherMachineAnalyserPlugin()
+    {
+        String currentDir = Prefs.getDefaultDirectory();
+
+        inputFolder = currentDir;
+        outputFolder = currentDir;
+
+        IJ.register(this.getClass());
     }
-*/
-
-/*
-    @Override
-    public void run(ImageProcessor imageProcessor) {
-    */
 
     @Override
-    public void run(String s)
-	{
-		IJ.log( "Hello Mother!" );
+    public void run(String s) {
 
-//		System.out.println( s );
+        GenericDialogPlus gd = new GenericDialogPlus("MoMA configuration");
+        gd.addDirectoryField("Input_folder", inputFolder);
+        gd.addDirectoryField("Output_folder", outputFolder);
+        gd.addNumericField("Number_of_Channels", 2, 0);
+        gd.showDialog();
+        if (gd.wasCanceled()) {
+            return;
+        }
+        inputFolder = gd.getNextString();
+        outputFolder = gd.getNextString();
+        int numberOfChannels = (int)gd.getNextNumber();
 
-		String[] args;
+        IJ.log("Hello Mother!");
 
-		if ( !s.isEmpty() )
-		{
-			// In case of using command-line arguments
-			args = s.split( " " );
-		}
-		else
-		{
-			// In case of using Fiji
-			String currentDir = Prefs.getDefaultDirectory();
+        String[] args = {
+                "moma",
+                "-i",
+                inputFolder,
+                "-o",
+                outputFolder,
+                "-c",
+                "" + numberOfChannels
+        };
 
-			GenericDialogPlus gd = new GenericDialogPlus( "MoMA configuration" );
-			gd.addDirectoryField( "Input_folder", currentDir );
-			gd.addDirectoryField( "Output_folder", currentDir );
-			gd.addNumericField( "Number_of_Channels", 2, 0 );
-			gd.showDialog();
-			if ( gd.wasCanceled() )
-			{
-				return;
-			}
-			String inputFolder = gd.getNextString();
-			String outputFolder = gd.getNextString();
-			int numberOfChannels = ( int ) gd.getNextNumber();
 
-			args = new String[] {
-					"-i",
-					inputFolder,
-					"-o",
-					outputFolder,
-					"-c",
-					"" + numberOfChannels
-			};
-			MoMA.running_as_Fiji_plugin = true;
-		}
+        for (String param : args) {
+            IJ.log("moma params " + param);
+        }
+                /*new String[5];
+        args[0] = "moma";
+        args[1] = "-i";
+        args[2] = "/Users/rhaase/Projects/Florian_Jug_Myers_MoMA_Deployment/data/MoMA_example";
+        args[3] = "-c";
+        args[4] = "2";*/
 
-		MoMA.main( args );
-	}
+        MoMA.running_as_Fiji_plugin = true;
+        MoMA.main(args);
+    }
 
     public static void main(String... args)
     {
