@@ -92,6 +92,7 @@ public class MoMA {
 	// -------------------------------------------------------------------------------------
 	public static MoMA instance;
 	public static boolean HEADLESS = false;
+	public static boolean running_as_Fiji_plugin = false;
 
 	/**
 	 * Parameter: sigma for gaussian blurring in x-direction of the raw image
@@ -390,13 +391,17 @@ public class MoMA {
 					"",
 					options,
 					"Error: " + e1.getMessage() );
-			System.exit( 0 );
+			if (!running_as_Fiji_plugin) {
+				System.exit( 0 );
+			}
 		}
 
 		if ( cmd.hasOption( "help" ) ) {
 			final HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp( "... -i <in-folder> -o [out-folder] [-headless]", options );
-			System.exit( 0 );
+			if (!running_as_Fiji_plugin) {
+				System.exit( 0 );
+			}
 		}
 
 		if ( cmd.hasOption( "h" ) ) {
@@ -405,7 +410,9 @@ public class MoMA {
 			if ( !cmd.hasOption( "i" ) ) {
 				final HelpFormatter formatter = new HelpFormatter();
 				formatter.printHelp( "Headless-mode requires option '-i <in-folder>'...", options );
-				System.exit( 0 );
+				if (!running_as_Fiji_plugin) {
+					System.exit( 0 );
+				}
 			}
 		}
 
@@ -415,11 +422,15 @@ public class MoMA {
 
 			if ( !inputFolder.isDirectory() ) {
 				System.out.println( "Error: Input folder is not a directory!" );
-				System.exit( 2 );
+				if (!running_as_Fiji_plugin) {
+					System.exit( 2 );
+				}
 			}
 			if ( !inputFolder.canRead() ) {
 				System.out.println( "Error: Input folder cannot be read!" );
-				System.exit( 2 );
+				if (!running_as_Fiji_plugin) {
+					System.exit( 2 );
+				}
 			}
 		}
 
@@ -427,7 +438,9 @@ public class MoMA {
 		if ( !cmd.hasOption( "o" ) ) {
 			if ( inputFolder == null ) {
 				System.out.println( "Error: Output folder would be set to a 'null' input folder! Please check your command line arguments..." );
-				System.exit( 3 );
+				if (!running_as_Fiji_plugin) {
+					System.exit( 3 );
+				}
 			}
 			outputFolder = inputFolder;
 			STATS_OUTPUT_PATH = outputFolder.getAbsolutePath();
@@ -436,11 +449,15 @@ public class MoMA {
 
 			if ( !outputFolder.isDirectory() ) {
 				System.out.println( "Error: Output folder is not a directory!" );
-				System.exit( 3 );
+				if (!running_as_Fiji_plugin) {
+					System.exit( 3 );
+				}
 			}
 			if ( !outputFolder.canWrite() ) {
 				System.out.println( "Error: Output folder cannot be written to!" );
-				System.exit( 3 );
+				if (!running_as_Fiji_plugin) {
+					System.exit( 3 );
+				}
 			}
 
 			STATS_OUTPUT_PATH = outputFolder.getAbsolutePath();
@@ -486,7 +503,9 @@ public class MoMA {
 						JOptionPane.ERROR_MESSAGE );
 			}
 			e.printStackTrace();
-			System.exit( 98 );
+			if (!running_as_Fiji_plugin) {
+				System.exit( 98 );
+			}
 		} catch ( final UnsatisfiedLinkError ulr ) {
 			final String msgs = "Could initialize Gurobi.\n" + "You might not have installed Gurobi properly or you miss a valid license.\n" + "Please visit 'www.gurobi.com' for further information.\n\n" + ulr.getMessage() + "\nJava library path: " + jlp;
 			if ( HEADLESS ) {
@@ -500,7 +519,9 @@ public class MoMA {
 				ulr.printStackTrace();
 			}
 			System.out.println( "\n>>>>> Java library path: " + jlp + "\n" );
-			System.exit( 99 );
+			if (!running_as_Fiji_plugin) {
+				System.exit( 99 );
+			}
 		}
 		// ******* END CHECK GUROBI **** END CHECK GUROBI **** END CHECK GUROBI ********
 
@@ -577,6 +598,7 @@ public class MoMA {
 		path = inputFolder.getAbsolutePath();
 		props.setProperty( "import_path", path );
 
+		/*
 		String tempfilename = "/Users/rhaase/temp/test.model";
 
 		InputStream inputStream = MoMA.class.getClassLoader().getResourceAsStream(SEGMENTATION_CLASSIFIER_MODEL_FILE);
@@ -602,23 +624,9 @@ public class MoMA {
 			e.printStackTrace();
 		}
 
-		/*
-		URL classifierUrl = MoMA.class.getClassLoader().getResource(SEGMENTATION_CLASSIFIER_MODEL_FILE);
-		try {
-			System.out.println("file len" + new File(classifierUrl.toURI()).length());
-		}
-		catch (URISyntaxException e)
-		{
-			e.printStackTrace();
-		}
-
-		String classifierFolder = classifierUrl.getPath();
-		if (classifierFolder.startsWith("file:"))
-		{
-			classifierFolder = classifierFolder.substring(5, classifierFolder.length());
-		}*/
-
 		GrowthLineSegmentationMagic.setClassifier( tempfilename , "" );
+		*/
+
 
 		if ( !HEADLESS ) {
 			// Setting up console window...
@@ -634,7 +642,9 @@ public class MoMA {
 			main.processDataFromFolder( path, minTime, maxTime, minChannelIdx, numChannels );
 		} catch ( final Exception e ) {
 			e.printStackTrace();
-			System.exit( 11 );
+			if (!running_as_Fiji_plugin) {
+				System.exit( 11 );
+			}
 		}
 		// ------------------------------------------------------------------------------------------------------
 		// ------------------------------------------------------------------------------------------------------
@@ -683,7 +693,9 @@ public class MoMA {
 
 			instance.saveParams();
 
-			System.exit( 0 );
+			if (!running_as_Fiji_plugin) {
+				System.exit( 11 );
+			}
 		}
 	}
 
@@ -997,7 +1009,9 @@ public class MoMA {
 			@Override
 			public void windowClosing( final WindowEvent we ) {
 				saveParams();
-				System.exit( 0 );
+				if (!running_as_Fiji_plugin) {
+					System.exit(0);
+				}
 			}
 		} );
 
