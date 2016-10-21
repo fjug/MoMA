@@ -598,15 +598,15 @@ public class MoMA {
 		path = inputFolder.getAbsolutePath();
 		props.setProperty( "import_path", path );
 
-		/*
-		String tempfilename = "/Users/rhaase/temp/test.model";
+		final String tempFolder = System.getProperty("java.io.tmpdir");
+		final String tempFilename = "test.model";
 
-		InputStream inputStream = MoMA.class.getClassLoader().getResourceAsStream(SEGMENTATION_CLASSIFIER_MODEL_FILE);
+		final InputStream inputStream = MoMA.class.getClassLoader().getResourceAsStream(SEGMENTATION_CLASSIFIER_MODEL_FILE);
 		try {
-			OutputStream outputStream = new FileOutputStream(tempfilename);
+			OutputStream outputStream = new FileOutputStream(tempFolder + File.separator + tempFilename);
 
 
-			int bufferSize = 1000;
+			int bufferSize = 4096;
 			byte[] buffer = new byte[bufferSize];
 
 			int readBytes = 0;
@@ -624,9 +624,23 @@ public class MoMA {
 			e.printStackTrace();
 		}
 
-		GrowthLineSegmentationMagic.setClassifier( tempfilename , "" );
-		*/
+		/*
+		URL classifierUrl = MoMA.class.getClassLoader().getResource(SEGMENTATION_CLASSIFIER_MODEL_FILE);
+		try {
+			System.out.println("file len" + new File(classifierUrl.toURI()).length());
+		}
+		catch (URISyntaxException e)
+		{
+			e.printStackTrace();
+		}
 
+		String classifierFolder = classifierUrl.getPath();
+		if (classifierFolder.startsWith("file:"))
+		{
+			classifierFolder = classifierFolder.substring(5, classifierFolder.length());
+		}*/
+
+		GrowthLineSegmentationMagic.setClassifier( tempFolder , tempFilename );
 
 		if ( !HEADLESS ) {
 			// Setting up console window...
