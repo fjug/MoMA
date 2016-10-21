@@ -145,13 +145,16 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
 
         String selectedDataSet = datasets[gdDataSetSelection.getNextChoiceIndex()];
 
+        String momaInputFolder = splitFolder + selectedDataSet + "/";
+        String momaOutputFolder = analysisResultsFolder + selectedDataSet + "/";
 
+        ensureFolderExists(momaOutputFolder);
 
         // -------------------------------------------------------------------------------
         // Running actual MoMA
         String momaParameters =
-                "input_folder=" + splitFolder + selectedDataSet + "/" +
-                "output_folder=" + analysisResultsFolder + selectedDataSet + "/" +
+                "input_folder=" + momaInputFolder +
+                "output_folder=" + momaOutputFolder +
                 "number_of_channels=" + numberOfChannels;
 
         IJ.run("MoMA", momaParameters);
