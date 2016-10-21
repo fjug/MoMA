@@ -17,6 +17,11 @@
 
 	<name>MotherMachine_</name>
 
+    <properties>
+        <jmathplot.path>${project.basedir}/lib/jmathplot.jar</jmathplot.path>
+        <gurobi.path>${project.basedir}/lib/gurobi.jar</gurobi.path>
+    </properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>net.imglib2</groupId>
@@ -35,20 +40,50 @@
 			<artifactId>netcdf</artifactId>
 			<version>4.2.20</version>
 		</dependency>
-		<dependency>
-			<groupId>jmathplot</groupId>
-			<artifactId>jmathplot</artifactId>
-			<version>1.0</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/jmathplot.jar</systemPath>
-		</dependency>
+
+        <!-- DEVELOPMENT -->
+
+		<!--<dependency>-->
+			<!--<groupId>jmathplot</groupId>-->
+			<!--<artifactId>jmathplot</artifactId>-->
+			<!--<version>1.0</version>-->
+			<!--<scope>system</scope>-->
+			<!--<systemPath>${jmathplot.path}</systemPath>-->
+		<!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>gurobi</groupId>-->
+            <!--<artifactId>gurobi</artifactId>-->
+            <!--<version>1.0</version>-->
+            <!--<scope>system</scope>-->
+            <!--<systemPath>${gurobi.path}</systemPath>-->
+        <!--</dependency>-->
+
+        <!-- END OF DEVELOPMENT -->
+
+
+        <!-- DEPLOYMENT -->
+
+        <!--
+        Use the below maven command to install the local jar files before creating a package. Then shade plugin picks them up for packaging.
+
+        mvn install:install-file -Dfile=jmathplot.jar -DgroupId=jmathplot -DartifactId=jmathplot -Dversion=1.0 -Dpackaging=jar
+        mvn install:install-file -Dfile=gurobi.jar -DgroupId=gurobi -DartifactId=gurobi -Dversion=1.0 -Dpackaging=jar
+        -->
+
+        <dependency>
+            <groupId>jmathplot</groupId>
+            <artifactId>jmathplot</artifactId>
+            <version>1.0</version>
+        </dependency>
+
         <dependency>
             <groupId>gurobi</groupId>
             <artifactId>gurobi</artifactId>
             <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/gurobi.jar</systemPath>
         </dependency>
+
+        <!-- END OF DEPLOYMENT -->
+
         <dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Trainable_Segmentation</artifactId>
