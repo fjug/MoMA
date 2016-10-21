@@ -32,6 +32,8 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
     public void run(String s) {
 
 
+        // -------------------------------------------------------------------------------
+        // plugin configuration
         GenericDialogPlus gd = new GenericDialogPlus("MoMA configuration");
         gd.addDirectoryField("Input folder", currentDir);
         gd.addNumericField("Number of Channels", 2, 0);
@@ -45,7 +47,6 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         }
         int numberOfChannels = (int) gd.getNextNumber();
 
-
         currentDir = inputFolder;
 
         File inputFolderFile = new File(inputFolder);
@@ -54,6 +55,8 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
             return;
         }
 
+        // -------------------------------------------------------------------------------
+        // create subfolders for intermediate and final analysis results
         String registeredFolder = inputFolder + "1_registered/";
         String splitFolder = inputFolder + "2_splitted/";
         String analysisResultsFolder = inputFolder + "3_analysed/";
@@ -131,9 +134,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
             IJ.log("No data sets found. Consider removing the 2_spitted subfolder to rerun splitting (MMPreprocess).");
             return;
         }
-
         String[] dataSetDescriptions = new String[datasets.length];
-
         int nextIndexToAnalyse = -1;
         for (int i = 0; i < datasets.length; i++) {
             dataSetDescriptions[i] = datasets[i];
@@ -159,12 +160,13 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         if (gdDataSetSelection.wasCanceled()) {
             return;
         }
-
         String selectedDataSet = datasets[gdDataSetSelection.getNextChoiceIndex()];
 
         String momaInputFolder = splitFolder + selectedDataSet + "/";
         String momaOutputFolder = analysisResultsFolder + selectedDataSet + "/";
 
+        // -------------------------------------------------------------------------------
+        // create MoMA output folder; it would exit if it not exists
         Utilities.ensureFolderExists(momaOutputFolder);
 
         // -------------------------------------------------------------------------------
