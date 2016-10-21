@@ -10,6 +10,7 @@ import ij.plugin.HyperStackConverter;
 import ij.plugin.PlugIn;
 
 import java.io.File;
+import java.util.ArrayList;
 
 /**
  * Author: Robert Haase, Scientific Computing Facility, MPI-CBG Dresden, rhaase@mpi-cbg.de
@@ -145,10 +146,14 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
                 }
             }
         }
-
+        String selectedDataset = "";
+        if (nextIndexToAnalyse >= 0)
+        {
+            selectedDataset = dataSetDescriptions[nextIndexToAnalyse];
+        }
 
         GenericDialogPlus gdDataSetSelection = new GenericDialogPlus("MoMA dataset selection");
-        gdDataSetSelection.addChoice("Dataset", dataSetDescriptions, dataSetDescriptions[nextIndexToAnalyse]);
+        gdDataSetSelection.addChoice("Dataset", dataSetDescriptions, selectedDataset);
         gdDataSetSelection.addMessage("Datasets marked with a * were analysed already.");
         gdDataSetSelection.showDialog();
         if (gdDataSetSelection.wasCanceled()) {
@@ -192,9 +197,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         }
         int count = 0;
         for (File subfile : file.listFiles()) {
-            if (!subfile.isDirectory() && !subfile.isHidden())
-            {
-                IJ.log(subfile.getName());
+            if (!subfile.isDirectory() && !subfile.isHidden()) {
                 count++;
             }
         }
@@ -205,22 +208,20 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
     private String[] listSubFolderNames(String folder)
     {
         File file = new File(folder);
-        if (!file.exists() || !file.isDirectory())
-        {
+        if (!file.exists() || !file.isDirectory()) {
             return new String[] {};
         }
 
-        int numberOfFolders = file.listFiles().length - countFilesInFolder(folder);
+        ArrayList<String> folderNameList = new ArrayList<String>();
 
-        String[] listOfFolderNames = new String[numberOfFolders];
-
-        int count = 0;
         for (File subfile : file.listFiles()) {
-            if (subfile.isDirectory()) {
-                listOfFolderNames[count] = subfile.getName();
-                count++;
+            if (subfile.isDirectory() && !subfile.isHidden()) {
+                folderNameList.add(subfile.getName());
             }
         }
+
+        String[] listOfFolderNames = new String[folderNameList.size()];
+        folderNameList.toArray(listOfFolderNames);
         return listOfFolderNames;
     }
 }
