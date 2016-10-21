@@ -11,6 +11,11 @@ import java.util.ArrayList;
  */
 public class Utilities {
 
+    /**
+     * Checks if a given folder location exists and creates the folder if not.
+     *
+     * @param folder to be created
+     */
     static void ensureFolderExists(String folder) {
         File file = new File(folder);
         if (!file.exists() || !file.isDirectory()) {
@@ -18,6 +23,11 @@ public class Utilities {
         }
     }
 
+    /**
+     * Count files in a folder which are neighter hidden nor a directory
+     * @param folder folder to count files in
+     * @return number of files, zero if folder does not exist
+     */
     static int countFilesInFolder(String folder) {
         File file = new File(folder);
         if (!file.exists() || !file.isDirectory())
@@ -34,6 +44,11 @@ public class Utilities {
         return count;
     }
 
+    /**
+     * Creates a list of sub folder names
+     * @param folder main folder to look through
+     * @return String array containing all sub folder names
+     */
     static String[] listSubFolderNames(String folder)
     {
         File file = new File(folder);
