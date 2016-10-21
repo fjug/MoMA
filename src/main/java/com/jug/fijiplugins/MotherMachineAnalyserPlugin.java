@@ -76,7 +76,7 @@ public class MotherMachineAnalyserPlugin implements PlugIn {
     {
         new ImageJ();
 
-        new MotherMachineAnalyserPlugin().run(String.join( " ", args ));
+        new MotherMachineAnalyserPlugin().run("");
     }
 
 }
