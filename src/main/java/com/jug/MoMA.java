@@ -438,7 +438,7 @@ public class MoMA {
 				System.out.println( "Error: Output folder is not a directory!" );
 				System.exit( 3 );
 			}
-			if ( !inputFolder.canWrite() ) {
+			if ( !outputFolder.canWrite() ) {
 				System.out.println( "Error: Output folder cannot be written to!" );
 				System.exit( 3 );
 			}
