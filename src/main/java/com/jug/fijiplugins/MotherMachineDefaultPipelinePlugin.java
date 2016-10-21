@@ -58,18 +58,18 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         String splitFolder = inputFolder + "2_splitted/";
         String analysisResultsFolder = inputFolder + "3_analysed/";
 
-        ensureFolderExists(registeredFolder);
-        ensureFolderExists(splitFolder);
-        ensureFolderExists(analysisResultsFolder);
+        Utilities.ensureFolderExists(registeredFolder);
+        Utilities.ensureFolderExists(splitFolder);
+        Utilities.ensureFolderExists(analysisResultsFolder);
 
         boolean executeRegistration = true;
         boolean executeSplitting = true;
 
-        if (countFilesInFolder(registeredFolder) == countFilesInFolder(inputFolder)) {
+        if (Utilities.countFilesInFolder(registeredFolder) == Utilities.countFilesInFolder(inputFolder)) {
             executeRegistration = false;
         }
 
-        if (countFilesInFolder(splitFolder) > 0) {
+        if (Utilities.countFilesInFolder(splitFolder) > 0) {
             executeSplitting = false;
         }
 
@@ -102,7 +102,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
             imp.close();
         } else {
             IJ.log("Skipping registration...");
-            numberOfTimePoints = countFilesInFolder(registeredFolder) / numberOfChannels;
+            numberOfTimePoints = Utilities.countFilesInFolder(registeredFolder) / numberOfChannels;
         }
 
         if (executeSplitting) {
@@ -125,7 +125,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         // -------------------------------------------------------------------------------
         // Dataset selection
 
-        String[] datasets = listSubFolderNames(splitFolder);
+        String[] datasets = Utilities.listSubFolderNames(splitFolder);
 
         if (datasets.length == 0) {
             IJ.log("No data sets found. Consider removing the 2_spitted subfolder to rerun splitting (MMPreprocess).");
@@ -137,7 +137,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         int nextIndexToAnalyse = -1;
         for (int i = 0; i < datasets.length; i++) {
             dataSetDescriptions[i] = datasets[i];
-            if (countFilesInFolder(analysisResultsFolder + datasets[i] + "/") > 0) {
+            if (Utilities.countFilesInFolder(analysisResultsFolder + datasets[i] + "/") > 0) {
                 dataSetDescriptions[i] += " *";
             } else {
                 if (nextIndexToAnalyse < 0)
@@ -165,7 +165,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         String momaInputFolder = splitFolder + selectedDataSet + "/";
         String momaOutputFolder = analysisResultsFolder + selectedDataSet + "/";
 
-        ensureFolderExists(momaOutputFolder);
+        Utilities.ensureFolderExists(momaOutputFolder);
 
         // -------------------------------------------------------------------------------
         // Running actual MoMA
@@ -182,46 +182,4 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         // -------------------------------------------------------------------------------
     }
 
-    private void ensureFolderExists(String folder) {
-        File file = new File(folder);
-        if (!file.exists() || !file.isDirectory()) {
-            file.mkdir();
-        }
-    }
-
-    private int countFilesInFolder(String folder) {
-        File file = new File(folder);
-        if (!file.exists() || !file.isDirectory())
-        {
-            return 0;
-        }
-        int count = 0;
-        for (File subfile : file.listFiles()) {
-            if (!subfile.isDirectory() && !subfile.isHidden()) {
-                count++;
-            }
-        }
-        IJ.log("" + count + " files in folder " + folder);
-        return count;
-    }
-
-    private String[] listSubFolderNames(String folder)
-    {
-        File file = new File(folder);
-        if (!file.exists() || !file.isDirectory()) {
-            return new String[] {};
-        }
-
-        ArrayList<String> folderNameList = new ArrayList<String>();
-
-        for (File subfile : file.listFiles()) {
-            if (subfile.isDirectory() && !subfile.isHidden()) {
-                folderNameList.add(subfile.getName());
-            }
-        }
-
-        String[] listOfFolderNames = new String[folderNameList.size()];
-        folderNameList.toArray(listOfFolderNames);
-        return listOfFolderNames;
-    }
 }
