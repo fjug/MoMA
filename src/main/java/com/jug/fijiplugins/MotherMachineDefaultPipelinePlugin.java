@@ -22,7 +22,8 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
 
     public MotherMachineDefaultPipelinePlugin()
     {
-        currentDir = Prefs.getDefaultDirectory();
+        //currentDir = Prefs.getDefaultDirectory();
+        //IJ.log("current dir: " + currentDir);
 
         IJ.register(this.getClass());
     }
@@ -37,6 +38,13 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         GenericDialogPlus gd = new GenericDialogPlus("MoMA configuration");
         gd.addDirectoryField("Input folder", currentDir);
         gd.addNumericField("Number of Channels", 2, 0);
+
+
+        gd.addMessage("Advanced splitting parameters (MMPreprocess)");
+        gd.addNumericField("Variance threshold", 0.001, 8);
+        gd.addNumericField("Lateral offset", 40, 0);
+        gd.addNumericField("Crop width", 100, 0);
+
         gd.showDialog();
         if (gd.wasCanceled()) {
             return;
@@ -46,6 +54,11 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
             inputFolder = inputFolder + "/";
         }
         int numberOfChannels = (int) gd.getNextNumber();
+
+
+        double varianceThreshold = gd.getNextNumber();
+        int lateralOffset = (int)gd.getNextNumber();
+        int cropWidth = (int)gd.getNextNumber();
 
         currentDir = inputFolder;
 
@@ -118,7 +131,13 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
                             " number_of_Channels=" + numberOfChannels +
                             " channels_start_with=1" +
                             " number_of_Time_points=" + numberOfTimePoints +
-                            " time_points_start_with=1";
+                            " time_points_start_with=1" +
+                            " variance_threshold=" + varianceThreshold +
+                            " lateral_offset=" + lateralOffset +
+                            " crop_width=" + cropWidth;
+
+
+
 
             IJ.run("MoMA pre-processing", parameters);
         } else {
