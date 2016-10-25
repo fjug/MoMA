@@ -1,4 +1,4 @@
-package com.jug.util;
+package com.jug.gurobi;
 
 import ij.IJ;
 

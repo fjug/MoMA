@@ -1,4 +1,4 @@
-package com.jug.util;
+package com.jug.gurobi;
 
 import org.apache.commons.lang3.StringUtils;
 
