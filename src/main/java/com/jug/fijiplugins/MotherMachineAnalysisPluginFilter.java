@@ -1,13 +1,11 @@
 package com.jug.fijiplugins;
 
 import com.jug.MoMA;
+import com.jug.gurobi.GurobiInstaller;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
-import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.real.FloatType;
 
 import java.io.File;
 
@@ -24,6 +22,12 @@ public class MotherMachineAnalysisPluginFilter implements PlugInFilter {
 
     @Override
     public void run(ImageProcessor imageProcessor) {
+
+        if(!new GurobiInstaller().checkInstallation()) {
+            IJ.log("Gurobi appears not properly installed. Please check your installation!");
+            return;
+        }
+
         ImagePlus imp = IJ.getImage();
 
         String tempFolder = IJ.getDirectory("temp");

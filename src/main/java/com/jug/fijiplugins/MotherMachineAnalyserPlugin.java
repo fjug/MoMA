@@ -1,18 +1,12 @@
 package com.jug.fijiplugins;
 
 import com.jug.MoMA;
-import com.jug.util.Exec;
-import com.jug.util.NativeLibrary;
+import com.jug.gurobi.GurobiInstaller;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImageJ;
 import ij.Prefs;
 import ij.plugin.PlugIn;
-
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
 
 /**
  * MotherMachine Analysis plugin
@@ -40,77 +34,43 @@ public class MotherMachineAnalyserPlugin implements PlugIn {
     @Override
     public void run(String s) {
 
-		final Class<?> clazz = MotherMachineAnalyserPlugin.class;
-		final String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();
-		final String pluginsDir = url.substring(0, url.length() - clazz.getName().length() - 6);
-
-		try
-		{
-			NativeLibrary.copyLibraries( new URL(pluginsDir) );
-		}
-		catch ( URISyntaxException e )
-		{
-			IJ.log( "Native library allocation for Fiji failed." );
-			e.printStackTrace();
-		}
-		catch ( MalformedURLException e )
-		{
-			IJ.log( "The given class URL is wrong." );
-			e.printStackTrace();
+		if(!new GurobiInstaller().checkInstallation()) {
+			IJ.log("Gurobi appears not properly installed. Please check your installation!");
+			return;
 		}
 
-		final String gurobiLicFilePath = System.getProperty( "user.home" ) + File.separator + "gurobi.lic";
-		final File gurobiLicFile = new File( gurobiLicFilePath );
+		GenericDialogPlus gd = new GenericDialogPlus("MoMA configuration");
+		gd.addDirectoryField("Input_folder", inputFolder);
+		gd.addDirectoryField("Output_folder", outputFolder);
+		gd.addNumericField("Number_of_Channels", 2, 0);
+		gd.showDialog();
+		if (gd.wasCanceled()) {
+			return;
+		}
+		inputFolder = gd.getNextString();
+		outputFolder = gd.getNextString();
+		int numberOfChannels = (int)gd.getNextNumber();
 
-		if(!gurobiLicFile.exists())
-		{
-			GenericDialogPlus gurobiDialog = new GenericDialogPlus("Getting Gurobi License File");
-			gurobiDialog.addMessage( "Paste the string starting with \"grbgetkey\"" );
-			gurobiDialog.addStringField( "", "", 45 );
-			gurobiDialog.showDialog();
+		IJ.log("Starting MoMA..");
 
-			if(gurobiDialog.wasCanceled())
-				return;
+		String[] args = {
+				"moma",
+				"-i",
+				inputFolder,
+				"-o",
+				outputFolder,
+				"-c",
+				"" + numberOfChannels
+		};
 
-			final String grbkeygetString = gurobiDialog.getNextString();
 
-			Exec.runGrbgetkey( grbkeygetString.split( " " ) );
+		for (String param : args) {
+			IJ.log("moma params " + param);
 		}
 
-		if(gurobiLicFile.exists())
-		{
-			GenericDialogPlus gd = new GenericDialogPlus("MoMA configuration");
-			gd.addDirectoryField("Input_folder", inputFolder);
-			gd.addDirectoryField("Output_folder", outputFolder);
-			gd.addNumericField("Number_of_Channels", 2, 0);
-			gd.showDialog();
-			if (gd.wasCanceled()) {
-				return;
-			}
-			inputFolder = gd.getNextString();
-			outputFolder = gd.getNextString();
-			int numberOfChannels = (int)gd.getNextNumber();
+		MoMA.running_as_Fiji_plugin = true;
+		MoMA.main(args);
 
-			IJ.log("Starting MoMA..");
-
-			String[] args = {
-					"moma",
-					"-i",
-					inputFolder,
-					"-o",
-					outputFolder,
-					"-c",
-					"" + numberOfChannels
-			};
-
-
-			for (String param : args) {
-				IJ.log("moma params " + param);
-			}
-
-			MoMA.running_as_Fiji_plugin = true;
-			MoMA.main(args);
-		}
     }
 
     public static void main(String... args)
