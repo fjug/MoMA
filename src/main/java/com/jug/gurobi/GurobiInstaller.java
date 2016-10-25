@@ -10,7 +10,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 /**
- * Author: Robert Haase, Scientific Computing Facility, MPI-CBG Dresden, rhaase@mpi-cbg.de
+ * Author: HongKee Moon (moon@mpi-cbg.de), Robert Haase(rhaase@mpi-cbg.de) Scientific Computing Facility
+ * Organization: MPI-CBG Dresden
  * Date: October 2016
  */
 public class GurobiInstaller {
