@@ -5,3 +5,9 @@
 .classpath
 .project
 /.idea/
+
+# Allow
+!*.so
+!*.dll
+!*.jnilib
+!*.exe
