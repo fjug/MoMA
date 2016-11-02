@@ -13,7 +13,7 @@
  
 	<groupId>com.jug</groupId>
 	<artifactId>MotherMachine_</artifactId>
-	<version>0.10.0</version>
+	<version>0.10.1</version>
 
 	<name>MotherMachine_</name>
 
@@ -119,6 +119,12 @@
             <artifactId>commons-lang3</artifactId>
             <version>3.3.2</version>
         </dependency>
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+		</dependency>
 	</dependencies>
 
 	<build>
