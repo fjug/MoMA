@@ -85,7 +85,7 @@ public class MoMA {
 	/**
 	 * Identifier of current version
 	 */
-	public static final String VERSION_STRING = "MoMA_0.10.0";
+	public static final String VERSION_STRING = "MoMA_0.10.1";
 
 	// -------------------------------------------------------------------------------------
 	// statics
@@ -128,7 +128,7 @@ public class MoMA {
 	 * Prior knowledge: hard offset in detected well center lines - will be cut
 	 * of from top.
 	 */
-	public static int GL_OFFSET_TOP = 35;
+	public static int GL_OFFSET_TOP = 65;
 
 	/**
 	 * Prior knowledge: hard offset in detected well center lines - will be cut
@@ -425,7 +425,7 @@ public class MoMA {
 		File inputFolder = null;
 		if ( cmd.hasOption( "i" ) ) {
 			inputFolder = new File( cmd.getOptionValue( "i" ) );
-
+			/*
 			if ( !inputFolder.isDirectory() ) {
 				System.out.println( "Error: Input folder is not a directory!" );
 				if (!running_as_Fiji_plugin) {
@@ -433,7 +433,7 @@ public class MoMA {
 				} else {
 					return;
 				}
-			}
+			}*/
 			if ( !inputFolder.canRead() ) {
 				System.out.println( "Error: Input folder cannot be read!" );
 				if (!running_as_Fiji_plugin) {
@@ -1016,29 +1016,6 @@ public class MoMA {
 			}
 		} );
 
-		if ( !HEADLESS ) {
-			Image image = null;
-			try {
-				image = new ImageIcon( MoMA.class.getClassLoader().getResource( "IconMpiCbg128.png" ) ).getImage();
-			} catch (final Exception e) {
-				try {
-					image = new ImageIcon( MoMA.class.getClassLoader().getResource(
-									"resources/IconMpiCbg128.png" ) ).getImage();
-				} catch ( final Exception e2 ) {
-					System.out.println( ">>> Error: app icon not found..." );
-				}
-			}
-
-			if (image != null) {
-    			if ( OSValidator.isMac() ) {
-    				System.out.println( "On a Mac! --> trying to set icons..." );
-    				Application.getApplication().setDockIconImage( image );
-    			} else {
-    				System.out.println( "Not a Mac! --> trying to set icons..." );
-    				guiFrame.setIconImage( image );
-    			}
-			}
-		}
 	}
 
 	/**
@@ -1299,24 +1276,9 @@ public class MoMA {
 		setDatasetName( String.format( "%s >> %s", folder.getParentFile().getName(), folder.getName() ) );
 
 		// load channels separately into Img objects
-		rawChannelImgs = new ArrayList< Img< FloatType >>();
-		for ( int cIdx = minChannelIdx; cIdx < minChannelIdx + numChannels; cIdx++ ) {
+		rawChannelImgs = FloatTypeImgLoader.loadTiffsFromFileOrFolder(path, minTime, maxTime, minChannelIdx, numChannels + minChannelIdx - 1);
 
-			// load tiffs from folder
-			final String filter = String.format( "_c%04d", cIdx );
-			System.out.println( String.format( "Loading tiff sequence for channel, identified by '%s', from '%s'...", filter, path ) );
-			try {
-				if ( cIdx == minChannelIdx ) {
-					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, true, filter ) );
-				} else {
-					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, false, filter ) );
-				}
-			} catch ( final Exception e ) {
-				e.printStackTrace();
-				System.exit( 10 );
-			}
-			System.out.println( "Done loading tiffs!" );
-		}
+
 		imgRaw = rawChannelImgs.get( 0 );
 
 		// setup ARGB image (that will eventually contain annotations)
