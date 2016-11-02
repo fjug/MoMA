@@ -16,7 +16,7 @@ public class Utilities {
      *
      * @param folder to be created
      */
-    static void ensureFolderExists(String folder) {
+    public static void ensureFolderExists(String folder) {
         File file = new File(folder);
         if (!file.exists() || !file.isDirectory()) {
             file.mkdir();
