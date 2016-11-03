@@ -71,7 +71,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         // -------------------------------------------------------------------------------
         // create subfolders for intermediate and final analysis results
         String registeredFolder = inputFolder + "1_registered/";
-        String splitFolder = inputFolder + "2_splitted/";
+        String splitFolder = inputFolder + "2_split/";
         String analysisResultsFolder = inputFolder + "3_analysed/";
 
         Utilities.ensureFolderExists(registeredFolder);
