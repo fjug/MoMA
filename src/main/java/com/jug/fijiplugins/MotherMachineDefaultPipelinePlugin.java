@@ -1,5 +1,6 @@
 package com.jug.fijiplugins;
 
+import com.jug.gurobi.GurobiInstaller;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImagePlus;
@@ -32,6 +33,10 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
     @Override
     public void run(String s) {
 
+        if(!new GurobiInstaller().checkInstallation()) {
+            IJ.log("Gurobi appears not properly installed. Please check your installation!");
+            return;
+        }
 
         // -------------------------------------------------------------------------------
         // plugin configuration
