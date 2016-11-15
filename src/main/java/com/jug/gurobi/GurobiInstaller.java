@@ -3,7 +3,13 @@ package com.jug.gurobi;
 import com.jug.fijiplugins.MotherMachineAnalyserPlugin;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
+import ij.gui.GenericDialog;
+import ij.gui.MultiLineLabel;
+import ij.plugin.BrowserLauncher;
 
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -44,7 +50,7 @@ public class GurobiInstaller {
             GenericDialogPlus gurobiDialog = new GenericDialogPlus("Getting Gurobi License File");
             gurobiDialog.addMessage( "There was no gurobi license file found in your users home directory." );
             gurobiDialog.addMessage( "Please acquire a license at " );
-            gurobiDialog.addMessage( "http://www.gurobi.com/downloads/licenses/license-center" );
+            addHyperLink(gurobiDialog, "http://www.gurobi.com/downloads/licenses/license-center", "http://www.gurobi.com/downloads/licenses/license-center" );
             gurobiDialog.addMessage( "Afterwards, please copy and paste the string starting with \"grbgetkey\":" );
             gurobiDialog.addStringField( "", "", 45 );
             gurobiDialog.showDialog();
@@ -57,6 +63,54 @@ public class GurobiInstaller {
             Exec.runGrbgetkey( grbkeygetString.split( " " ) );
         }
 
+
+
         return gurobiLicFile.exists();
     }
+
+
+
+    private static final void addHyperLink(final GenericDialog gd, final String msg, final String url )
+    {
+        gd.addMessage( msg + "\n", new Font( Font.SANS_SERIF, Font.ITALIC + Font.BOLD, 12 ) );
+        MultiLineLabel text =  (MultiLineLabel) gd.getMessage();
+        addHyperLinkListener( text, url );
+    }
+
+    private static final void addHyperLinkListener( final MultiLineLabel text, final String myURL )
+    {
+        if ( text != null && myURL != null )
+        {
+            text.addMouseListener( new MouseAdapter()
+            {
+                @Override
+                public void mouseClicked( final MouseEvent e )
+                {
+                    try
+                    {
+                        BrowserLauncher.openURL( myURL );
+                    }
+                    catch ( Exception ex )
+                    {
+                        IJ.log( "" + ex);
+                    }
+                }
+
+                @Override
+                public void mouseEntered( final MouseEvent e )
+                {
+                    text.setForeground( Color.BLUE );
+                    text.setCursor( new java.awt.Cursor( java.awt.Cursor.HAND_CURSOR ) );
+                }
+
+                @Override
+                public void mouseExited( final MouseEvent e )
+                {
+                    text.setForeground( Color.BLACK );
+                    text.setCursor( new java.awt.Cursor( java.awt.Cursor.DEFAULT_CURSOR ) );
+                }
+            });
+        }
+    }
+
 }
