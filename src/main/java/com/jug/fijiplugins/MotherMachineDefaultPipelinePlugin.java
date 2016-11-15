@@ -155,7 +155,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         String[] datasets = Utilities.listSubFolderNames(splitFolder);
 
         if (datasets.length == 0) {
-            IJ.log("No data sets found. Consider removing the 2_spitted subfolder to rerun splitting (MMPreprocess).");
+            IJ.log("No data sets found. Consider removing the 2_split subfolder to rerun splitting (MMPreprocess).");
             return;
         }
         String[] dataSetDescriptions = new String[datasets.length];
