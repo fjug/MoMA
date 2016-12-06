@@ -4,33 +4,138 @@
 package com.jug.util;
 
 import ij.IJ;
+import ij.ImagePlus;
 import ij.Prefs;
+import ij.plugin.ChannelSplitter;
+import ij.plugin.Duplicator;
 import io.scif.img.ImgIOException;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import net.imglib2.IterableInterval;
-import net.imglib2.RandomAccessible;
-import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.*;
 import net.imglib2.algorithm.stats.Normalize;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author jug
  * 
  */
 public class FloatTypeImgLoader {
+
+	public static ArrayList <Img<FloatType>> loadTiffsFromFileOrFolder(String fileOrPathName, int minTime, int maxTime, int minChannel, int maxChannel) throws FileNotFoundException
+	{
+		File file = new File(fileOrPathName);
+
+		if (!file.exists()) {
+			throw new FileNotFoundException();
+		}
+
+		if (file.isDirectory()) {
+			return loadTiffsFromFolder( fileOrPathName, minTime, maxTime, minChannel, maxChannel);
+		} else {
+			return loadTiffsFromFile( fileOrPathName, minTime, maxTime, minChannel, maxChannel);
+		}
+	}
+
+	private static ArrayList<Img<FloatType>> loadTiffsFromFile(String filename, int minTime, int maxTime, int minChannel, int maxChannel) {
+
+		ArrayList<Img<FloatType>> rawChannelImgs = new ArrayList< Img< FloatType >>();
+
+		ImagePlus imp = IJ.openImage(filename);
+
+		int channelCount = imp.getNChannels();
+		int frameCount = imp.getNFrames();
+		if (channelCount == maxChannel - minChannel + 1 && (frameCount == maxTime - minTime + 1 || (minTime == -1 && maxTime == -1 )))
+		{
+			ImagePlus[] channelImps = ChannelSplitter.split(imp);
+			for (ImagePlus channelImp : channelImps)
+			{
+				Img<FloatType> img = ImageJFunctions.convertFloat(channelImp);
+				System.out.println("size before dupl "  + img.max(2));
+
+				// dirty workaround, see FloatTypeImgLoader.loadMMTiffSequence
+				img = duplicateLastSlice(img);
+
+				System.out.println("size after dupl "  + img.max(2));
+				rawChannelImgs.add(img);
+			}
+		} else { // this way is not very memory efficient, but I see no other easy alternative
+			int sliceCount = imp.getNSlices();
+
+			for (int c = minChannel; c <= maxChannel; c++) {
+				ImagePlus dupl = new Duplicator().run(imp, minChannel, maxChannel, 1, sliceCount, minTime, maxTime);
+				Img<FloatType> img = ImageJFunctions.convertFloat(dupl);
+
+				// dirty workaround, see FloatTypeImgLoader.loadMMTiffSequence
+				img = duplicateLastSlice(img);
+				rawChannelImgs.add(img);
+			}
+		}
+
+		System.out.println("size before norm  "  + rawChannelImgs.get(0).max(2));
+		// Normalise first channel
+		ArrayList<IntervalView<FloatType>> firstChannelSlices = Util.slice(rawChannelImgs.get( 0 ));
+		for (IntervalView<FloatType> slice : firstChannelSlices)
+		{
+			Normalize.normalize(slice, new FloatType( 0.0f ), new FloatType( 1.0f ) );
+		}
+		rawChannelImgs.set(0, Util.stack(firstChannelSlices));
+
+		System.out.println("size after norm  "  + rawChannelImgs.get(0).max(2));
+		return rawChannelImgs;
+	}
+
+	private static Img<FloatType> duplicateLastSlice(Img<FloatType> inImg) {
+		ArrayList<IntervalView<FloatType>> slices = Util.slice(inImg);
+
+		// duplicate last slice
+		slices.add(slices.get(slices.size() - 1));
+
+
+
+		return Util.stack(slices);
+	}
+
+	private static ArrayList<Img<FloatType>> loadTiffsFromFolder(String path, int minTime, int maxTime, int minChannel, int maxChannel) {
+
+		ArrayList<Img<FloatType>> rawChannelImgs = new ArrayList< Img< FloatType >>();
+		for ( int cIdx = minChannel; cIdx <= maxChannel; cIdx++ ) {
+
+			// load tiffs from folder
+			final String filter = String.format( "_c%04d", cIdx );
+			System.out.println( String.format( "Loading tiff sequence for channel, identified by '%s', from '%s'...", filter, path ) );
+			try {
+				if ( cIdx == minChannel ) {
+					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, true, filter ) );
+				} else {
+					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, false, filter ) );
+				}
+			} catch ( final Exception e ) {
+				e.printStackTrace();
+				System.exit( 10 );
+			}
+			System.out.println( "Done loading tiffs!" );
+		}
+
+		return rawChannelImgs;
+	}
+
+
 
 	/**
 	 * Loads all files containing ".tif" from a folder given by foldername.
@@ -59,8 +164,7 @@ public class FloatTypeImgLoader {
 					isMatching = isMatching && name.contains( filter );
 				}
 				if ( isMatching == true ) {
-					final String strTime = name.split( "_t" )[ 1 ].substring( 0, 4 );
-					final int time = Integer.parseInt( strTime );
+					final int time = getTimeFromFilename(name);
 					if ( ( minTime != -1 && time < minTime ) || ( maxTime != -1 && time > maxTime ) ) {
 						isMatching = false;
 					}
@@ -99,8 +203,7 @@ public class FloatTypeImgLoader {
 					isMatching = isMatching && name.contains( filter );
 				}
 				if ( isMatching == true ) {
-					final String strTime = name.split( "_t" )[ 1 ].substring( 0, 4 );
-					final int time = Integer.parseInt( strTime );
+					final int time = getTimeFromFilename(name);
 					if ( ( minTime != -1 && time < minTime ) || ( maxTime != -1 && time > maxTime ) ) {
 						isMatching = false;
 					}
@@ -298,7 +401,10 @@ public class FloatTypeImgLoader {
 		System.out.print( "\n >> Loading file '" + file.getName() + "' ..." );
 //		final List< SCIFIOImgPlus< FloatType >> imgs = imageOpener.openImgs( file.getAbsolutePath(), imgFactory, new FloatType() );
 //		final Img< FloatType > img = imgs.get( 0 ).getImg();
-		final Img< FloatType > img = ImagePlusAdapter.wrapReal( IJ.openImage( file.getAbsolutePath() ) );
+
+		//alert! this does not always work, just try with the test images or FloatTypeImgLoaderTest class
+		//final Img< FloatType > img = ImagePlusAdapter.wrapReal( IJ.openImage( file.getAbsolutePath() ) );
+		final Img< FloatType > img = ImagePlusAdapter.convertFloat( IJ.openImage( file.getAbsolutePath() ) );
 		return img;
 	}
 
@@ -635,6 +741,9 @@ public class FloatTypeImgLoader {
 
 		for ( int i = 0; i < listOfFiles.length; i++ ) {
 			String str = listOfFiles[ i ].getName();
+
+			final int num = getParameterFromFilename(str, prefix);
+			/*
 			str = str.substring( str.indexOf( prefix ) + prefix.length() );
 			int muh = str.indexOf( "_" );
 			int mah = str.indexOf( "." );
@@ -648,12 +757,60 @@ public class FloatTypeImgLoader {
 				num = Integer.parseInt( str );
 			} catch ( final NumberFormatException nfe ) {
 				throw new Exception( "Naming convention in given folder do not comply to rules... Bad user! ;)" );
-			}
+			}*/
 
 			if ( max < num ) max = num;
 		}
 
 		return max;
 	}
+
+	static int getTimeFromFilename(String filename) {
+		return getParameterFromFilename(filename, "t");
+	}
+
+	static int getChannelFromFilename(String filename) {
+		return getParameterFromFilename(filename, "c");
+	}
+
+	/**
+	 * This function looks for the last appearing _x0003 part in a filename like
+	 * /path_x3/test_xyz/filename_x33.tif and will return 33 in this case.
+	 *
+	 * @param filename
+	 * @param startsWith
+	 * @return
+	 */
+	private static int getParameterFromFilename(String filename, String startsWith) {
+		String[] arr = filename.split("_");
+
+		boolean resultValid = false;
+		int result = 0;
+		for (String item : arr) {
+			if (item.startsWith(startsWith)) {
+
+				for (int i = 1; i < item.length(); i++) {
+					String substr = item.substring(1, i+1);
+					if (isNumeric(substr))
+					{
+						result = Integer.parseInt(substr);
+						resultValid = true;
+					}
+				}
+			}
+		}
+		if (resultValid)
+		{
+			return result;
+		}
+		return 0;
+	}
+
+
+	private static boolean isNumeric(String text) {
+		return StringUtils.isNumeric(text);
+	}
+
+
 
 }

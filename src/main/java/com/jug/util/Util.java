@@ -9,13 +9,15 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import javax.imageio.ImageIO;
 
-import net.imglib2.IterableInterval;
-import net.imglib2.Point;
+import net.imglib2.*;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.integer.ShortType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -304,4 +306,47 @@ public class Util {
 		return Math.sqrt( sumOfSquares );
 	}
 
+	static ArrayList<IntervalView<FloatType>> slice(RandomAccessibleInterval<FloatType> inImg)
+	{
+		ArrayList<IntervalView<FloatType>> result = new ArrayList<IntervalView<FloatType>>();
+
+		for (long z = inImg.min(2); z <= inImg.max(2); z++) {
+			IntervalView<FloatType> sliceImg = Views.hyperSlice(inImg, 2, z);
+			result.add(sliceImg);
+		}
+		return result;
+	}
+
+	static Img<FloatType> stack(List<IntervalView<FloatType>> imgs)
+	{
+		long[] dims = new long[imgs.get(0).numDimensions() + 1];
+
+		for (int d = 0; d < dims.length - 1; d++) {
+			dims[d] = imgs.get(0).dimension(d);
+		}
+		dims[dims.length - 1] = imgs.size();
+
+		Img<FloatType> result = ArrayImgs.floats(dims);
+		for (int z = 0; z < imgs.size(); z++) {
+
+			// copy single slice
+			IntervalView<FloatType> sliceImgSource = imgs.get(z);
+			Cursor<FloatType> sliceImgCur = sliceImgSource.cursor();
+
+			RandomAccess<FloatType> outRa = result.randomAccess();
+
+			long[] position = new long[dims.length];
+
+			while (sliceImgCur.hasNext()) {
+				sliceImgCur.next();
+				sliceImgCur.localize(position);
+				position[dims.length - 1] = z;
+
+				outRa.setPosition(position);
+				outRa.get().set(sliceImgCur.get());
+			}
+		}
+
+		return result;
+	}
 }

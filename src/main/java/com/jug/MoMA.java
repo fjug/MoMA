@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -83,13 +85,14 @@ public class MoMA {
 	/**
 	 * Identifier of current version
 	 */
-	public static final String VERSION_STRING = "MoMA_0.9.6";
+	public static final String VERSION_STRING = "MoMA_0.10.4";
 
 	// -------------------------------------------------------------------------------------
 	// statics
 	// -------------------------------------------------------------------------------------
 	public static MoMA instance;
 	public static boolean HEADLESS = false;
+	public static boolean running_as_Fiji_plugin = false;
 
 	/**
 	 * Parameter: sigma for gaussian blurring in x-direction of the raw image
@@ -125,7 +128,7 @@ public class MoMA {
 	 * Prior knowledge: hard offset in detected well center lines - will be cut
 	 * of from top.
 	 */
-	public static int GL_OFFSET_TOP = 35;
+	public static int GL_OFFSET_TOP = 65;
 
 	/**
 	 * Prior knowledge: hard offset in detected well center lines - will be cut
@@ -388,13 +391,21 @@ public class MoMA {
 					"",
 					options,
 					"Error: " + e1.getMessage() );
-			System.exit( 0 );
+			if (!running_as_Fiji_plugin) {
+				System.exit( 0 );
+			} else {
+				return;
+			}
 		}
 
 		if ( cmd.hasOption( "help" ) ) {
 			final HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp( "... -i <in-folder> -o [out-folder] [-headless]", options );
-			System.exit( 0 );
+			if (!running_as_Fiji_plugin) {
+				System.exit( 0 );
+			} else {
+				return;
+			}
 		}
 
 		if ( cmd.hasOption( "h" ) ) {
@@ -403,21 +414,33 @@ public class MoMA {
 			if ( !cmd.hasOption( "i" ) ) {
 				final HelpFormatter formatter = new HelpFormatter();
 				formatter.printHelp( "Headless-mode requires option '-i <in-folder>'...", options );
-				System.exit( 0 );
+				if (!running_as_Fiji_plugin) {
+					System.exit( 0 );
+				} else {
+					return;
+				}
 			}
 		}
 
 		File inputFolder = null;
 		if ( cmd.hasOption( "i" ) ) {
 			inputFolder = new File( cmd.getOptionValue( "i" ) );
-
+			/*
 			if ( !inputFolder.isDirectory() ) {
 				System.out.println( "Error: Input folder is not a directory!" );
-				System.exit( 2 );
-			}
+				if (!running_as_Fiji_plugin) {
+					System.exit( 2 );
+				} else {
+					return;
+				}
+			}*/
 			if ( !inputFolder.canRead() ) {
 				System.out.println( "Error: Input folder cannot be read!" );
-				System.exit( 2 );
+				if (!running_as_Fiji_plugin) {
+					System.exit( 2 );
+				} else {
+					return;
+				}
 			}
 		}
 
@@ -425,7 +448,11 @@ public class MoMA {
 		if ( !cmd.hasOption( "o" ) ) {
 			if ( inputFolder == null ) {
 				System.out.println( "Error: Output folder would be set to a 'null' input folder! Please check your command line arguments..." );
-				System.exit( 3 );
+				if (!running_as_Fiji_plugin) {
+					System.exit( 3 );
+				} else {
+					return;
+				}
 			}
 			outputFolder = inputFolder;
 			STATS_OUTPUT_PATH = outputFolder.getAbsolutePath();
@@ -434,11 +461,19 @@ public class MoMA {
 
 			if ( !outputFolder.isDirectory() ) {
 				System.out.println( "Error: Output folder is not a directory!" );
-				System.exit( 3 );
+				if (!running_as_Fiji_plugin) {
+					System.exit( 3 );
+				} else {
+					return;
+				}
 			}
-			if ( !inputFolder.canWrite() ) {
+			if ( !outputFolder.canWrite() ) {
 				System.out.println( "Error: Output folder cannot be written to!" );
-				System.exit( 3 );
+				if (!running_as_Fiji_plugin) {
+					System.exit( 3 );
+				} else {
+					return;
+				}
 			}
 
 			STATS_OUTPUT_PATH = outputFolder.getAbsolutePath();
@@ -484,7 +519,11 @@ public class MoMA {
 						JOptionPane.ERROR_MESSAGE );
 			}
 			e.printStackTrace();
-			System.exit( 98 );
+			if (!running_as_Fiji_plugin) {
+				System.exit( 98 );
+			} else {
+				return;
+			}
 		} catch ( final UnsatisfiedLinkError ulr ) {
 			final String msgs = "Could initialize Gurobi.\n" + "You might not have installed Gurobi properly or you miss a valid license.\n" + "Please visit 'www.gurobi.com' for further information.\n\n" + ulr.getMessage() + "\nJava library path: " + jlp;
 			if ( HEADLESS ) {
@@ -498,7 +537,11 @@ public class MoMA {
 				ulr.printStackTrace();
 			}
 			System.out.println( "\n>>>>> Java library path: " + jlp + "\n" );
-			System.exit( 99 );
+			if (!running_as_Fiji_plugin) {
+				System.exit( 99 );
+			} else {
+				return;
+			}
 		}
 		// ******* END CHECK GUROBI **** END CHECK GUROBI **** END CHECK GUROBI ********
 
@@ -575,7 +618,10 @@ public class MoMA {
 		path = inputFolder.getAbsolutePath();
 		props.setProperty( "import_path", path );
 
-		GrowthLineSegmentationMagic.setClassifier( SEGMENTATION_CLASSIFIER_MODEL_FILE, "" );
+
+		//GrowthLineSegmentationMagic.setClassifier( tempfilename , "" );
+
+
 
 		if ( !HEADLESS ) {
 			// Setting up console window...
@@ -591,7 +637,11 @@ public class MoMA {
 			main.processDataFromFolder( path, minTime, maxTime, minChannelIdx, numChannels );
 		} catch ( final Exception e ) {
 			e.printStackTrace();
-			System.exit( 11 );
+			if (!running_as_Fiji_plugin) {
+				System.exit( 11 );
+			} else {
+				return;
+			}
 		}
 		// ------------------------------------------------------------------------------------------------------
 		// ------------------------------------------------------------------------------------------------------
@@ -640,7 +690,11 @@ public class MoMA {
 
 			instance.saveParams();
 
-			System.exit( 0 );
+			if (!running_as_Fiji_plugin) {
+				System.exit( 11 );
+			} else {
+				return;
+			}
 		}
 	}
 
@@ -954,33 +1008,14 @@ public class MoMA {
 			@Override
 			public void windowClosing( final WindowEvent we ) {
 				saveParams();
-				System.exit( 0 );
+				if (!running_as_Fiji_plugin) {
+					System.exit(0);
+				} else {
+					return;
+				}
 			}
 		} );
 
-		if ( !HEADLESS ) {
-			Image image = null;
-			try {
-				image = new ImageIcon( MoMA.class.getClassLoader().getResource( "IconMpiCbg128.png" ) ).getImage();
-			} catch (final Exception e) {
-				try {
-					image = new ImageIcon( MoMA.class.getClassLoader().getResource(
-									"resources/IconMpiCbg128.png" ) ).getImage();
-				} catch ( final Exception e2 ) {
-					System.out.println( ">>> Error: app icon not found..." );
-				}
-			}
-
-			if (image != null) {
-    			if ( OSValidator.isMac() ) {
-    				System.out.println( "On a Mac! --> trying to set icons..." );
-    				Application.getApplication().setDockIconImage( image );
-    			} else {
-    				System.out.println( "Not a Mac! --> trying to set icons..." );
-    				guiFrame.setIconImage( image );
-    			}
-			}
-		}
 	}
 
 	/**
@@ -1241,24 +1276,9 @@ public class MoMA {
 		setDatasetName( String.format( "%s >> %s", folder.getParentFile().getName(), folder.getName() ) );
 
 		// load channels separately into Img objects
-		rawChannelImgs = new ArrayList< Img< FloatType >>();
-		for ( int cIdx = minChannelIdx; cIdx < minChannelIdx + numChannels; cIdx++ ) {
+		rawChannelImgs = FloatTypeImgLoader.loadTiffsFromFileOrFolder(path, minTime, maxTime, minChannelIdx, numChannels + minChannelIdx - 1);
 
-			// load tiffs from folder
-			final String filter = String.format( "_c%04d", cIdx );
-			System.out.println( String.format( "Loading tiff sequence for channel, identified by '%s', from '%s'...", filter, path ) );
-			try {
-				if ( cIdx == minChannelIdx ) {
-					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, true, filter ) );
-				} else {
-					rawChannelImgs.add( FloatTypeImgLoader.loadMMPathAsStack( path, minTime, maxTime, false, filter ) );
-				}
-			} catch ( final Exception e ) {
-				e.printStackTrace();
-				System.exit( 10 );
-			}
-			System.out.println( "Done loading tiffs!" );
-		}
+
 		imgRaw = rawChannelImgs.get( 0 );
 
 		// setup ARGB image (that will eventually contain annotations)
