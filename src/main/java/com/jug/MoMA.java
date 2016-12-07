@@ -3,7 +3,6 @@ package com.jug;
 import java.awt.FileDialog;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
-import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -15,14 +14,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -40,7 +37,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.SystemUtils;
 
-import com.apple.eawt.Application;
 import com.jug.gui.MoMAGui;
 import com.jug.gui.MoMAModel;
 import com.jug.gui.progress.DialogProgress;
@@ -51,7 +47,6 @@ import com.jug.segmentation.GrowthLineSegmentationMagic;
 import com.jug.segmentation.SilentWekaSegmenter;
 import com.jug.util.DataMover;
 import com.jug.util.FloatTypeImgLoader;
-import com.jug.util.OSValidator;
 import com.jug.util.converter.RealFloatProbMapToSegmentation;
 
 /**
@@ -85,7 +80,7 @@ public class MoMA {
 	/**
 	 * Identifier of current version
 	 */
-	public static final String VERSION_STRING = "MoMA_0.10.4";
+	public static final String VERSION_STRING = "MoMA_0.10.6";
 
 	// -------------------------------------------------------------------------------------
 	// statics
@@ -1159,16 +1154,16 @@ public class MoMA {
 		}
 
 		try {
-			if ( is == null ) {
-				// Try loading from classpath
-				System.out.println( "Loading default properties from: " + getClass().getResource( "mm.properties" ) );
-				is = getClass().getResourceAsStream( "mm.properties" );
+			URL propslURL = ClassLoader.getSystemResource( "mm.properties" );
+			if ( propslURL == null ) {
+				propslURL = getClass().getClassLoader().getResource( "mm.properties" );
 			}
+			if ( propslURL != null ) {
+				is = propslURL.openStream();
+				defaultProps.load( is );
+				System.out.println( " >> default properties loaded!" );
 
-			// Try loading properties from the file (if found)
-			defaultProps.load( is );
-
-			System.out.println( " >> default properties loaded!" );
+			}
 		} catch ( final Exception e ) {
 			System.out.println( "No default properties file 'mm.properties' found in current path or classpath... I will create one at termination time!" );
 		}
