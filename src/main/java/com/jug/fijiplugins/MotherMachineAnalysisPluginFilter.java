@@ -23,7 +23,7 @@ public class MotherMachineAnalysisPluginFilter implements PlugInFilter {
     @Override
     public void run(ImageProcessor imageProcessor) {
 
-        if(!new GurobiInstaller().checkInstallation()) {
+        if(!GurobiInstaller.checkInstallation()) {
             IJ.log("Gurobi appears not properly installed. Please check your installation!");
             return;
         }

@@ -14,6 +14,11 @@ import java.io.File;
 import java.util.ArrayList;
 
 /**
+ * This plugin represents the full pipeline of the MoMA analysis
+ * - Registration of images (motion correction)
+ * - Splitting the different growth channels from the original huge images
+ * - Analyse one particular growth channel. If the user wants to analyse another Growth channel, he just need to restart this plugin.
+ *
  * Author: Robert Haase, Scientific Computing Facility, MPI-CBG Dresden, rhaase@mpi-cbg.de
  * Date: October 2016
  */
@@ -33,7 +38,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
     @Override
     public void run(String s) {
 
-        if(!new GurobiInstaller().checkInstallation()) {
+        if(!GurobiInstaller.checkInstallation()) {
             IJ.log("Gurobi appears not properly installed. Please check your installation!");
             return;
         }

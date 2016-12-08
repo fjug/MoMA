@@ -11,6 +11,9 @@ import ij.plugin.PlugIn;
 /**
  * MotherMachine Analysis plugin
  *
+ * This plugin represents a users entry point for using the MoMA. The plugin asks for a folder where the images showing
+ * one particular growth channel is saved and analyses it.
+ *
  * Author: Robert Haase, Scientific Computing Facility, MPI-CBG Dresden, rhaase@mpi-cbg.de
  * Author: HongKee Moon (moon@mpi-cbg.de), Scientific Computing Facility
  * Organization: MPI-CBG Dresden
@@ -34,7 +37,7 @@ public class MotherMachineAnalyserPlugin implements PlugIn {
     @Override
     public void run(String s) {
 
-		if(!new GurobiInstaller().checkInstallation()) {
+		if(!GurobiInstaller.checkInstallation()) {
 			IJ.log("Gurobi appears not properly installed. Please check your installation!");
 			return;
 		}
