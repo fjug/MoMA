@@ -249,8 +249,7 @@ public class DialogPropertiesEditor extends JDialog implements ActionListener {
 		sheet.setSortingCategories( false );
 		sheet.setSortingProperties( false );
 		sheet.setRestoreToggleStates( false );
-		for ( final Object propKey : this.props.keySet() ) {
-			final String key = propKey.toString();
+		for ( final String key : this.props.stringPropertyNames() ) {
 			sheet.addProperty( PropFactory.buildFor( key, props.getProperty( key ) ) );
 		}
 //		sheet.setEditorFactory( PropertyEditorRegistry.Instance );
