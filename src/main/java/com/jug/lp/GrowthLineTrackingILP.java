@@ -575,7 +575,7 @@ public class GrowthLineTrackingILP {
 	 * @return the cost we want to set for the given combination of segmentation
 	 *         hypothesis.
 	 */
-	private Pair< Float, float[] > compatibilityCostOfMapping(
+	protected Pair< Float, float[] > compatibilityCostOfMapping(
 			final Hypothesis< Component< FloatType, ? > > from,
 			final Hypothesis< Component< FloatType, ? > > to ) {
 		final long sizeFrom = from.getWrappedHypothesis().size();
@@ -730,7 +730,7 @@ public class GrowthLineTrackingILP {
 	 * @return the cost we want to set for the given combination of segmentation
 	 *         hypothesis.
 	 */
-	private Pair< Float, float[] > compatibilityCostOfDivision(
+	protected Pair< Float, float[] > compatibilityCostOfDivision(
 			final Hypothesis< Component< FloatType, ? > > from,
 			final Hypothesis< Component< FloatType, ? > > toUpper,
 			final Hypothesis< Component< FloatType, ? > > toLower ) {
@@ -1163,6 +1163,27 @@ public class GrowthLineTrackingILP {
 			if ( MoMA.getGui() != null ) {
 				MoMA.getGui().dataToDisplayChanged();
 			}
+
+			// Relaxation run-test for Paul and Bogdan
+			// - - - - - - - - - - - - - - - - - - - -
+//			System.out.println( ">> Relaxing problem..." );
+//			final GRBModel r = model.relax();
+//			System.out.println( ">> Solving relaxed problem..." );
+//			r.optimize();
+//			System.out.println( ">> Counting integral variables..." );
+//			int integral = 0;
+//			int matching = 0;
+//			int numvars = 0;
+//			for ( int idx = 0; idx < r.getVars().length; idx++ ) {
+//				final GRBVar var = model.getVars()[ idx ];
+//				final GRBVar varRelaxed = r.getVars()[ idx ];
+//				final double x = var.get( GRB.DoubleAttr.X );
+//				final double xRelaxed = varRelaxed.get( GRB.DoubleAttr.X );
+//				if ( xRelaxed == 0.0 || xRelaxed == 1.0 ) integral++;
+//				if ( x == xRelaxed ) matching++;
+//				numvars++;
+//			}
+//			System.out.println( String.format( ">> %d, %d, %d", numvars, integral, matching ) );
 
 			// Read solution and extract interpretation
 			// - - - - - - - - - - - - - - - - - - - - -
@@ -2348,6 +2369,115 @@ public class GrowthLineTrackingILP {
 	 */
 	public CostManager getCostManager() {
 		return costManager;
+	}
+
+	/**
+	 * Stores the tracking problem according to the format designed with Paul
+	 * Swoboda (IST).
+	 * See also: https://docs.google.com/document/d/1f_L3PF8WQZdLZsQZb7xb_Z7GwZ9RN1_yotGeWjb-ihU/edit
+	 *
+	 * @param file
+	 */
+	public void exportFG_PAUL( final File file ) {
+
+		final FactorGraphFileBuilder_PAUL fgFile = new FactorGraphFileBuilder_PAUL();
+
+		// HYPOTHESES SECTION
+		for ( int t = 0; t < nodes.getNumberOfTimeSteps(); t++ ) {
+
+			fgFile.markNextTimepoint();
+
+			final List< Hypothesis< Component< FloatType, ? > > > hyps_t = nodes.getAllHypotheses().get( t );
+			for ( final Hypothesis< Component< FloatType, ? > > hyp : hyps_t ) {
+
+				// variables for assignments
+				final int hyp_id = fgFile.addHyp( hyp );
+			}
+
+			// Get the full component tree
+			final ComponentForest< ? > ct = gl.get( t ).getComponentTree();
+			// And call the function adding all the path-blocking-constraints...
+			for ( final Component< ?, ? > ctRoot : ct.roots() ) {
+				// And call the function adding all the path-blocking-constraints...
+				recursivelyAddPathBlockingHypotheses( fgFile, ctRoot, t );
+			}
+		}
+
+		// HYPOTHESES SECTION
+		fgFile.addLine( "\n# ASSIGNMENTS ASSIGNMENTS ASSIGNMENTS ASSIGNMENTS ASSIGNMENTS ASSIGNMENTS ASSIGNMENTS" );
+
+		fgFile.addLine( "\n# MAPPINGS" );
+		for ( int t = 0; t < nodes.getNumberOfTimeSteps(); t++ ) {
+			final List< Hypothesis< Component< FloatType, ? > > > hyps_t = nodes.getAllHypotheses().get( t );
+			for ( final Hypothesis< Component< FloatType, ? > > hyp : hyps_t ) {
+				final HashMap< Hypothesis< Component< FloatType, ? > >, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > > mapRightNeighbors =
+						this.getAllCompatibleRightAssignments( t );
+				final Set< AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > assmnts = mapRightNeighbors.get( hyp );
+				if ( assmnts != null ) {
+					for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? > > > assmnt : assmnts ) {
+						if ( assmnt instanceof MappingAssignment ) {
+							fgFile.addMapping( this, t, ( MappingAssignment ) assmnt );
+						}
+					}
+				}
+			}
+		}
+
+		fgFile.addLine( "\n# DIVISIONS" );
+		for ( int t = 0; t < nodes.getNumberOfTimeSteps(); t++ ) {
+			final List< Hypothesis< Component< FloatType, ? > > > hyps_t = nodes.getAllHypotheses().get( t );
+			for ( final Hypothesis< Component< FloatType, ? > > hyp : hyps_t ) {
+				final HashMap< Hypothesis< Component< FloatType, ? > >, Set< AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > > mapRightNeighbors =
+						this.getAllCompatibleRightAssignments( t );
+				final Set< AbstractAssignment< Hypothesis< Component< FloatType, ? > > > > assmnts = mapRightNeighbors.get( hyp );
+				if ( assmnts != null ) {
+					for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? > > > assmnt : assmnts ) {
+						if ( assmnt instanceof DivisionAssignment ) {
+							fgFile.addDivision( this, t, ( DivisionAssignment ) assmnt );
+						}
+					}
+				}
+			}
+		}
+
+		fgFile.addLine( "\n# EXITS (not needed, one per hypothesis, cost always 0)" );
+
+		// WRITE FILE
+		fgFile.write( file );
+	}
+
+	private void recursivelyAddPathBlockingHypotheses(
+			final FactorGraphFileBuilder_PAUL fgFile,
+			final Component< ?, ? > ctNode,
+			final int t ) {
+
+		// if ctNode is a leave node -> add constraint (by going up the list of
+		// parents and building up the constraint)
+		if ( ctNode.getChildren().size() == 0 ) {
+			Component< ?, ? > runnerNode = ctNode;
+
+			final List< Hypothesis< Component< FloatType, ? > > > hyps = new ArrayList< Hypothesis< Component< FloatType, ? > > >();
+			while ( runnerNode != null ) {
+				@SuppressWarnings( "unchecked" )
+				final Hypothesis< Component< FloatType, ? > > hypothesis =
+						( Hypothesis< Component< FloatType, ? > > ) nodes.findHypothesisContaining( runnerNode );
+				if ( hypothesis == null ) {
+					System.err.println(
+							"A WARNING: Hypothesis for a CTN was not found in GrowthLineTrackingILP -- this is an indication for some design problem of the system!" );
+				} else {
+					hyps.add( hypothesis );
+				}
+
+				runnerNode = runnerNode.getParent();
+			}
+			// Add the Exclusion Constraint (finally)
+			fgFile.addExclusionConstraint( hyps );
+		} else {
+			// if ctNode is a inner node -> recursion
+			for ( final Component< ?, ? > ctChild : ctNode.getChildren() ) {
+				recursivelyAddPathBlockingHypotheses( fgFile, ctChild, t );
+			}
+		}
 	}
 
 }

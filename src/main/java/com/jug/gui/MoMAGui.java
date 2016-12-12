@@ -1136,7 +1136,8 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 					System.out.println( "Using existing ILP (possibly containing user-defined ground-truth bits)..." );
 				}
 				System.out.println( "Saving ILP as FactorGraph..." );
-				model.getCurrentGL().getIlp().exportFG_PASCAL( file );
+//				model.getCurrentGL().getIlp().exportFG_PASCAL( file );
+				model.getCurrentGL().getIlp().exportFG_PAUL( file );
 				System.out.println( "...done!" );
 			}
 		}

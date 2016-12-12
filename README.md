@@ -23,6 +23,16 @@ We show how all proposed interactions can be elegantly incorporated into the ass
 After interactively pointing at a single mistake, multiple segmentation and tracking errors are fixed automatically in one single
 reevaluation of the model.
 
+
+## Application
+To get started, read our
+* [Installation guide](https://github.com/fjug/MoMA/wiki/Installation%20guide)
+* [Quick user guide](https://github.com/fjug/MoMA/wiki/Quick%20user%20guide)
+
+and download
+* [Example datasets](https://github.com/fjug/MoMA/wiki/MoMA%20Datasets)
+* [Tutorial movies](https://github.com/fjug/MoMA/wiki/MoMA%20Movies)
+
 ## Publications
 [Optimal Joint Segmentation and Tracking of Escherichia Coli in the Mother Machine](http://link.springer.com/chapter/10.1007/978-3-319-12289-2_3#page-1)
 F Jug, T Pietzsch, D Kainmüller, J Funke, M Kaiser, E van Nimwegen, G Myers
