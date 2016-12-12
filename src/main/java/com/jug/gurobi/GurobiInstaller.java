@@ -21,7 +21,7 @@ import java.net.URL;
  * Date: October 2016
  */
 public class GurobiInstaller {
-    public boolean checkInstallation()
+    public static boolean checkInstallation()
     {
         final Class<?> clazz = MotherMachineAnalyserPlugin.class;
         final String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();

@@ -1181,6 +1181,20 @@ public class MoMA {
 			} catch ( final IOException e ) {
 				System.out.println( "ERROR: Could not read user props!" );
 			}
+		} else {
+			File userHomeMMProperties = new File(System.getProperty("user.home") + "/.moma/mmuser.properties");
+			if (userHomeMMProperties.canRead()) {
+				System.out.println( "Loading user properties from: " + userHomeMMProperties.getAbsolutePath() );
+				try {
+					is = new FileInputStream( userHomeMMProperties );
+					props.load( is );
+					System.out.println( " >> user properties loaded!" );
+				} catch ( final FileNotFoundException e ) {
+					System.out.println( "ERROR: Could not find user props!" );
+				} catch ( final IOException e ) {
+					System.out.println( "ERROR: Could not read user props!" );
+				}
+			}
 		}
 
 		return props;
