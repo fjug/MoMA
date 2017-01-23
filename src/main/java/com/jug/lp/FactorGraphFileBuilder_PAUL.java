@@ -21,7 +21,7 @@ import net.imglib2.util.Pair;
 public class FactorGraphFileBuilder_PAUL {
 
 	int next_t = 0;
-	int next_hyp_id = 0;
+	int next_hyp_id = -1; //will be set to 0 in markNextTimepoint()
 
 	List< String > lines = new ArrayList< String >();
 
@@ -30,6 +30,16 @@ public class FactorGraphFileBuilder_PAUL {
 	public FactorGraphFileBuilder_PAUL() {
 		mapHypId = new HashMap< Hypothesis< Component< FloatType, ? > >, Integer >();
 		lines.add( "# EXPORTED MM-TRACKING (jug@mpi-cbg.de)\n" );
+		lines.add( "# objective_value = NOT_COMPUTED" );
+		lines.add( "# SEGMENTS" );
+		lines.add( "# Note: ids must be given such that hypotheses are ordered from top to bottom" );
+		lines.add( "# (in order to implicitly know about exit constraints)\n" );
+	}
+
+	public FactorGraphFileBuilder_PAUL( final double optimal_energy ) {
+		mapHypId = new HashMap< Hypothesis< Component< FloatType, ? > >, Integer >();
+		lines.add( "# EXPORTED MM-TRACKING (jug@mpi-cbg.de)\n" );
+		lines.add( "# objective_value = " + optimal_energy );
 		lines.add( "# SEGMENTS" );
 		lines.add( "# Note: ids must be given such that hypotheses are ordered from top to bottom" );
 		lines.add( "# (in order to implicitly know about exit constraints)\n" );
@@ -39,12 +49,13 @@ public class FactorGraphFileBuilder_PAUL {
 	 * writes a time-point tag into <code>lines</code>.
 	 */
 	public void markNextTimepoint() {
-		if ( next_hyp_id == 0 ) {
+		if ( next_hyp_id == -1 ) {
 			lines.add( "# #### SEGMENTS (HYPOTHESES) ###################################" );
 		}
 
 		lines.add( "\nt=" + next_t + "\n" );
 		next_t++;
+		next_hyp_id = 0;
 	}
 
 	/**
@@ -68,7 +79,7 @@ public class FactorGraphFileBuilder_PAUL {
 	 * @param hyps
 	 */
 	public void addExclusionConstraint( final List< Hypothesis< Component< FloatType, ? > > > hyps ) {
-		String str = "EC ";
+		String str = "EC ";// + hyps.get( 0 ).getTime();
 		boolean first = true;
 		for ( final Hypothesis< Component< FloatType, ? > > hyp : hyps ) {
 			if ( first ) {
@@ -117,7 +128,14 @@ public class FactorGraphFileBuilder_PAUL {
 		final Hypothesis< Component< FloatType, ? > > sourceHypothesis = assmnt.getSourceHypothesis();
 		final Hypothesis< Component< FloatType, ? > > destinationHypothesis = assmnt.getDestinationHypothesis();
 		final Pair< Float, float[] > cost = ilp.compatibilityCostOfMapping( sourceHypothesis, destinationHypothesis );
-		lines.add( String.format( "MA %d %d %d %f", t, mapHypId.get( sourceHypothesis ), mapHypId.get( destinationHypothesis ), cost.getA() ) );
+		lines.add(
+				String.format(
+						"MA %d %d %d %d %f",
+						t,
+						mapHypId.get( sourceHypothesis ),
+						t + 1,
+						mapHypId.get( destinationHypothesis ),
+						cost.getA() ) );
 	}
 
 	/**
@@ -133,9 +151,10 @@ public class FactorGraphFileBuilder_PAUL {
 				ilp.compatibilityCostOfDivision( sourceHypothesis, destinationHypothesisUpper, destinationHypothesisLower );
 		lines.add(
 				String.format(
-						"DA %d %d %d %d %f",
+						"DA %d %d %d %d %d %f",
 						t,
 						mapHypId.get( sourceHypothesis ),
+						t + 1,
 						mapHypId.get( destinationHypothesisUpper ),
 						mapHypId.get( destinationHypothesisLower ),
 						cost.getA() ) );

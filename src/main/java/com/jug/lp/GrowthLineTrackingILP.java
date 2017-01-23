@@ -2380,7 +2380,12 @@ public class GrowthLineTrackingILP {
 	 */
 	public void exportFG_PAUL( final File file ) {
 
-		final FactorGraphFileBuilder_PAUL fgFile = new FactorGraphFileBuilder_PAUL();
+		FactorGraphFileBuilder_PAUL fgFile;
+		try {
+			fgFile = new FactorGraphFileBuilder_PAUL( model.get( GRB.DoubleAttr.ObjVal ) );
+		} catch ( final GRBException e ) {
+			fgFile = new FactorGraphFileBuilder_PAUL();
+		}
 
 		// HYPOTHESES SECTION
 		for ( int t = 0; t < nodes.getNumberOfTimeSteps(); t++ ) {
