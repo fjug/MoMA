@@ -12,7 +12,7 @@ import java.net.URL;
  */
 public class NativeLibrary
 {
-	public static void copyLibraries( final URL pluginUrl ) throws URISyntaxException, MalformedURLException
+	public static boolean copyLibraries( final URL pluginUrl ) throws URISyntaxException, MalformedURLException
 	{
 		//		IJ.log( System.getProperty( "user.dir" ) );
 
@@ -30,7 +30,7 @@ public class NativeLibrary
 				final File dest = new File( path + File.separator + "lib" + File.separator + "macosx" );
 				dest.mkdirs();
 
-				FileUtils.copyResourcesRecursively( url, new File( path + File.separator + "lib" ), dest );
+				return FileUtils.copyResourcesRecursively( url, new File( path + File.separator + "lib" ), dest );
 			}
 			else
 			{
@@ -46,7 +46,7 @@ public class NativeLibrary
 				final File dest = new File( path + File.separator + "lib" + File.separator + "win64" );
 				dest.mkdirs();
 
-				FileUtils.copyResourcesRecursively( url, new File( path + File.separator + "lib" ), dest );
+				return FileUtils.copyResourcesRecursively( url, new File( path + File.separator + "lib" ), dest );
 			}
 			else if ( archName.startsWith( "x86" ) )
 			{
@@ -55,7 +55,7 @@ public class NativeLibrary
 				final File dest = new File( path + File.separator + "lib" + File.separator + "win32" );
 				dest.mkdirs();
 
-				FileUtils.copyResourcesRecursively( url, new File( path + File.separator + "lib" ), dest );
+				return FileUtils.copyResourcesRecursively( url, new File( path + File.separator + "lib" ), dest );
 			}
 		}
 		else if ( osName.startsWith( "linux" ) )
@@ -67,7 +67,7 @@ public class NativeLibrary
 				final File dest = new File( path + File.separator + "lib" + File.separator + "linux64" );
 				dest.mkdirs();
 
-				FileUtils.copyResourcesRecursively( url, new File( path + File.separator + "lib" ), dest );
+				return FileUtils.copyResourcesRecursively( url, new File( path + File.separator + "lib" ), dest );
 			}
 			else if ( archName.startsWith( "i386" ) )
 			{
@@ -78,5 +78,6 @@ public class NativeLibrary
 		{
 			throw new UnsupportedOperationException( "Your OS is not supported." );
 		}
+		return false;
 	}
 }
