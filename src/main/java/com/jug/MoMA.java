@@ -520,7 +520,7 @@ public class MoMA {
 				return;
 			}
 		} catch ( final UnsatisfiedLinkError ulr ) {
-			final String msgs = "Could initialize Gurobi.\n" + "You might not have installed Gurobi properly or you miss a valid license.\n" + "Please visit 'www.gurobi.com' for further information.\n\n" + ulr.getMessage() + "\nJava library path: " + jlp;
+			final String msgs = "Could not initialize Gurobi.\n" + "You might not have installed Gurobi properly or you miss a valid license.\n" + "Please visit 'www.gurobi.com' for further information.\n\n" + ulr.getMessage() + "\nJava library path: " + jlp;
 			if ( HEADLESS ) {
 				System.out.println( msgs );
 			} else {
