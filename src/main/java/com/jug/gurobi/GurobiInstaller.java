@@ -1,7 +1,10 @@
 package com.jug.gurobi;
 
+import com.jug.MoMA;
 import com.jug.fijiplugins.MotherMachineAnalyserPlugin;
 import fiji.util.gui.GenericDialogPlus;
+import gurobi.GRBEnv;
+import gurobi.GRBException;
 import ij.IJ;
 import ij.gui.GenericDialog;
 import ij.gui.MultiLineLabel;
@@ -14,6 +17,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import javax.swing.*;
 
 /**
  * Author: HongKee Moon (moon@mpi-cbg.de), Robert Haase(rhaase@mpi-cbg.de) Scientific Computing Facility
@@ -27,9 +31,12 @@ public class GurobiInstaller {
         final String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();
         final String pluginsDir = url.substring(0, url.length() - clazz.getName().length() - 6);
 
+        boolean actuallyCopiedGurobiFiles = false;
+
         try
         {
-            NativeLibrary.copyLibraries( new URL(pluginsDir) );
+            actuallyCopiedGurobiFiles = NativeLibrary.copyLibraries( new URL(pluginsDir) );
+            System.out.println("copyLibraries succeeded? " + actuallyCopiedGurobiFiles);
         }
         catch ( URISyntaxException e )
         {
@@ -63,7 +70,25 @@ public class GurobiInstaller {
             Exec.runGrbgetkey( grbkeygetString.split( " " ) );
         }
 
+        if (actuallyCopiedGurobiFiles) {
+            boolean restartNeccessary = false;
 
+            try {
+                new GRBEnv( "MoMA_gurobi.log" );
+            } catch ( final GRBException e ) {
+                restartNeccessary = true;
+            } catch ( final UnsatisfiedLinkError ulr ) {
+                restartNeccessary = true;
+            }
+
+            if (restartNeccessary) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Installation of a module (Gurobi Optimizer) is requesting for a restart. Please restart ImageJ/FIJI.",
+                        "Gurobi Installation",
+                        JOptionPane.ERROR_MESSAGE );
+            }
+        }
 
         return gurobiLicFile.exists();
     }
