@@ -1197,6 +1197,9 @@ public class GrowthLineTrackingILP {
 					dialog.setVisible( false );
 					dialog.dispose();
 				}
+				// LP export for Paul and Bogdan
+				// - - - - - - - - - - - - - - - - - - - -
+//				model.write( "/Users/jug/Desktop/forPaul.lp" );
 			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.INFEASIBLE ) {
 				status = INFEASIBLE;
 				if ( !MoMA.HEADLESS ) {
