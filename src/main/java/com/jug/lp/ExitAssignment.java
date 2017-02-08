@@ -57,9 +57,11 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< F
 
 		expr.addTerm( Hup.size(), this.getGRBVar() );
 
+		boolean add = false;
 		for ( final Hypothesis< Component< FloatType, ? >> upperHyp : Hup ) {
 			if ( edges.getRightNeighborhood( upperHyp ) != null ) {
 				for ( final AbstractAssignment< Hypothesis< Component< FloatType, ? >>> a_j : edges.getRightNeighborhood( upperHyp ) ) {
+					add = true;
 					if ( a_j.getType() == GrowthLineTrackingILP.ASSIGNMENT_EXIT ) {
 						continue;
 					}
@@ -69,7 +71,7 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< Component< F
 			}
 		}
 
-		if ( !MoMA.DISABLE_EXIT_CONSTRAINTS ) {
+		if ( add && !MoMA.DISABLE_EXIT_CONSTRAINTS ) {
 			ilp.model.addConstr( expr, GRB.LESS_EQUAL, Hup.size(), "dc_" + dcId );
 		}
 		dcId++;
