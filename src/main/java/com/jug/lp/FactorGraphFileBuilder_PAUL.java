@@ -59,26 +59,12 @@ public class FactorGraphFileBuilder_PAUL {
 	}
 
 	/**
-	 * Adds a hypotheses.
-	 *
-	 * @param hyp
-	 *
-	 * @return the id of the added hypothesis.
-	 */
-	public int addHyp( final Hypothesis< Component< FloatType, ? > > hyp ) {
-		mapHypId.put( hyp, next_hyp_id );
-		lines.add( String.format( "H %d %f (%d,%d)", next_hyp_id, hyp.getCosts(), hyp.getLocation().a, hyp.getLocation().b ) );
-		next_hyp_id++;
-		return next_hyp_id - 1;
-	}
-
-	/**
 	 * Adds an exclusion constraint (of hyps that cannot be turned on
 	 * simultaneously)
 	 *
 	 * @param hyps
 	 */
-	public void addExclusionConstraint( final List< Hypothesis< Component< FloatType, ? > > > hyps ) {
+	public void addPathBlockingConstraint( final List< Hypothesis< Component< FloatType, ? > > > hyps ) {
 		String str = "EC ";// + hyps.get( 0 ).getTime();
 		boolean first = true;
 		for ( final Hypothesis< Component< FloatType, ? > > hyp : hyps ) {
@@ -120,6 +106,27 @@ public class FactorGraphFileBuilder_PAUL {
 	}
 
 	/**
+	 * Adds a hypotheses.
+	 *
+	 * @param hyp
+	 *
+	 * @return the id of the added hypothesis.
+	 */
+	public int addHyp( final GrowthLineTrackingILP ilp, final Hypothesis< Component< FloatType, ? > > hyp ) {
+		mapHypId.put( hyp, next_hyp_id );
+		double exitCost = ilp.costModulationForSubstitutedILP( hyp.getCosts() );
+		if (hyp.getTime() == ilp.getGrowthLine().size() - 1) {
+			exitCost = 0;
+		}
+		lines.add( String.format( "H %d %d %.16f %.16f (%d,%d)", next_hyp_id, hyp.getId(), 0f, exitCost, hyp.getLocation().a, hyp.getLocation().b ) );
+																			// the hypcosts are all 0 because we fold them into
+																			// the assignments according to the way we substitute
+																			// the corresponding variable for the ILP anyways.
+		next_hyp_id++;
+		return next_hyp_id - 1;
+	}
+
+	/**
 	 * @param ilp
 	 * @param t
 	 * @param assmnt
@@ -127,15 +134,18 @@ public class FactorGraphFileBuilder_PAUL {
 	public void addMapping( final GrowthLineTrackingILP ilp, final int t, final MappingAssignment assmnt ) {
 		final Hypothesis< Component< FloatType, ? > > sourceHypothesis = assmnt.getSourceHypothesis();
 		final Hypothesis< Component< FloatType, ? > > destinationHypothesis = assmnt.getDestinationHypothesis();
-		final Pair< Float, float[] > cost = ilp.compatibilityCostOfMapping( sourceHypothesis, destinationHypothesis );
-		lines.add(
-				String.format(
-						"MA %d %d %d %d %f",
-						t,
-						mapHypId.get( sourceHypothesis ),
-						t + 1,
-						mapHypId.get( destinationHypothesis ),
-						cost.getA() ) );
+		final float mappingCost = ilp.compatibilityCostOfMapping( sourceHypothesis, destinationHypothesis ).getA();
+		final double cost = ilp.costModulationForSubstitutedILP( sourceHypothesis.getCosts(), destinationHypothesis.getCosts(), mappingCost );
+		if ( cost <= GrowthLineTrackingILP.CUTOFF_COST ) {
+			lines.add(
+					String.format(
+							"MA %d %d %d %d %.16f",
+							t,
+							mapHypId.get( sourceHypothesis ),
+							t + 1,
+							mapHypId.get( destinationHypothesis ),
+							cost ) );
+		}
 	}
 
 	/**
@@ -147,16 +157,24 @@ public class FactorGraphFileBuilder_PAUL {
 		final Hypothesis< Component< FloatType, ? > > sourceHypothesis = assmnt.getSourceHypothesis();
 		final Hypothesis< Component< FloatType, ? > > destinationHypothesisUpper = assmnt.getUpperDesinationHypothesis();
 		final Hypothesis< Component< FloatType, ? > > destinationHypothesisLower = assmnt.getLowerDesinationHypothesis();
-		final Pair< Float, float[] > cost =
+		final Pair< Float, float[] > costPair =
 				ilp.compatibilityCostOfDivision( sourceHypothesis, destinationHypothesisUpper, destinationHypothesisLower );
-		lines.add(
+		final float divisionCost = ilp.compatibilityCostOfDivision( sourceHypothesis, destinationHypothesisUpper, destinationHypothesisLower ).getA();
+		final double cost = ilp.costModulationForSubstitutedILP(
+				sourceHypothesis.getCosts(),
+				destinationHypothesisUpper.getCosts(),
+				destinationHypothesisLower.getCosts(),
+				divisionCost );
+		if ( cost <= GrowthLineTrackingILP.CUTOFF_COST ) {
+			lines.add(
 				String.format(
-						"DA %d %d %d %d %d %f",
+						"DA %d %d %d %d %d %.16f",
 						t,
 						mapHypId.get( sourceHypothesis ),
 						t + 1,
 						mapHypId.get( destinationHypothesisUpper ),
 						mapHypId.get( destinationHypothesisLower ),
-						cost.getA() ) );
+						cost ) );
+		}
 	}
 }

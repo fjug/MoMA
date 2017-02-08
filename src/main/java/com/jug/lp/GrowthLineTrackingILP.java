@@ -481,8 +481,9 @@ public class GrowthLineTrackingILP {
 		float cost = 0.0f;
 		int i = 0;
 		for ( final Hypothesis< Component< FloatType, ? >> hyp : hyps ) {
-			cost = Math.min( 0.0f, hyp.getCosts() / 4f ); // NOTE: 0 or negative but only hyp/4 to prefer map or div if exists...
-			final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, String.format( "a_%d^EXIT--%d", t, i ) );
+			cost = costModulationForSubstitutedILP( hyp.getCosts() );
+
+			final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, String.format( "a_%d^EXIT--%d", t, hyp.getId() ) );
 			final List< Hypothesis< Component< FloatType, ? >>> Hup = LpUtils.getHup( hyp, hyps );
 			final ExitAssignment ea = new ExitAssignment( t, newLPVar, this, nodes, edgeSets, Hup, hyp );
 			nodes.addAssignment( t, ea );
@@ -519,12 +520,8 @@ public class GrowthLineTrackingILP {
 
 				if ( !( ComponentTreeUtils.isBelowByMoreThen( to, from, MoMA.MAX_CELL_DROP ) ) ) {
 
-//					cost = 1.0f * ( fromCost + toCost ) + compatibilityCostOfMapping( from, to );
-//					cost = toCost + compatibilityCostOfMapping( from, to );
-//					cost = 0.9f * fromCost + 0.1f * toCost + compatibilityCostOfMapping( from, to );
-
 					final Pair< Float, float[] > compatibilityCostOfMapping = compatibilityCostOfMapping( from, to );
-					cost = 0.1f * fromCost + 0.9f * toCost + compatibilityCostOfMapping.getA();
+					cost = costModulationForSubstitutedILP( fromCost, toCost, compatibilityCostOfMapping.getA() );
 
 					final int numFeatures = 2 + compatibilityCostOfMapping.getB().length;
 					final float[] featureValues = new float[ numFeatures ];
@@ -539,7 +536,7 @@ public class GrowthLineTrackingILP {
 					// weights = [ 0.1, 0.9, 0.5, 0.5, 0.0, 1.0 ]
 					//             2.7, 2.7, 0.7, 0.6, 0.6, 0.2
 					if ( cost <= CUTOFF_COST ) {
-						final String name = String.format( "a_%d^MAPPING--(%d,%d)", t, i, j );
+						final String name = String.format( "a_%d^MAPPING--(%d,%d)", t, from.getId(), to.getId() );
 						final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, name );
 
 						costManager.addMappingVariable( newLPVar, featureValues );
@@ -573,7 +570,8 @@ public class GrowthLineTrackingILP {
 	 *            the segmentation hypothesis towards which the
 	 *            mapping-assignment leads.
 	 * @return the cost we want to set for the given combination of segmentation
-	 *         hypothesis.
+	 *         hypothesis (plus the vector of cost contributions/feature
+	 *         values).
 	 */
 	protected Pair< Float, float[] > compatibilityCostOfMapping(
 			final Hypothesis< Component< FloatType, ? > > from,
@@ -640,6 +638,54 @@ public class GrowthLineTrackingILP {
 	}
 
 	/**
+	 * This method defines how the segmentation costs are influencing the costs
+	 * of mapping assignments during the ILP hypotheses substitution takes
+	 * place.
+	 *
+	 * @param fromCost
+	 * @param toCost
+	 * @param mappingCosts
+	 * @return
+	 */
+	protected float costModulationForSubstitutedILP(
+			final float fromCost,
+			final float toCost,
+			final float mappingCosts ) {
+		return 0.1f * fromCost + 0.9f * toCost + mappingCosts;
+	}
+
+	/**
+	 * This method defines how the segmentation costs are influencing the costs
+	 * of division assignments during the ILP hypotheses substitution takes
+	 * place.
+	 *
+	 * @param fromCost
+	 * @param toCost
+	 * @param divisionCosts
+	 * @return
+	 */
+	protected float costModulationForSubstitutedILP(
+			final float fromCost,
+			final float toUpperCost,
+			final float toLowerCost,
+			final float divisionCosts ) {
+		return 0.1f * fromCost + 0.9f * ( toUpperCost + toLowerCost ) + divisionCosts;
+	}
+
+	/**
+	 * This method defines how the segmentation costs are influencing the costs
+	 * of exit assignments during the ILP hypotheses substitution takes place.
+	 *
+	 * @param fromCosts
+	 *            costs for the segment to exit
+	 * @return the modulated costs.
+	 */
+	protected float costModulationForSubstitutedILP( final float fromCosts ) {
+		return Math.min( 0.0f, fromCosts / 4f ); // NOTE: 0 or negative but only hyp/4 to prefer map or div if exists...
+	}
+
+
+	/**
 	 * Add a division-assignment to a bunch of segmentation hypotheses. Note
 	 * that this function also looks for suitable pairs of hypothesis in
 	 * nxtHyps, since division-assignments naturally need two right-neighbors.
@@ -672,12 +718,15 @@ public class GrowthLineTrackingILP {
 						if ( lowerNeighbor == null ) {
 							System.out.println( "CRITICAL BUG!!!! Check GrowthLineTimeSeris::adDivisionAssignment(...)" );
 						} else {
-							final float toCost = to.getCosts() + lowerNeighbor.getCosts();
-
-//							cost = 0.9f * fromCost + 0.1f * toCost + compatibilityCostOfDivision( from, to, lowerNeighbor );
-//							cost = toCost + compatibilityCostOfDivision( from, to, lowerNeighbor );
 							final Pair< Float, float[] > compatibilityCostOfDivision = compatibilityCostOfDivision( from, to, lowerNeighbor );
-							cost = 0.1f * fromCost + 0.9f * toCost + compatibilityCostOfDivision.getA();
+
+							//TODO toCosts should be split and structSVM routines should acknowledge two separated features!!!
+							final float toCost = to.getCosts() + lowerNeighbor.getCosts();
+							cost = costModulationForSubstitutedILP(
+									fromCost,
+									to.getCosts(),
+									lowerNeighbor.getCosts(),
+									compatibilityCostOfDivision.getA() );
 
 							final int numFeatures = 2 + compatibilityCostOfDivision.getB().length;
 							final float[] featureValues = new float[ numFeatures ];
@@ -692,7 +741,7 @@ public class GrowthLineTrackingILP {
 							// weights =  [ 0.1, 0.9, 0.5, 0.5, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.1, 0.03 ]
 							//             -0.6, 1.1, 0.9, 0.6, 1.6, 1.1, 0.3, 0.4, 0.3, 0.8, 1.6, 1.3, 0.02
 							if ( cost <= CUTOFF_COST ) {
-								final String name = String.format( "a_%d^DIVISION--(%d,%d)", t, i, j );
+								final String name = String.format( "a_%d^DIVISION--(%d,%d)", t, from.getId(), to.getId() );
 								final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, name );
 
 								costManager.addDivisionVariable( newLPVar, featureValues );
@@ -728,7 +777,8 @@ public class GrowthLineTrackingILP {
 	 *            the lower (right) segmentation hypothesis towards which the
 	 *            mapping-assignment leads.
 	 * @return the cost we want to set for the given combination of segmentation
-	 *         hypothesis.
+	 *         hypothesis (plus the vector of cost contributions/feature
+	 *         values).
 	 */
 	protected Pair< Float, float[] > compatibilityCostOfDivision(
 			final Hypothesis< Component< FloatType, ? > > from,
@@ -1199,7 +1249,7 @@ public class GrowthLineTrackingILP {
 				}
 				// LP export for Paul and Bogdan
 				// - - - - - - - - - - - - - - - - - - - -
-//				model.write( "/Users/jug/Desktop/forPaul.lp" );
+//				model.write( "/Users/jug/Dropbox/WorkingData/CSBD/Collaborations/IST_Paul/4thRound/lpExport.lp" );
 			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.INFEASIBLE ) {
 				status = INFEASIBLE;
 				if ( !MoMA.HEADLESS ) {
@@ -1578,6 +1628,13 @@ public class GrowthLineTrackingILP {
 		}
 
 		return ret;
+	}
+
+	/**
+	 * @return the GrowthLine this is the ILP for.
+	 */
+	protected GrowthLine getGrowthLine() {
+		return gl;
 	}
 
 	/**
@@ -2399,7 +2456,7 @@ public class GrowthLineTrackingILP {
 			for ( final Hypothesis< Component< FloatType, ? > > hyp : hyps_t ) {
 
 				// variables for assignments
-				final int hyp_id = fgFile.addHyp( hyp );
+				final int hyp_id = fgFile.addHyp( this, hyp );
 			}
 
 			// Get the full component tree
@@ -2448,8 +2505,6 @@ public class GrowthLineTrackingILP {
 			}
 		}
 
-		fgFile.addLine( "\n# EXITS (not needed, one per hypothesis, cost always 0)" );
-
 		// WRITE FILE
 		fgFile.write( file );
 	}
@@ -2479,7 +2534,7 @@ public class GrowthLineTrackingILP {
 				runnerNode = runnerNode.getParent();
 			}
 			// Add the Exclusion Constraint (finally)
-			fgFile.addExclusionConstraint( hyps );
+			fgFile.addPathBlockingConstraint( hyps );
 		} else {
 			// if ctNode is a inner node -> recursion
 			for ( final Component< ?, ? > ctChild : ctNode.getChildren() ) {
