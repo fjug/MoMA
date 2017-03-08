@@ -268,7 +268,11 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 				new RangeSlider( 0, model.getCurrentGL().size() - 2 );
 		sliderTrackingRange.setBorder( BorderFactory.createEmptyBorder( 0, 7, 0, 7 ) );
 		sliderTrackingRange.setValue( 0 );
-		sliderTrackingRange.setUpperValue( max );
+		if (MoMA.OPTIMISATION_INTERVAL_LENGTH >= 0) {
+			sliderTrackingRange.setUpperValue(MoMA.OPTIMISATION_INTERVAL_LENGTH);
+		} else {
+			sliderTrackingRange.setUpperValue(max);
+		}
 		sliderTrackingRange.addChangeListener( this );
 		final JLabel lblIgnoreBeyond =
 				new JLabel( String.format( "opt. range:", sliderTrackingRange.getValue() ) );
