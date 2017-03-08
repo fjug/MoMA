@@ -607,8 +607,7 @@ public class MoMA {
 
 
 		OPTIMISATION_INTERVAL_LENGTH = Integer.parseInt( props.getProperty( "OPTIMISATION_INTERVAL_LENGTH", Integer.toString(OPTIMISATION_INTERVAL_LENGTH) ));
-		System.out.println("READ OPTI LENGTH " + OPTIMISATION_INTERVAL_LENGTH);
-		System.out.println("export pixel intensities " + props.getProperty( "EXPORT_INCLUDE_PIXEL_INTENSITIES", "Hallo" ));
+		
 
 		if ( !HEADLESS ) {
 			// Iterate over all currently attached monitors and check if sceen
