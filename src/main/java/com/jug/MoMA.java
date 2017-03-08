@@ -193,6 +193,16 @@ public class MoMA {
 	public static boolean USE_CLASSIFIER_FOR_PMF = true;
 
 	/**
+	 * Global switches for export options
+	 */
+	public static boolean EXPORT_DO_TRACK_EXPORT = false;
+	public static boolean EXPORT_USER_INPUTS = true;
+	public static boolean EXPORT_INCLUDE_HISTOGRAMS = true;
+	public static boolean EXPORT_INCLUDE_QUANTILES = true;
+	public static boolean EXPORT_INCLUDE_COL_INTENSITY_SUMS = true;
+	public static boolean EXPORT_INCLUDE_PIXEL_INTENSITIES = false;
+
+	/**
 	 * One of the test for paper:
 	 * What happens if exit constraints are NOT part of the model?
 	 */
@@ -582,6 +592,14 @@ public class MoMA {
 		GUI_WIDTH = Integer.parseInt( props.getProperty( "GUI_WIDTH", Integer.toString( GUI_WIDTH ) ) );
 		GUI_HEIGHT = Integer.parseInt( props.getProperty( "GUI_HEIGHT", Integer.toString( GUI_HEIGHT ) ) );
 		GUI_CONSOLE_WIDTH = Integer.parseInt( props.getProperty( "GUI_CONSOLE_WIDTH", Integer.toString( GUI_CONSOLE_WIDTH ) ) );
+
+		EXPORT_DO_TRACK_EXPORT = props.getProperty( "EXPORT_DO_TRACK_EXPORT", Integer.toString(EXPORT_DO_TRACK_EXPORT?1:0) ).equals("1");
+		EXPORT_USER_INPUTS = props.getProperty( "EXPORT_USER_INPUTS", Integer.toString(EXPORT_USER_INPUTS?1:0) ).equals("1");
+		EXPORT_INCLUDE_HISTOGRAMS = props.getProperty( "EXPORT_INCLUDE_HISTOGRAMS", Integer.toString(EXPORT_INCLUDE_HISTOGRAMS?1:0) ).equals("1");
+		EXPORT_INCLUDE_QUANTILES = props.getProperty( "EXPORT_INCLUDE_QUANTILES", Integer.toString(EXPORT_INCLUDE_QUANTILES?1:0) ).equals("1");
+		EXPORT_INCLUDE_COL_INTENSITY_SUMS = props.getProperty( "EXPORT_INCLUDE_COL_INTENSITY_SUMS", Integer.toString(EXPORT_INCLUDE_COL_INTENSITY_SUMS?1:0) ).equals("1");
+		EXPORT_INCLUDE_PIXEL_INTENSITIES = props.getProperty( "EXPORT_INCLUDE_PIXEL_INTENSITIES", Integer.toString(EXPORT_INCLUDE_PIXEL_INTENSITIES?1:0) ).equals("1");
+
 
 		if ( !HEADLESS ) {
 			// Iterate over all currently attached monitors and check if sceen
@@ -1200,6 +1218,11 @@ public class MoMA {
 		return props;
 	}
 
+	public void saveParams() {
+		final File f = new File( "mm.properties" );
+		saveParams (f);
+	}
+
 	/**
 	 * Saves a file 'mm.properties' in the current folder. This file contains
 	 * all MotherMachine specific properties as key-value pairs.
@@ -1208,9 +1231,8 @@ public class MoMA {
 	 *            an instance of {@link Properties} containing all key-value
 	 *            pairs used by the MotherMachine.
 	 */
-	public void saveParams() {
+	public void saveParams(final File f) {
 		try {
-			final File f = new File( "mm.properties" );
 			final OutputStream out = new FileOutputStream( f );
 
 			props.setProperty( "BGREM_TEMPLATE_XMIN", Integer.toString( BGREM_TEMPLATE_XMIN ) );
@@ -1252,6 +1274,14 @@ public class MoMA {
 			props.setProperty( "GUI_WIDTH", Integer.toString( GUI_WIDTH ) );
 			props.setProperty( "GUI_HEIGHT", Integer.toString( GUI_HEIGHT ) );
 			props.setProperty( "GUI_CONSOLE_WIDTH", Integer.toString( GUI_CONSOLE_WIDTH ) );
+
+
+			props.setProperty( "EXPORT_DO_TRACK_EXPORT", Integer.toString(EXPORT_DO_TRACK_EXPORT?1:0) );
+			props.setProperty( "EXPORT_USER_INPUTS", Integer.toString(EXPORT_USER_INPUTS?1:0) );
+			props.setProperty( "EXPORT_INCLUDE_HISTOGRAMS", Integer.toString(EXPORT_INCLUDE_HISTOGRAMS?1:0) );
+			props.setProperty( "EXPORT_INCLUDE_QUANTILES", Integer.toString(EXPORT_INCLUDE_QUANTILES?1:0) );
+			props.setProperty( "EXPORT_INCLUDE_COL_INTENSITY_SUMS", Integer.toString(EXPORT_INCLUDE_COL_INTENSITY_SUMS?1:0) );
+			props.setProperty( "EXPORT_INCLUDE_PIXEL_INTENSITIES", Integer.toString(EXPORT_INCLUDE_PIXEL_INTENSITIES?1:0) );
 
 			props.store( out, "MotherMachine properties" );
 		} catch ( final Exception e ) {
