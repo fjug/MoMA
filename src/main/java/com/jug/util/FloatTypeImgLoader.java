@@ -769,7 +769,7 @@ public class FloatTypeImgLoader {
 		return getParameterFromFilename(filename, "t");
 	}
 
-	static int getChannelFromFilename(String filename) {
+	public static int getChannelFromFilename(String filename) {
 		return getParameterFromFilename(filename, "c");
 	}
 
