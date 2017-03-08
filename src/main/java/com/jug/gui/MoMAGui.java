@@ -386,13 +386,15 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 					dataToDisplayChanged();
 				}
 				if ( e.getActionCommand().equals( "g" ) ) {
-					sliderGL.requestFocus();
+					//sliderGL.requestFocus();
+					sliderTime.setValue(sliderTrackingRange.getUpperValue());
 					dataToDisplayChanged();
 				}
 				if ( e.getActionCommand().equals( "a" ) ) {
 					/*if ( !tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelCountingView ) ) {
 						tabsViews.setSelectedComponent( panelCountingView );
-					}
+					}*/
+					bFreezeHistory.doClick();
 					dataToDisplayChanged();
 				}
 				if ( e.getActionCommand().equals( "s" ) ) {
