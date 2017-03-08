@@ -314,7 +314,7 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 		panelSegmentationAndAssignmentView.setHorizontalScrollBarPolicy( ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER );
 		panelDetailedDataView = buildDetailedDataView();
 
-		tabsViews.add( "Cell Counting", panelCountingView );
+		//tabsViews.add( "Cell Counting", panelCountingView );
 		tabsViews.add( "Segm. & Assingments", panelSegmentationAndAssignmentView );
 		tabsViews.add( "Detailed Data View", panelDetailedDataView );
 
