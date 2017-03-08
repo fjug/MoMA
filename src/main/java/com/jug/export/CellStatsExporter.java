@@ -266,12 +266,6 @@ public class CellStatsExporter {
 	// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private final MoMAGui gui;
-	//private boolean EXPORT_DO_TRACK_EXPORT = false;
-	//private boolean EXPORT_USER_INPUTS = true;
-	//private boolean EXPORT_INCLUDE_HISTOGRAMS = true;
-	//private boolean EXPORT_INCLUDE_QUANTILES = true;
-	//private boolean EXPORT_INCLUDE_COL_INTENSITY_SUMS = true;
-	//private boolean EXPORT_INCLUDE_PIXEL_INTENSITIES = false;
 
 	public CellStatsExporter( final MoMAGui gui ) {
 		this.gui = gui;
