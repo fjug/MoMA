@@ -203,6 +203,11 @@ public class MoMA {
 	public static boolean EXPORT_INCLUDE_PIXEL_INTENSITIES = false;
 
 	/**
+	 *
+	 */
+	public static int OPTIMISATION_INTERVAL_LENGTH = -1;
+
+	/**
 	 * One of the test for paper:
 	 * What happens if exit constraints are NOT part of the model?
 	 */
@@ -600,6 +605,10 @@ public class MoMA {
 		EXPORT_INCLUDE_COL_INTENSITY_SUMS = props.getProperty( "EXPORT_INCLUDE_COL_INTENSITY_SUMS", Integer.toString(EXPORT_INCLUDE_COL_INTENSITY_SUMS?1:0) ).equals("1");
 		EXPORT_INCLUDE_PIXEL_INTENSITIES = props.getProperty( "EXPORT_INCLUDE_PIXEL_INTENSITIES", Integer.toString(EXPORT_INCLUDE_PIXEL_INTENSITIES?1:0) ).equals("1");
 
+
+		OPTIMISATION_INTERVAL_LENGTH = Integer.parseInt( props.getProperty( "OPTIMISATION_INTERVAL_LENGTH", Integer.toString(OPTIMISATION_INTERVAL_LENGTH) ));
+		System.out.println("READ OPTI LENGTH " + OPTIMISATION_INTERVAL_LENGTH);
+		System.out.println("export pixel intensities " + props.getProperty( "EXPORT_INCLUDE_PIXEL_INTENSITIES", "Hallo" ));
 
 		if ( !HEADLESS ) {
 			// Iterate over all currently attached monitors and check if sceen
@@ -1286,6 +1295,8 @@ public class MoMA {
 			props.setProperty( "EXPORT_INCLUDE_QUANTILES", Integer.toString(EXPORT_INCLUDE_QUANTILES?1:0) );
 			props.setProperty( "EXPORT_INCLUDE_COL_INTENSITY_SUMS", Integer.toString(EXPORT_INCLUDE_COL_INTENSITY_SUMS?1:0) );
 			props.setProperty( "EXPORT_INCLUDE_PIXEL_INTENSITIES", Integer.toString(EXPORT_INCLUDE_PIXEL_INTENSITIES?1:0) );
+
+			props.setProperty("OPTIMISATION_INTERVAL_LENGTH", Integer.toString(OPTIMISATION_INTERVAL_LENGTH));
 
 			props.store( out, "MotherMachine properties" );
 		} catch ( final Exception e ) {
