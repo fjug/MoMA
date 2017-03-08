@@ -1166,24 +1166,28 @@ public class MoMA {
 			final File f = new File( "mm.properties" );
 			System.out.println( "Loading default properties from: " + f.getAbsolutePath() );
 			is = new FileInputStream( f );
+			defaultProps.load( is );
 		} catch ( final Exception e ) {
 			System.out.println( "Could not load props... try from classpath next..." );
 			is = null;
 		}
 
-		try {
-			URL propslURL = ClassLoader.getSystemResource( "mm.properties" );
-			if ( propslURL == null ) {
-				propslURL = getClass().getClassLoader().getResource( "mm.properties" );
-			}
-			if ( propslURL != null ) {
-				is = propslURL.openStream();
-				defaultProps.load( is );
-				System.out.println( " >> default properties loaded!" );
+		// if loading from current directory didn't work...
+		if (is == null) {
+			try {
+				URL propslURL = ClassLoader.getSystemResource("mm.properties");
+				if (propslURL == null) {
+					propslURL = getClass().getClassLoader().getResource("mm.properties");
+				}
+				if (propslURL != null) {
+					is = propslURL.openStream();
+					defaultProps.load(is);
+					System.out.println(" >> default properties loaded!");
 
+				}
+			} catch (final Exception e) {
+				System.out.println("No default properties file 'mm.properties' found in current path or classpath... I will create one at termination time!");
 			}
-		} catch ( final Exception e ) {
-			System.out.println( "No default properties file 'mm.properties' found in current path or classpath... I will create one at termination time!" );
 		}
 
 		// ADD USER PROPS IF GIVEN VIA CLI
