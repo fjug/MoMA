@@ -294,6 +294,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 		}
 		final IlpThread thread = new IlpThread();
 		thread.start();
+		mmgui.focusOnSliderTime();
 	}
 
 	/**
@@ -339,6 +340,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 	public void mouseReleased( final MouseEvent e ) {
 		this.isDragging = false;
 		repaint();
+		mmgui.focusOnSliderTime();
 	}
 
 	/**
