@@ -13,6 +13,8 @@ import java.awt.MenuBar;
 import java.awt.MenuItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -175,6 +177,7 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 
 		buildGui();
 		dataToDisplayChanged();
+		focusOnSliderTime();
 	}
 
 	/**
@@ -309,6 +312,7 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 
 		// --- Controls ----------------------------------
 		cbAutosave = new JCheckBox( "autosave?" );
+		cbAutosave.addActionListener(this);
 //		btnRedoAllHypotheses = new JButton( "Resegment" );
 //		btnRedoAllHypotheses.addActionListener( this );
 		btnRestart = new JButton( "Restart" );
@@ -566,6 +570,19 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		// - - - - - -
 		leftAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ), this );
+		leftAssignmentViewer.addChangeListener(this);
+		// the following block is a workaround. The left assignment viewer gets focus when MoMA starts. But it shouldn't
+		leftAssignmentViewer.addFocusListener(new FocusListener() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				focusOnSliderTime();
+			}
+
+			@Override
+			public void focusLost(FocusEvent e) {
+
+			}
+		});
 		if ( ilp != null )
 			leftAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( model.getCurrentTime() - 1 ) );
 		// - - - - - -
@@ -590,6 +607,7 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		// - - - - - -
 		rightAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ), this );
+		rightAssignmentViewer.addChangeListener(this);
 		if ( ilp != null )
 			rightAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( model.getCurrentTime() ) );
 		panelVerticalHelper.add( rightAssignmentViewer, BorderLayout.CENTER );
@@ -618,18 +636,23 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 		panelView.add( lblCheckBoxLine, "align center" );
 		// - - - - - -
 		cbSegmentationOkLeft = new JCheckBox();
+		cbSegmentationOkLeft.addActionListener(this);
 		panelView.add( cbSegmentationOkLeft, "align center" );
 		// - - - - - -
 		cbAssignmentsOkLeft = new JCheckBox();
+		cbAssignmentsOkLeft.addActionListener(this);
 		panelView.add( cbAssignmentsOkLeft, "align center" );
 		// - - - - - -
 		cbSegmentationOkCenter = new JCheckBox();
+		cbSegmentationOkCenter.addActionListener(this);
 		panelView.add( cbSegmentationOkCenter, "align center" );
 		// - - - - - -
 		cbAssignmentsOkRight = new JCheckBox();
+		cbAssignmentsOkRight.addActionListener(this);
 		panelView.add( cbAssignmentsOkRight, "align center" );
 		// - - - - - -
 		cbSegmentationOkRight = new JCheckBox();
+		cbSegmentationOkRight.addActionListener(this);
 		panelView.add( cbSegmentationOkRight, "align center" );
 		// - - - - - -
 		bFreezeHistory = new JButton( "<-all" );
@@ -949,6 +972,7 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 
 		dataToDisplayChanged();
 		this.repaint();
+		focusOnSliderTime();
 	}
 
 	/**
@@ -1609,7 +1633,13 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 	 * Requests the focus on the slider controlling the time (frame).
 	 */
 	public void focusOnSliderTime() {
-		sliderTime.requestFocus();
+
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				sliderTime.requestFocus();
+			}
+		});
 	}
 
 	/**
