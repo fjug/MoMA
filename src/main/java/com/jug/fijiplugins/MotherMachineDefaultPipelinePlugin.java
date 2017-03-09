@@ -67,8 +67,13 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
             return;
         }
         String inputFolder = gd.getNextString();
-        if (!inputFolder.endsWith("/")) {
-            inputFolder = inputFolder + "/";
+
+        if (s.equals("file")) {
+            //inputFolder = inputFolder.substring(0, inputFolder.length() - 1);
+        } else {
+            if (!inputFolder.endsWith("/")) {
+                inputFolder = inputFolder + "/";
+            }
         }
         //int numberOfChannels = (int) gd.getNextNumber();
 
@@ -81,7 +86,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
 
         File inputFolderFile = new File(inputFolder);
         if (!inputFolderFile.exists()) {
-            IJ.log("The input folder does not exist. Aborting...");
+            IJ.log("The input folder(" + inputFolder + ") does not exist. Aborting...");
             return;
         }
         String dataSetName;
@@ -98,6 +103,12 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         String registeredFolder = inputFolder + "1_registered/";
         String splitFolder = inputFolder + "2_split/";
         String analysisResultsFolder = inputFolder + "3_analysed/";
+
+        if (s.equals("file")) {
+            registeredFolder = inputFolder + "_1_registered/";
+            splitFolder = inputFolder + "_2_split/";
+            analysisResultsFolder = inputFolder + "_3_analysed/";
+        }
 
         Utilities.ensureFolderExists(registeredFolder);
         Utilities.ensureFolderExists(splitFolder);
@@ -156,6 +167,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
                 // if it's a file:
                 imp = IJ.openImage(inputFolder);
                 numberOfChannels = imp.getNChannels();
+                numberOfTimePoints = imp.getNFrames();
                 imp.show();
                 hyperStackImp = imp;
             }
