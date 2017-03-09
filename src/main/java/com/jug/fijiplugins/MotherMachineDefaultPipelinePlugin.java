@@ -129,7 +129,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
                 int min_c = Integer.MAX_VALUE;
                 int max_c = Integer.MIN_VALUE;
 
-                for (File image : inputFolderFile.listFiles(tifFilter)) {
+                for (File image : inputFolderFile.listFiles(FloatTypeImgLoader.tifFilter)) {
                     int c = FloatTypeImgLoader.getChannelFromFilename(image.getName());
                     if (c < min_c) {
                         min_c = c;
@@ -178,7 +178,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
             //numberOfTimePoints = Utilities.countFilesInFolder(registeredFolder) / numberOfChannels;
 
             File registeredFolderFile = new File(registeredFolder);
-            File[] filelist = registeredFolderFile.listFiles(tifFilter);
+            File[] filelist = registeredFolderFile.listFiles(FloatTypeImgLoader.tifFilter);
             if (filelist.length == 1) { // registration result saved as single stack file
                 ImagePlus imp = IJ.openImage(filelist[0].getAbsolutePath());
                 numberOfChannels = imp.getNChannels();
@@ -280,11 +280,5 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         // -------------------------------------------------------------------------------
     }
 
-    static FileFilter tifFilter = new FileFilter() {
-        @Override
-        public boolean accept(File pathname) {
-            return pathname.getName().endsWith(".tif");
-        }
-    };
 
 }
