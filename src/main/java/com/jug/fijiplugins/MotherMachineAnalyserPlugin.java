@@ -61,9 +61,7 @@ public class MotherMachineAnalyserPlugin implements PlugIn {
 				"-i",
 				inputFolder,
 				"-o",
-				outputFolder,
-				"-c",
-				"" + numberOfChannels
+				outputFolder
 		};
 
 
