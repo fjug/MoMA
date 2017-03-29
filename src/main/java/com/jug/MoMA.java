@@ -491,7 +491,7 @@ public class MoMA {
 		}
 
 
-		if (inputFolder.isDirectory()) {
+		if (inputFolder.isDirectory() && inputFolder.listFiles(FloatTypeImgLoader.tifFilter).length > 1) {
 			int min_t = Integer.MAX_VALUE;
 			int max_t = Integer.MIN_VALUE;
 			int min_c = Integer.MAX_VALUE;
@@ -521,9 +521,14 @@ public class MoMA {
 			minChannelIdx = min_c;
 			numChannels = max_c - min_c + 1;
 		} else {
-			ImagePlus imp = IJ.openImage(inputFolder.getAbsolutePath());
-			imp.show();
 
+			ImagePlus imp;
+			if (inputFolder.isDirectory() && inputFolder.listFiles(FloatTypeImgLoader.tifFilter).length == 1) {
+				imp = IJ.openImage(inputFolder.listFiles(FloatTypeImgLoader.tifFilter)[0].getAbsolutePath());
+			} else {
+				imp = IJ.openImage(inputFolder.getAbsolutePath());
+			}
+			
 			minTime = 1;
 			maxTime = imp.getNFrames();
 			minChannelIdx = 1;
