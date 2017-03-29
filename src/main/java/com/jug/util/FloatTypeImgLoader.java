@@ -770,7 +770,7 @@ public class FloatTypeImgLoader {
 		return max;
 	}
 
-	static int getTimeFromFilename(String filename) {
+	public static int getTimeFromFilename(String filename) {
 		return getParameterFromFilename(filename, "t");
 	}
 
