@@ -1,5 +1,8 @@
 package com.jug;
 
+import com.jug.util.Util;
+import ij.IJ;
+import ij.ImagePlus;
 import java.awt.FileDialog;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -365,11 +368,6 @@ public class MoMA {
 		final Option optRange = new Option( "orange", "opt_range", true, "initial optimization range" );
 		optRange.setRequired( false );
 
-		final Option numChannelsOption = new Option( "c", "channels", true, "number of channels to be loaded and analyzed." );
-		numChannelsOption.setRequired( true );
-
-		final Option minChannelIdxOption = new Option( "cmin", "min_channel", true, "the smallest channel index (usually 0 or 1, default is 1)." );
-		minChannelIdxOption.setRequired( false );
 
 		final Option infolder = new Option( "i", "infolder", true, "folder to read data from" );
 		infolder.setRequired( false );
@@ -382,8 +380,6 @@ public class MoMA {
 
 		options.addOption( help );
 		options.addOption( headless );
-		options.addOption( numChannelsOption );
-		options.addOption( minChannelIdxOption );
 		options.addOption( timeFirst );
 		options.addOption( timeLast );
 		options.addOption( optRange );
@@ -494,12 +490,51 @@ public class MoMA {
 			fileUserProps = new File( cmd.getOptionValue( "p" ) );
 		}
 
-		if ( cmd.hasOption( "cmin" ) ) {
-			minChannelIdx = Integer.parseInt( cmd.getOptionValue( "cmin" ) );
+
+		if (inputFolder.isDirectory()) {
+			int min_t = Integer.MAX_VALUE;
+			int max_t = Integer.MIN_VALUE;
+			int min_c = Integer.MAX_VALUE;
+			int max_c = Integer.MIN_VALUE;
+			for (File image : inputFolder.listFiles(Util.tifFilter)) {
+
+				int c = FloatTypeImgLoader.getChannelFromFilename(image.getName());
+				int t = FloatTypeImgLoader.getTimeFromFilename(image.getName());
+
+				if (c < min_c) {
+					min_c = c;
+				}
+				if (c > max_c) {
+					max_c = c;
+				}
+
+				if (t < min_t) {
+					min_t = t;
+				}
+				if (t > max_t) {
+					max_t = t;
+				}
+
+			}
+			minTime = min_t;
+			maxTime = max_t + 1;
+			minChannelIdx = min_c;
+			numChannels = max_c - min_c + 1;
+		} else {
+			ImagePlus imp = IJ.openImage(inputFolder.getAbsolutePath());
+			imp.show();
+
+			minTime = 1;
+			maxTime = imp.getNFrames();
+			minChannelIdx = 1;
+			numChannels = imp.getNChannels();
 		}
-		if ( cmd.hasOption( "c" ) ) {
-			numChannels = Integer.parseInt( cmd.getOptionValue( "c" ) );
-		}
+		System.out.println("Determined minTime" + minTime);
+		System.out.println("Determined maxTime" + maxTime);
+
+		System.out.println("Determined minChannelIdx" + minChannelIdx);
+		System.out.println("Determined numChannels" + numChannels);
+
 
 		if ( cmd.hasOption( "tmin" ) ) {
 			minTime = Integer.parseInt( cmd.getOptionValue( "tmin" ) );
