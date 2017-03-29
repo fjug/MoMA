@@ -496,7 +496,7 @@ public class MoMA {
 			int max_t = Integer.MIN_VALUE;
 			int min_c = Integer.MAX_VALUE;
 			int max_c = Integer.MIN_VALUE;
-			for (File image : inputFolder.listFiles(Util.tifFilter)) {
+			for (File image : inputFolder.listFiles(FloatTypeImgLoader.tifFilter)) {
 
 				int c = FloatTypeImgLoader.getChannelFromFilename(image.getName());
 				int t = FloatTypeImgLoader.getTimeFromFilename(image.getName());
