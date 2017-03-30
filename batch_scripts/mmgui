@@ -1,3 +1,5 @@
-cd /Users/jug/local/MotherMachine
-java -jar MotherMachine.jar $1 $2 $3
-cd -
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+java -jar $DIR/MotherMachine_-0.10.6.jar -i $1
