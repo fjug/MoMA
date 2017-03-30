@@ -492,6 +492,7 @@ public class MoMA {
 
 
 		if (inputFolder.isDirectory() && inputFolder.listFiles(FloatTypeImgLoader.tifFilter).length > 1) {
+			System.out.println("reading a folder of images");
 			int min_t = Integer.MAX_VALUE;
 			int max_t = Integer.MIN_VALUE;
 			int min_c = Integer.MAX_VALUE;
@@ -524,11 +525,13 @@ public class MoMA {
 
 			ImagePlus imp;
 			if (inputFolder.isDirectory() && inputFolder.listFiles(FloatTypeImgLoader.tifFilter).length == 1) {
+				System.out.println("reading a folder with a single image");
 				imp = IJ.openImage(inputFolder.listFiles(FloatTypeImgLoader.tifFilter)[0].getAbsolutePath());
 			} else {
+				System.out.println("reading a file");
 				imp = IJ.openImage(inputFolder.getAbsolutePath());
 			}
-			
+
 			minTime = 1;
 			maxTime = imp.getNFrames();
 			minChannelIdx = 1;
