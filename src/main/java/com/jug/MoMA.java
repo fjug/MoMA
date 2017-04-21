@@ -83,7 +83,7 @@ public class MoMA {
 	/**
 	 * Identifier of current version
 	 */
-	public static final String VERSION_STRING = "MoMA_0.10.6";
+	public static final String VERSION_STRING = "MoMA_0.10.7-SNAPSHOT";
 
 	// -------------------------------------------------------------------------------------
 	// statics
@@ -515,7 +515,6 @@ public class MoMA {
 				if (t > max_t) {
 					max_t = t;
 				}
-
 			}
 			minTime = min_t;
 			maxTime = max_t + 1;
