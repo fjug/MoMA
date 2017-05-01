@@ -13,7 +13,7 @@
  
 	<groupId>com.jug</groupId>
 	<artifactId>MotherMachine_</artifactId>
-	<version>0.10.7-SNAPSHOT</version>
+	<version>0.10.9-SNAPSHOT</version>
 
 	<name>MotherMachine_</name>
 
@@ -173,6 +173,13 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
+							<artifactSet>
+							  <excludes>
+								  <exclude>classworlds:classworlds</exclude>
+								  <exclude>ome:formats-api</exclude>
+								  <exclude>ome:bio-formats_plugins</exclude>
+							  </excludes>
+							</artifactSet>
 							<transformers>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 									<mainClass>com.jug.MoMA</mainClass>
