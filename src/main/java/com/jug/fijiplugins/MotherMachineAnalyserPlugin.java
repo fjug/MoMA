@@ -45,14 +45,14 @@ public class MotherMachineAnalyserPlugin implements PlugIn {
 		GenericDialogPlus gd = new GenericDialogPlus("MoMA configuration");
 		gd.addDirectoryField("Input_folder", inputFolder);
 		gd.addDirectoryField("Output_folder", outputFolder);
-		gd.addNumericField("Number_of_Channels", 2, 0);
+		//gd.addNumericField("Number_of_Channels", 2, 0);
 		gd.showDialog();
 		if (gd.wasCanceled()) {
 			return;
 		}
 		inputFolder = gd.getNextString();
 		outputFolder = gd.getNextString();
-		int numberOfChannels = (int)gd.getNextNumber();
+		//int numberOfChannels = (int)gd.getNextNumber();
 
 		IJ.log("Starting MoMA..");
 
