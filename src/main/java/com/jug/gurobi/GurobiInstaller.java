@@ -27,6 +27,10 @@ import javax.swing.*;
 public class GurobiInstaller {
     public static boolean checkInstallation()
     {
+        if (!MoMA.running_as_Fiji_plugin) {
+            return true;
+        }
+
         final Class<?> clazz = MotherMachineAnalyserPlugin.class;
         final String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();
         final String pluginsDir = url.substring(0, url.length() - clazz.getName().length() - 6);
