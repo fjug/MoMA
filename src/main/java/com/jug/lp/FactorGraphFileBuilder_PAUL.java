@@ -114,10 +114,10 @@ public class FactorGraphFileBuilder_PAUL {
 	 */
 	public int addHyp( final GrowthLineTrackingILP ilp, final Hypothesis< Component< FloatType, ? > > hyp ) {
 		mapHypId.put( hyp, next_hyp_id );
-		double exitCost = ilp.costModulationForSubstitutedILP( hyp.getCosts() );
-		if (hyp.getTime() == ilp.getGrowthLine().size() - 1) {
-			exitCost = 0;
-		}
+		final double exitCost = ilp.costModulationForSubstitutedILP( hyp.getCosts() );
+//		if ( hyp.getTime() == ilp.getGrowthLine().size() - 1 ) {
+//			exitCost = 0;
+//		}
 		lines.add( String.format( "H %d %d %.16f %.16f (%d,%d)", next_hyp_id, hyp.getId(), 0f, exitCost, hyp.getLocation().a, hyp.getLocation().b ) );
 																			// the hypcosts are all 0 because we fold them into
 																			// the assignments according to the way we substitute

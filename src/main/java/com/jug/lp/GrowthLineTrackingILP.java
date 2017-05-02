@@ -204,6 +204,10 @@ public class GrowthLineTrackingILP {
 			createSegmentationHypotheses( t );
 			enumerateAndAddAssignments( t - 1 );
 		}
+		// add exit essignments to last (hidden/duplicated) timepoint
+		// in order have some right assignment for LP hypotheses variable substitution.
+		final List< Hypothesis< Component< FloatType, ? > > > curHyps = nodes.getHypothesesAt( gl.size() - 1 );
+		addExitAssignments( gl.size() - 1, curHyps );
 	}
 
 	/**
@@ -1121,7 +1125,7 @@ public class GrowthLineTrackingILP {
 		int eccId = 0;
 
 		// For each time-point
-		for ( int t = 1; t < gl.size() - 1; t++ ) { // !!! sparing out the border !!!
+		for ( int t = 1; t < gl.size(); t++ ) {
 
 			for ( final Hypothesis< Component< FloatType, ? >> hyp : nodes.getHypothesesAt( t ) ) {
 				final GRBLinExpr expr = new GRBLinExpr();
@@ -1249,7 +1253,7 @@ public class GrowthLineTrackingILP {
 				}
 				// LP export for Paul and Bogdan
 				// - - - - - - - - - - - - - - - - - - - -
-//				model.write( "/Users/jug/Dropbox/WorkingData/CSBD/Collaborations/IST_Paul/4thRound/lpExport.lp" );
+//				model.write( "/Users/jug/Dropbox/WorkingData/CSBD/Collaborations/IST_Paul/BES_datasets/lpExport.lp" );
 			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.INFEASIBLE ) {
 				status = INFEASIBLE;
 				if ( !MoMA.HEADLESS ) {

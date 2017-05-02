@@ -1259,7 +1259,10 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
     					sliderTrackingRange.setValue( 0 );
 
     					model.getCurrentGL().getIlp().freezeBefore( sliderTrackingRange.getValue() );
-    					model.getCurrentGL().getIlp().ignoreBeyond( sliderTrackingRange.getUpperValue() );
+						if ( sliderTrackingRange.getUpperValue() < sliderTrackingRange.getMaximum() ) {
+							// this is needed because of the duplication of the last time-point
+							model.getCurrentGL().getIlp().ignoreBeyond( sliderTrackingRange.getUpperValue() );
+						}
 
     					System.out.println( "Finding optimal result..." );
     					model.getCurrentGL().runILP();
@@ -1293,7 +1296,10 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 					}
 
 					model.getCurrentGL().getIlp().freezeBefore( sliderTrackingRange.getValue() );
-					model.getCurrentGL().getIlp().ignoreBeyond( sliderTrackingRange.getUpperValue() );
+					if ( sliderTrackingRange.getUpperValue() < sliderTrackingRange.getMaximum() ) {
+						// this is needed because of the duplication of the last time-point
+						model.getCurrentGL().getIlp().ignoreBeyond( sliderTrackingRange.getUpperValue() );
+					}
 
 					System.out.println( "Finding optimal result..." );
 					model.getCurrentGL().runILP();
