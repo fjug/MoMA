@@ -6,6 +6,8 @@ package com.jug.lp;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.jug.export.FactorGraphFileBuilder_SCALAR;
+
 import gurobi.GRBException;
 import gurobi.GRBVar;
 import net.imglib2.algorithm.componenttree.Component;

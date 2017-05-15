@@ -5,6 +5,8 @@ package com.jug.lp;
 
 import java.util.List;
 
+import com.jug.export.FactorGraphFileBuilder_SCALAR;
+
 import gurobi.GRB;
 import gurobi.GRBConstr;
 import gurobi.GRBException;
