@@ -1,17 +1,15 @@
 package com.jug.fijiplugins;
 
+import java.io.File;
+
 import com.jug.gurobi.GurobiInstaller;
+
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.Prefs;
-import ij.io.OpenDialog;
 import ij.plugin.HyperStackConverter;
 import ij.plugin.PlugIn;
-
-import java.io.File;
-import java.util.ArrayList;
 
 /**
  * This plugin represents the full pipeline of the MoMA analysis

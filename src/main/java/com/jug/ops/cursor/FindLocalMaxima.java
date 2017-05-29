@@ -6,13 +6,18 @@ package com.jug.ops.cursor;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.scijava.ItemIO;
+import org.scijava.plugin.Parameter;
+import org.scijava.plugin.Plugin;
+
 import net.imglib2.Cursor;
 import net.imglib2.Interval;
 import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.algorithm.region.localneighborhood.Neighborhood;
-import net.imglib2.algorithm.region.localneighborhood.RectangleShape;
-import net.imglib2.ops.operation.UnaryOutputOperation;
+import net.imglib2.algorithm.neighborhood.Neighborhood;
+import net.imglib2.algorithm.neighborhood.RectangleShape;
+import net.imagej.ops.AbstractOp;
+import net.imagej.ops.Op;
 import net.imglib2.type.Type;
 import net.imglib2.util.Intervals;
 import net.imglib2.view.IntervalView;
@@ -22,38 +27,45 @@ import net.imglib2.view.Views;
  * @author jug
  * 
  */
-public class FindLocalMaxima< IMG_T extends Type< IMG_T > & Comparable< IMG_T >> implements UnaryOutputOperation< RandomAccessibleInterval< IMG_T >, List< Point > > {
 
-	/**
-	 * Returns an instance of the return type of function 'compute'.
-	 * 
-	 * @see net.imglib2.ops.operation.UnaryOutputOperation#createEmptyOutput(java.lang.Object)
-	 */
-	@Override
+@Plugin(type = Op.class, name = "find local maxima")
+public class FindLocalMaxima<IMG_T extends Type< IMG_T > & Comparable< IMG_T >> extends AbstractOp {
+
+	@Parameter
+	private RandomAccessibleInterval<IMG_T> input;
+
+	@Parameter(type = ItemIO.OUTPUT)
+	private List< Point > output;
+	
+//	/**
+//	 * Returns an instance of the return type of function 'compute'.
+//	 * 
+//	 * @see net.imglib2.ops.operation.UnaryOutputOperation#createEmptyOutput(java.lang.Object)
+//	 */
+//	@Override
 	public List< Point > createEmptyOutput( final RandomAccessibleInterval< IMG_T > in ) {
 		return new ArrayList< Point >();
 	}
 
+//	/**
+//	 * Iterates input and returns the position of the first occurrence of a
+//	 * local maximum.
+//	 * 
+//	 * @see net.imglib2.ops.operation.UnaryOutputOperation#compute(java.lang.Object)
+//	 */
+//	@Override
+//	public List< Point > compute( final RandomAccessibleInterval< IMG_T > in ) {
+//		return compute( in, createEmptyOutput( in ) );
+//	}
+	
+	
 	/**
 	 * Iterates input and returns the position of the first occurrence of a
 	 * local maximum.
 	 * 
-	 * @see net.imglib2.ops.operation.UnaryOutputOperation#compute(java.lang.Object)
 	 */
 	@Override
-	public List< Point > compute( final RandomAccessibleInterval< IMG_T > in ) {
-		return compute( in, createEmptyOutput( in ) );
-	}
-
-	/**
-	 * Iterates input and returns the position of the first occurrence of a
-	 * local maximum.
-	 * 
-	 * @see net.imglib2.ops.operation.UnaryOutputOperation#compute(java.lang.Object,
-	 *      java.lang.Object)
-	 */
-	@Override
-	public List< Point > compute( final RandomAccessibleInterval< IMG_T > input, final List< Point > output ) {
+	public void run() {
 		final List< Point > ret = createEmptyOutput( input );
 
 		// Credits to Example 4b @ http://imglib2.net/ (Mr. Preibisch and Mr. Pietzsch)
@@ -99,14 +111,7 @@ public class FindLocalMaxima< IMG_T extends Type< IMG_T > & Comparable< IMG_T >>
 			}
 		}
 
-		return ret;
+		output = ret;
 	}
 
-	/**
-	 * @see net.imglib2.ops.operation.UnaryOperation#copy()
-	 */
-	@Override
-	public UnaryOutputOperation< RandomAccessibleInterval< IMG_T >, List< Point >> copy() {
-		return new FindLocalMaxima< IMG_T >();
-	}
 }
