@@ -489,8 +489,8 @@ public abstract class AbstractGrowthLineFrame< C extends Component< FloatType, C
 		// special case: growth line does not exist in this frame
 		if ( imgLocations.size() == 0 ) return new float[ 0 ];
 
-		final int maxOffsetX = 9;
-		final int maxOffsetY = 9;
+		final int maxOffsetX = 9; //TODO
+		final int maxOffsetY = 9; //TODO
 
 		int centerX = getAvgXpos();
 		int centerZ = imgLocations.get( 0 ).getIntPosition( 2 );
