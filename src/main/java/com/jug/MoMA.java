@@ -28,7 +28,7 @@ import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
-import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -338,7 +338,7 @@ public class MoMA {
 
 		// create Options object & the parser
 		final Options options = new Options();
-		final CommandLineParser parser = new BasicParser();
+		final CommandLineParser parser = new DefaultParser();
 		// defining command line options
 		final Option help = new Option( "help", "print this message" );
 
