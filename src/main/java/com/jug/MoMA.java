@@ -906,7 +906,7 @@ public class MoMA {
 	 * System.err to it.
 	 */
 	private void initConsoleWindow() {
-		frameConsoleWindow = new JFrame( String.format( "%s Console Window", this.VERSION_STRING ) );
+		frameConsoleWindow = new JFrame( String.format( "%s Console Window", MoMA.VERSION_STRING ) );
 		// frameConsoleWindow.setResizable( false );
 		consoleWindowTextArea = new JTextArea();
 		consoleWindowTextArea.setLineWrap( true );
@@ -1897,8 +1897,8 @@ public class MoMA {
 	 */
 	public void setDatasetName( final String datasetName ) {
 		this.datasetName = datasetName;
-		if ( this.getGuiFrame() != null ) {
-			this.getGuiFrame().setTitle( String.format( "%s -- %s", this.VERSION_STRING, this.datasetName ) );
+		if ( MoMA.getGuiFrame() != null ) {
+			MoMA.getGuiFrame().setTitle( String.format( "%s -- %s", MoMA.VERSION_STRING, this.datasetName ) );
 		}
 	}
 }
