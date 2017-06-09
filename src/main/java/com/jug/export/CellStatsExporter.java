@@ -266,12 +266,6 @@ public class CellStatsExporter {
 	// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private final MoMAGui gui;
-	private boolean doTrackExport = false;
-	private boolean doExportUserInputs = true;
-	private boolean includeHistograms = true;
-	private boolean includeQuantiles = true;
-	private boolean includeColIntensitySums = true;
-	private boolean includePixelIntensities = false;
 
 	public CellStatsExporter( final MoMAGui gui ) {
 		this.gui = gui;
@@ -279,15 +273,15 @@ public class CellStatsExporter {
 
 	public boolean showConfigDialog() {
 		final DialogCellStatsExportSetup dialog =
-				new DialogCellStatsExportSetup( gui, doExportUserInputs, doTrackExport, includeHistograms, includeQuantiles, includeColIntensitySums, includePixelIntensities );
+				new DialogCellStatsExportSetup( gui, MoMA.EXPORT_USER_INPUTS, MoMA.EXPORT_DO_TRACK_EXPORT, MoMA.EXPORT_INCLUDE_HISTOGRAMS, MoMA.EXPORT_INCLUDE_QUANTILES, MoMA.EXPORT_INCLUDE_COL_INTENSITY_SUMS, MoMA.EXPORT_INCLUDE_PIXEL_INTENSITIES);
 		dialog.ask();
 		if ( !dialog.wasCanceled() ) {
-			this.doTrackExport = dialog.doExportTracks;
-			this.doExportUserInputs = dialog.doExportUserInputs;
-			this.includeHistograms = dialog.includeHistograms;
-			this.includeQuantiles = dialog.includeQuantiles;
-			this.includeColIntensitySums = dialog.includeColIntensitySums;
-			this.includePixelIntensities = dialog.includePixelIntensities;
+			MoMA.EXPORT_DO_TRACK_EXPORT = dialog.doExportTracks;
+			MoMA.EXPORT_USER_INPUTS = dialog.doExportUserInputs;
+			MoMA.EXPORT_INCLUDE_HISTOGRAMS = dialog.includeHistograms;
+			MoMA.EXPORT_INCLUDE_QUANTILES = dialog.includeQuantiles;
+			MoMA.EXPORT_INCLUDE_COL_INTENSITY_SUMS = dialog.includeColIntensitySums;
+			MoMA.EXPORT_INCLUDE_PIXEL_INTENSITIES = dialog.includePixelIntensities;
 			return true;
 		} else {
 			return false;
@@ -306,10 +300,10 @@ public class CellStatsExporter {
 							JOptionPane.ERROR_MESSAGE );
 					return;
 				}
-				if ( doTrackExport ) {
+				if ( MoMA.EXPORT_DO_TRACK_EXPORT) {
 					exportTracks( new File( folderToUse, "ExportedTracks_" + MoMA.getDefaultFilenameDecoration() + ".csv" ) );
 				}
-				if ( doExportUserInputs ) {
+				if ( MoMA.EXPORT_USER_INPUTS) {
 					final int tmin = MoMA.getMinTime();
 					final int tmax = MoMA.getMaxTime();
 					final File file =
@@ -325,12 +319,14 @@ public class CellStatsExporter {
 				} catch ( final GRBException e ) {
 					e.printStackTrace();
 				}
+				// always export mmproperties
+				MoMA.instance.saveParams(new File( folderToUse, "mm.properties" ));
 			}
 		} else {
-			if ( doTrackExport ) {
+			if ( MoMA.EXPORT_DO_TRACK_EXPORT) {
 				exportTracks( new File( MoMA.STATS_OUTPUT_PATH, "ExportedTracks_" + MoMA.getDefaultFilenameDecoration() + ".csv" ) );
 			}
-			if ( doExportUserInputs ) {
+			if ( MoMA.EXPORT_USER_INPUTS) {
 				final int tmin = MoMA.getMinTime();
 				final int tmax = MoMA.getMaxTime();
 				final File file =
@@ -347,6 +343,8 @@ public class CellStatsExporter {
 			} catch ( final GRBException e ) {
 				e.printStackTrace();
 			}
+			// always export mmproperties
+			MoMA.instance.saveParams(new File( MoMA.STATS_OUTPUT_PATH, "mm.properties" ));
 		}
 	}
 
@@ -533,7 +531,7 @@ public class CellStatsExporter {
 					final FloatType max = new FloatType();
 					Util.computeMinMax( segmentBoxInChannel, min, max );
 
-					if ( includeHistograms ) {
+					if ( MoMA.EXPORT_INCLUDE_HISTOGRAMS) {
 						final long[] hist = segmentRecord.computeChannelHistogram( segmentBoxInChannel, min.get(), max.get() );
 						String histStr = String.format( "\t\tch=%d; output=HISTOGRAM", c );
 						histStr += String.format( "; min=%8.3f; max=%8.3f", min.get(), max.get() );
@@ -543,7 +541,7 @@ public class CellStatsExporter {
 						linesToExport.add( histStr );
 					}
 
-					if ( includeQuantiles ) {
+					if ( MoMA.EXPORT_INCLUDE_QUANTILES) {
 						final float[] percentile = segmentRecord.computeChannelPercentile( segmentBoxInChannel );
 						String percentileStr = String.format( "\t\tch=%d; output=PERCENTILES", c );
 						percentileStr += String.format( "; min=%8.3f; max=%8.3f", min.get(), max.get() );
@@ -553,7 +551,7 @@ public class CellStatsExporter {
 						linesToExport.add( percentileStr );
 					}
 
-					if ( includeColIntensitySums ) {
+					if ( MoMA.EXPORT_INCLUDE_COL_INTENSITY_SUMS) {
 						final IntervalView< FloatType > columnBoxInChannel = Util.getColumnBoxInImg( channelFrame, segmentRecord.hyp, firstGLF.getAvgXpos() );
 						final float[] column_intensities = segmentRecord.computeChannelColumnIntensities( columnBoxInChannel );
 						String colIntensityStr = String.format( "\t\tch=%d; output=COLUMN_INTENSITIES", c );
@@ -563,7 +561,7 @@ public class CellStatsExporter {
 						linesToExport.add( colIntensityStr );
 					}
 
-					if ( includePixelIntensities ) {
+					if ( MoMA.EXPORT_INCLUDE_PIXEL_INTENSITIES) {
 						final IntervalView< FloatType > intensityBoxInChannel = Util.getIntensityBoxInImg( channelFrame, segmentRecord.hyp, firstGLF.getAvgXpos() );
 						final float[][] intensities = segmentRecord.getIntensities( intensityBoxInChannel );
 						String intensityStr = String.format( "\t\tch=%d; output=PIXEL_INTENSITIES", c );

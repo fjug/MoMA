@@ -1,15 +1,20 @@
 package com.jug.fijiplugins;
 
-import java.io.File;
-
 import com.jug.gurobi.GurobiInstaller;
-
+import com.jug.util.FloatTypeImgLoader;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.Prefs;
+import ij.io.OpenDialog;
 import ij.plugin.HyperStackConverter;
 import ij.plugin.PlugIn;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This plugin represents the full pipeline of the MoMA analysis
@@ -44,8 +49,12 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         // -------------------------------------------------------------------------------
         // plugin configuration
         GenericDialogPlus gd = new GenericDialogPlus("MoMA configuration");
-        gd.addDirectoryField("Input folder", currentDir);
-        gd.addNumericField("Number of Channels", 2, 0);
+        if (s.equals("file")) {
+            gd.addFileField("Input_file", currentDir);
+        } else {
+            gd.addDirectoryField("Input_folder", currentDir);
+        }
+        //gd.addNumericField("Number of Channels", 2, 0);
 
 
         gd.addMessage("Advanced splitting parameters (MMPreprocess)");
@@ -58,10 +67,15 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
             return;
         }
         String inputFolder = gd.getNextString();
-        if (!inputFolder.endsWith("/")) {
-            inputFolder = inputFolder + "/";
+
+        if (s.equals("file")) {
+            //inputFolder = inputFolder.substring(0, inputFolder.length() - 1);
+        } else {
+            if (!inputFolder.endsWith("/")) {
+                inputFolder = inputFolder + "/";
+            }
         }
-        int numberOfChannels = (int) gd.getNextNumber();
+        //int numberOfChannels = (int) gd.getNextNumber();
 
 
         double varianceThreshold = gd.getNextNumber();
@@ -71,9 +85,17 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         currentDir = inputFolder;
 
         File inputFolderFile = new File(inputFolder);
-        if (!inputFolderFile.exists() || !inputFolderFile.isDirectory()) {
-            IJ.log("The input folder does not exist. Aborting...");
+        if (!inputFolderFile.exists()) {
+            IJ.log("The input folder(" + inputFolder + ") does not exist. Aborting...");
             return;
+        }
+        String dataSetName;
+        if (inputFolderFile.isDirectory()) {
+            dataSetName = inputFolderFile.getName();
+        }
+        else
+        {
+            dataSetName = inputFolderFile.getName().replace(".tiff","").replace(".tif","");
         }
 
         // -------------------------------------------------------------------------------
@@ -82,6 +104,12 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         String splitFolder = inputFolder + "2_split/";
         String analysisResultsFolder = inputFolder + "3_analysed/";
 
+        if (s.equals("file")) {
+            registeredFolder = inputFolder + "_1_registered/";
+            splitFolder = inputFolder + "_2_split/";
+            analysisResultsFolder = inputFolder + "_3_analysed/";
+        }
+
         Utilities.ensureFolderExists(registeredFolder);
         Utilities.ensureFolderExists(splitFolder);
         Utilities.ensureFolderExists(analysisResultsFolder);
@@ -89,7 +117,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         boolean executeRegistration = true;
         boolean executeSplitting = true;
 
-        if (Utilities.countFilesInFolder(registeredFolder) == Utilities.countFilesInFolder(inputFolder)) {
+        if (Utilities.countFilesInFolder(registeredFolder) > 0) {
             executeRegistration = false;
         }
 
@@ -98,35 +126,90 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         }
 
         int numberOfTimePoints = 0;
+        int numberOfChannels = 0;
         if (executeRegistration) {
+
+            ImagePlus imp;
+            ImagePlus hyperStackImp;
 
             // -------------------------------------------------------------------------------
             // Importing
-            IJ.run("Image Sequence...", "open=" + inputFolder + " sort");
+            if (new File(inputFolder).isDirectory()) {
+                IJ.run("Image Sequence...", "open=" + inputFolder + " sort");
 
-            ImagePlus imp = IJ.getImage();
-            int numberOfSlices = imp.getNSlices();
-            numberOfTimePoints = numberOfSlices / numberOfChannels;
+                int min_c = Integer.MAX_VALUE;
+                int max_c = Integer.MIN_VALUE;
 
-            ImagePlus hyperStackImp = HyperStackConverter.toHyperStack(imp, numberOfChannels, 1, numberOfTimePoints, "default", "Color");
-            hyperStackImp.show();
+                for (File image : inputFolderFile.listFiles(FloatTypeImgLoader.tifFilter)) {
+                    int c = FloatTypeImgLoader.getChannelFromFilename(image.getName());
+                    if (c < min_c) {
+                        min_c = c;
+                    }
+                    if (c > max_c) {
+                        max_c = c;
+                    }
+                }
 
-            // -------------------------------------------------------------------------------
-            // Registration
-            IJ.run(hyperStackImp, "HyperStackReg", "transformation=[Rigid Body] sliding");
+                numberOfChannels = max_c - min_c + 1;
+
+
+                imp = IJ.getImage();
+                int numberOfSlices = imp.getNSlices();
+                numberOfTimePoints = numberOfSlices / numberOfChannels;
+
+                hyperStackImp = HyperStackConverter.toHyperStack(imp, numberOfChannels, 1, numberOfTimePoints, "default", "Color");
+                hyperStackImp.show();
+
+                // -------------------------------------------------------------------------------
+                // Registration
+                IJ.run(hyperStackImp, "HyperStackReg", "transformation=[Rigid Body] sliding");
+            } else {
+                // if it's a file:
+                imp = IJ.openImage(inputFolder);
+                numberOfChannels = imp.getNChannels();
+                numberOfTimePoints = imp.getNFrames();
+                imp.show();
+                hyperStackImp = imp;
+            }
+
             ImagePlus registeredStackImp = IJ.getImage();
 
             // -------------------------------------------------------------------------------
             // Save intermediate results
-            IJ.run(registeredStackImp, "Image Sequence... ", "format=TIFF digits=4 save=[" + registeredFolder + "]");
+            //IJ.run(registeredStackImp, "Image Sequence... ", "format=TIFF digits=4 save=[" + registeredFolder + "]");
+            IJ.saveAsTiff(registeredStackImp, registeredFolder + dataSetName + ".tif");
 
             // cleanup
             registeredStackImp.close();
             hyperStackImp.close();
-            imp.close();
+            if (hyperStackImp != imp ) {
+                imp.close();
+            }
         } else {
             IJ.log("Skipping registration...");
-            numberOfTimePoints = Utilities.countFilesInFolder(registeredFolder) / numberOfChannels;
+            //numberOfTimePoints = Utilities.countFilesInFolder(registeredFolder) / numberOfChannels;
+
+            File registeredFolderFile = new File(registeredFolder);
+            File[] filelist = registeredFolderFile.listFiles(FloatTypeImgLoader.tifFilter);
+            if (filelist.length == 1) { // registration result saved as single stack file
+                ImagePlus imp = IJ.openImage(filelist[0].getAbsolutePath());
+                numberOfChannels = imp.getNChannels();
+                numberOfTimePoints = imp.getNFrames();
+            } else {
+                int min_t = Integer.MAX_VALUE;
+                int max_t = Integer.MIN_VALUE;
+                for (File image : filelist) {
+
+                    int t = FloatTypeImgLoader.getChannelFromFilename(image.getName());
+                    if (t < min_t) {
+                        min_t = t;
+                    }
+                    if (t > max_t) {
+                        max_t = t;
+                    }
+                }
+                numberOfTimePoints = max_t - min_t + 1;
+            }
         }
 
         if (executeSplitting) {
@@ -134,11 +217,9 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
             // Run MMPreprocess
 
             String parameters =
-                    "input_folder=[" + registeredFolder + "]" +
+                    "input_file=[" + registeredFolder + dataSetName + ".tif" + "]" +
                             " output_folder=[" + splitFolder + "]" +
-                            " number_of_Channels=" + numberOfChannels +
-                            " channels_start_with=1" +
-                            " number_of_Time_points=" + numberOfTimePoints +
+                            " number_of_time_points=" + numberOfTimePoints +
                             " time_points_start_with=1" +
                             " variance_threshold=" + varianceThreshold +
                             " lateral_offset=" + lateralOffset +
@@ -147,7 +228,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
 
 
 
-            IJ.run("MoMA pre-processing", parameters);
+            IJ.run("MoMA pre-processing a single file", parameters);
         } else {
             IJ.log("Skipping splitting (MMPreprocess)...");
         }
@@ -210,5 +291,6 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
 
         // -------------------------------------------------------------------------------
     }
+
 
 }

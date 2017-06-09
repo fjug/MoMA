@@ -13,6 +13,8 @@ import java.awt.MenuBar;
 import java.awt.MenuItem;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,24 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSlider;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
-import javax.swing.KeyStroke;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -192,6 +177,7 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 
 		buildGui();
 		dataToDisplayChanged();
+		focusOnSliderTime();
 	}
 
 	/**
@@ -268,7 +254,11 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 				new RangeSlider( 0, model.getCurrentGL().size() - 2 );
 		sliderTrackingRange.setBorder( BorderFactory.createEmptyBorder( 0, 7, 0, 7 ) );
 		sliderTrackingRange.setValue( 0 );
-		sliderTrackingRange.setUpperValue( max );
+		if (MoMA.OPTIMISATION_INTERVAL_LENGTH >= 0) {
+			sliderTrackingRange.setUpperValue(MoMA.OPTIMISATION_INTERVAL_LENGTH);
+		} else {
+			sliderTrackingRange.setUpperValue(max);
+		}
 		sliderTrackingRange.addChangeListener( this );
 		final JLabel lblIgnoreBeyond =
 				new JLabel( String.format( "opt. range:", sliderTrackingRange.getValue() ) );
@@ -314,7 +304,7 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 		panelSegmentationAndAssignmentView.setHorizontalScrollBarPolicy( ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER );
 		panelDetailedDataView = buildDetailedDataView();
 
-		tabsViews.add( "Cell Counting", panelCountingView );
+		//tabsViews.add( "Cell Counting", panelCountingView );
 		tabsViews.add( "Segm. & Assingments", panelSegmentationAndAssignmentView );
 		tabsViews.add( "Detailed Data View", panelDetailedDataView );
 
@@ -322,6 +312,7 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 
 		// --- Controls ----------------------------------
 		cbAutosave = new JCheckBox( "autosave?" );
+		cbAutosave.addActionListener(this);
 //		btnRedoAllHypotheses = new JButton( "Resegment" );
 //		btnRedoAllHypotheses.addActionListener( this );
 		btnRestart = new JButton( "Restart" );
@@ -382,13 +373,15 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 					dataToDisplayChanged();
 				}
 				if ( e.getActionCommand().equals( "g" ) ) {
-					sliderGL.requestFocus();
+					//sliderGL.requestFocus();
+					sliderTime.setValue(sliderTrackingRange.getUpperValue());
 					dataToDisplayChanged();
 				}
 				if ( e.getActionCommand().equals( "a" ) ) {
-					if ( !tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelCountingView ) ) {
+					/*if ( !tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelCountingView ) ) {
 						tabsViews.setSelectedComponent( panelCountingView );
-					}
+					}*/
+					bFreezeHistory.doClick();
 					dataToDisplayChanged();
 				}
 				if ( e.getActionCommand().equals( "s" ) ) {
@@ -577,6 +570,19 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		// - - - - - -
 		leftAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ), this );
+		leftAssignmentViewer.addChangeListener(this);
+		// the following block is a workaround. The left assignment viewer gets focus when MoMA starts. But it shouldn't
+		leftAssignmentViewer.addFocusListener(new FocusListener() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				focusOnSliderTime();
+			}
+
+			@Override
+			public void focusLost(FocusEvent e) {
+
+			}
+		});
 		if ( ilp != null )
 			leftAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( model.getCurrentTime() - 1 ) );
 		// - - - - - -
@@ -601,6 +607,7 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		// - - - - - -
 		rightAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ), this );
+		rightAssignmentViewer.addChangeListener(this);
 		if ( ilp != null )
 			rightAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( model.getCurrentTime() ) );
 		panelVerticalHelper.add( rightAssignmentViewer, BorderLayout.CENTER );
@@ -629,18 +636,23 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 		panelView.add( lblCheckBoxLine, "align center" );
 		// - - - - - -
 		cbSegmentationOkLeft = new JCheckBox();
+		cbSegmentationOkLeft.addActionListener(this);
 		panelView.add( cbSegmentationOkLeft, "align center" );
 		// - - - - - -
 		cbAssignmentsOkLeft = new JCheckBox();
+		cbAssignmentsOkLeft.addActionListener(this);
 		panelView.add( cbAssignmentsOkLeft, "align center" );
 		// - - - - - -
 		cbSegmentationOkCenter = new JCheckBox();
+		cbSegmentationOkCenter.addActionListener(this);
 		panelView.add( cbSegmentationOkCenter, "align center" );
 		// - - - - - -
 		cbAssignmentsOkRight = new JCheckBox();
+		cbAssignmentsOkRight.addActionListener(this);
 		panelView.add( cbAssignmentsOkRight, "align center" );
 		// - - - - - -
 		cbSegmentationOkRight = new JCheckBox();
+		cbSegmentationOkRight.addActionListener(this);
 		panelView.add( cbSegmentationOkRight, "align center" );
 		// - - - - - -
 		bFreezeHistory = new JButton( "<-all" );
@@ -934,6 +946,8 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 		if ( tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelDetailedDataView ) ) {
 			updatePlotPanels();
 		}
+		setFocusToTimeSlider();
+
 	}
 
 	/**
@@ -958,6 +972,7 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 
 		dataToDisplayChanged();
 		this.repaint();
+		focusOnSliderTime();
 	}
 
 	/**
@@ -1331,6 +1346,16 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 			} );
 			t.start();
 		}
+		setFocusToTimeSlider();
+	}
+
+	private void setFocusToTimeSlider() {
+
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				sliderTime.requestFocusInWindow();
+			}
+		} );
 	}
 
 	/**
@@ -1614,7 +1639,13 @@ public class MoMAGui extends JPanel implements ChangeListener, ActionListener {
 	 * Requests the focus on the slider controlling the time (frame).
 	 */
 	public void focusOnSliderTime() {
-		sliderTime.requestFocus();
+
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				sliderTime.requestFocus();
+			}
+		});
 	}
 
 	/**

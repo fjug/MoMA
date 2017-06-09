@@ -1,5 +1,8 @@
 package com.jug;
 
+import com.jug.util.Util;
+import ij.IJ;
+import ij.ImagePlus;
 import java.awt.FileDialog;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -86,7 +89,7 @@ public class MoMA {
 	/**
 	 * Identifier of current version
 	 */
-	public static final String VERSION_STRING = "MoMA_0.10.6";
+	public static final String VERSION_STRING = "MoMA_0.10.7-SNAPSHOT";
 
 	// -------------------------------------------------------------------------------------
 	// statics
@@ -197,6 +200,21 @@ public class MoMA {
 	 * Default: ON (true)
 	 */
 	public static boolean USE_CLASSIFIER_FOR_PMF = true;
+
+	/**
+	 * Global switches for export options
+	 */
+	public static boolean EXPORT_DO_TRACK_EXPORT = false;
+	public static boolean EXPORT_USER_INPUTS = true;
+	public static boolean EXPORT_INCLUDE_HISTOGRAMS = true;
+	public static boolean EXPORT_INCLUDE_QUANTILES = true;
+	public static boolean EXPORT_INCLUDE_COL_INTENSITY_SUMS = true;
+	public static boolean EXPORT_INCLUDE_PIXEL_INTENSITIES = false;
+
+	/**
+	 *
+	 */
+	public static int OPTIMISATION_INTERVAL_LENGTH = -1;
 
 	/**
 	 * One of the test for paper:
@@ -356,11 +374,6 @@ public class MoMA {
 		final Option optRange = new Option( "orange", "opt_range", true, "initial optimization range" );
 		optRange.setRequired( false );
 
-		final Option numChannelsOption = new Option( "c", "channels", true, "number of channels to be loaded and analyzed." );
-		numChannelsOption.setRequired( true );
-
-		final Option minChannelIdxOption = new Option( "cmin", "min_channel", true, "the smallest channel index (usually 0 or 1, default is 1)." );
-		minChannelIdxOption.setRequired( false );
 
 		final Option infolder = new Option( "i", "infolder", true, "folder to read data from" );
 		infolder.setRequired( false );
@@ -373,8 +386,6 @@ public class MoMA {
 
 		options.addOption( help );
 		options.addOption( headless );
-		options.addOption( numChannelsOption );
-		options.addOption( minChannelIdxOption );
 		options.addOption( timeFirst );
 		options.addOption( timeLast );
 		options.addOption( optRange );
@@ -485,12 +496,58 @@ public class MoMA {
 			fileUserProps = new File( cmd.getOptionValue( "p" ) );
 		}
 
-		if ( cmd.hasOption( "cmin" ) ) {
-			minChannelIdx = Integer.parseInt( cmd.getOptionValue( "cmin" ) );
+
+		if (inputFolder.isDirectory() && inputFolder.listFiles(FloatTypeImgLoader.tifFilter).length > 1) {
+			System.out.println("reading a folder of images");
+			int min_t = Integer.MAX_VALUE;
+			int max_t = Integer.MIN_VALUE;
+			int min_c = Integer.MAX_VALUE;
+			int max_c = Integer.MIN_VALUE;
+			for (File image : inputFolder.listFiles(FloatTypeImgLoader.tifFilter)) {
+
+				int c = FloatTypeImgLoader.getChannelFromFilename(image.getName());
+				int t = FloatTypeImgLoader.getTimeFromFilename(image.getName());
+
+				if (c < min_c) {
+					min_c = c;
+				}
+				if (c > max_c) {
+					max_c = c;
+				}
+
+				if (t < min_t) {
+					min_t = t;
+				}
+				if (t > max_t) {
+					max_t = t;
+				}
+			}
+			minTime = min_t;
+			maxTime = max_t + 1;
+			minChannelIdx = min_c;
+			numChannels = max_c - min_c + 1;
+		} else {
+
+			ImagePlus imp;
+			if (inputFolder.isDirectory() && inputFolder.listFiles(FloatTypeImgLoader.tifFilter).length == 1) {
+				System.out.println("reading a folder with a single image");
+				imp = IJ.openImage(inputFolder.listFiles(FloatTypeImgLoader.tifFilter)[0].getAbsolutePath());
+			} else {
+				System.out.println("reading a file");
+				imp = IJ.openImage(inputFolder.getAbsolutePath());
+			}
+
+			minTime = 1;
+			maxTime = imp.getNFrames();
+			minChannelIdx = 1;
+			numChannels = imp.getNChannels();
 		}
-		if ( cmd.hasOption( "c" ) ) {
-			numChannels = Integer.parseInt( cmd.getOptionValue( "c" ) );
-		}
+		System.out.println("Determined minTime" + minTime);
+		System.out.println("Determined maxTime" + maxTime);
+
+		System.out.println("Determined minChannelIdx" + minChannelIdx);
+		System.out.println("Determined numChannels" + numChannels);
+
 
 		if ( cmd.hasOption( "tmin" ) ) {
 			minTime = Integer.parseInt( cmd.getOptionValue( "tmin" ) );
@@ -526,7 +583,7 @@ public class MoMA {
 				return;
 			}
 		} catch ( final UnsatisfiedLinkError ulr ) {
-			final String msgs = "Could initialize Gurobi.\n" + "You might not have installed Gurobi properly or you miss a valid license.\n" + "Please visit 'www.gurobi.com' for further information.\n\n" + ulr.getMessage() + "\nJava library path: " + jlp;
+			final String msgs = "Could not initialize Gurobi.\n" + "You might not have installed Gurobi properly or you miss a valid license.\n" + "Please visit 'www.gurobi.com' for further information.\n\n" + ulr.getMessage() + "\nJava library path: " + jlp;
 			if ( HEADLESS ) {
 				System.out.println( msgs );
 			} else {
@@ -588,6 +645,17 @@ public class MoMA {
 		GUI_WIDTH = Integer.parseInt( props.getProperty( "GUI_WIDTH", Integer.toString( GUI_WIDTH ) ) );
 		GUI_HEIGHT = Integer.parseInt( props.getProperty( "GUI_HEIGHT", Integer.toString( GUI_HEIGHT ) ) );
 		GUI_CONSOLE_WIDTH = Integer.parseInt( props.getProperty( "GUI_CONSOLE_WIDTH", Integer.toString( GUI_CONSOLE_WIDTH ) ) );
+
+		EXPORT_DO_TRACK_EXPORT = props.getProperty( "EXPORT_DO_TRACK_EXPORT", Integer.toString(EXPORT_DO_TRACK_EXPORT?1:0) ).equals("1");
+		EXPORT_USER_INPUTS = props.getProperty( "EXPORT_USER_INPUTS", Integer.toString(EXPORT_USER_INPUTS?1:0) ).equals("1");
+		EXPORT_INCLUDE_HISTOGRAMS = props.getProperty( "EXPORT_INCLUDE_HISTOGRAMS", Integer.toString(EXPORT_INCLUDE_HISTOGRAMS?1:0) ).equals("1");
+		EXPORT_INCLUDE_QUANTILES = props.getProperty( "EXPORT_INCLUDE_QUANTILES", Integer.toString(EXPORT_INCLUDE_QUANTILES?1:0) ).equals("1");
+		EXPORT_INCLUDE_COL_INTENSITY_SUMS = props.getProperty( "EXPORT_INCLUDE_COL_INTENSITY_SUMS", Integer.toString(EXPORT_INCLUDE_COL_INTENSITY_SUMS?1:0) ).equals("1");
+		EXPORT_INCLUDE_PIXEL_INTENSITIES = props.getProperty( "EXPORT_INCLUDE_PIXEL_INTENSITIES", Integer.toString(EXPORT_INCLUDE_PIXEL_INTENSITIES?1:0) ).equals("1");
+
+
+		OPTIMISATION_INTERVAL_LENGTH = Integer.parseInt( props.getProperty( "OPTIMISATION_INTERVAL_LENGTH", Integer.toString(OPTIMISATION_INTERVAL_LENGTH) ));
+		
 
 		if ( !HEADLESS ) {
 			// Iterate over all currently attached monitors and check if sceen
@@ -1154,24 +1222,28 @@ public class MoMA {
 			final File f = new File( "mm.properties" );
 			System.out.println( "Loading default properties from: " + f.getAbsolutePath() );
 			is = new FileInputStream( f );
+			defaultProps.load( is );
 		} catch ( final Exception e ) {
 			System.out.println( "Could not load props... try from classpath next..." );
 			is = null;
 		}
 
-		try {
-			URL propslURL = ClassLoader.getSystemResource( "mm.properties" );
-			if ( propslURL == null ) {
-				propslURL = getClass().getClassLoader().getResource( "mm.properties" );
-			}
-			if ( propslURL != null ) {
-				is = propslURL.openStream();
-				defaultProps.load( is );
-				System.out.println( " >> default properties loaded!" );
+		// if loading from current directory didn't work...
+		if (is == null) {
+			try {
+				URL propslURL = ClassLoader.getSystemResource("mm.properties");
+				if (propslURL == null) {
+					propslURL = getClass().getClassLoader().getResource("mm.properties");
+				}
+				if (propslURL != null) {
+					is = propslURL.openStream();
+					defaultProps.load(is);
+					System.out.println(" >> default properties loaded!");
 
+				}
+			} catch (final Exception e) {
+				System.out.println("No default properties file 'mm.properties' found in current path or classpath... I will create one at termination time!");
 			}
-		} catch ( final Exception e ) {
-			System.out.println( "No default properties file 'mm.properties' found in current path or classpath... I will create one at termination time!" );
 		}
 
 		// ADD USER PROPS IF GIVEN VIA CLI
@@ -1206,6 +1278,11 @@ public class MoMA {
 		return props;
 	}
 
+	public void saveParams() {
+		final File f = new File( "mm.properties" );
+		saveParams (f);
+	}
+
 	/**
 	 * Saves a file 'mm.properties' in the current folder. This file contains
 	 * all MotherMachine specific properties as key-value pairs.
@@ -1214,9 +1291,8 @@ public class MoMA {
 	 *            an instance of {@link Properties} containing all key-value
 	 *            pairs used by the MotherMachine.
 	 */
-	public void saveParams() {
+	public void saveParams(final File f) {
 		try {
-			final File f = new File( "mm.properties" );
 			final OutputStream out = new FileOutputStream( f );
 
 			props.setProperty( "BGREM_TEMPLATE_XMIN", Integer.toString( BGREM_TEMPLATE_XMIN ) );
@@ -1258,6 +1334,16 @@ public class MoMA {
 			props.setProperty( "GUI_WIDTH", Integer.toString( GUI_WIDTH ) );
 			props.setProperty( "GUI_HEIGHT", Integer.toString( GUI_HEIGHT ) );
 			props.setProperty( "GUI_CONSOLE_WIDTH", Integer.toString( GUI_CONSOLE_WIDTH ) );
+
+
+			props.setProperty( "EXPORT_DO_TRACK_EXPORT", Integer.toString(EXPORT_DO_TRACK_EXPORT?1:0) );
+			props.setProperty( "EXPORT_USER_INPUTS", Integer.toString(EXPORT_USER_INPUTS?1:0) );
+			props.setProperty( "EXPORT_INCLUDE_HISTOGRAMS", Integer.toString(EXPORT_INCLUDE_HISTOGRAMS?1:0) );
+			props.setProperty( "EXPORT_INCLUDE_QUANTILES", Integer.toString(EXPORT_INCLUDE_QUANTILES?1:0) );
+			props.setProperty( "EXPORT_INCLUDE_COL_INTENSITY_SUMS", Integer.toString(EXPORT_INCLUDE_COL_INTENSITY_SUMS?1:0) );
+			props.setProperty( "EXPORT_INCLUDE_PIXEL_INTENSITIES", Integer.toString(EXPORT_INCLUDE_PIXEL_INTENSITIES?1:0) );
+
+			props.setProperty("OPTIMISATION_INTERVAL_LENGTH", Integer.toString(OPTIMISATION_INTERVAL_LENGTH));
 
 			props.store( out, "MotherMachine properties" );
 		} catch ( final Exception e ) {

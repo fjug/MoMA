@@ -78,6 +78,9 @@ public class FileUtils {
 
 				final File f = new File(destDir, filename);
 				if (!entry.isDirectory()) {
+					if (f.exists()) {
+						return false;
+					}
 					final InputStream entryInputStream = jarFile.getInputStream(entry);
 					if(!FileUtils.copyStream(entryInputStream, f)){
 						return false;
