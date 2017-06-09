@@ -39,24 +39,10 @@ public class FindLocalMaxima<IMG_T extends Type< IMG_T > & Comparable< IMG_T >> 
 	
 //	/**
 //	 * Returns an instance of the return type of function 'compute'.
-//	 * 
-//	 * @see net.imglib2.ops.operation.UnaryOutputOperation#createEmptyOutput(java.lang.Object)
 //	 */
-//	@Override
 	public List< Point > createEmptyOutput( final RandomAccessibleInterval< IMG_T > in ) {
 		return new ArrayList< Point >();
 	}
-
-//	/**
-//	 * Iterates input and returns the position of the first occurrence of a
-//	 * local maximum.
-//	 * 
-//	 * @see net.imglib2.ops.operation.UnaryOutputOperation#compute(java.lang.Object)
-//	 */
-//	@Override
-//	public List< Point > compute( final RandomAccessibleInterval< IMG_T > in ) {
-//		return compute( in, createEmptyOutput( in ) );
-//	}
 	
 	
 	/**

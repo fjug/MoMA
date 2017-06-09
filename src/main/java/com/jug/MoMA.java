@@ -41,6 +41,8 @@ import com.jug.gui.MoMAGui;
 import com.jug.gui.MoMAModel;
 import com.jug.gui.progress.DialogProgress;
 import com.jug.loops.Loops;
+import com.jug.ops.cursor.FindLocalMaxima;
+import com.jug.ops.numerictype.SumOfRai;
 import com.jug.segmentation.GrowthLineSegmentationMagic;
 import com.jug.segmentation.SilentWekaSegmenter;
 import com.jug.util.DataMover;
@@ -1463,7 +1465,7 @@ public class MoMA {
 			final IntervalView< FloatType > ivFrame = Views.hyperSlice( imgTemp, 2, frameIdx );
 
 			// Find maxima per image row (per frame)
-			frameWellCenters = new Loops< FloatType, List< Point >>().forEachHyperslice( ivFrame, 1, "find local maxima" );
+			frameWellCenters = new Loops< FloatType, List< Point >>().forEachHyperslice( ivFrame, 1, new FindLocalMaxima<FloatType>());
 
 			// Delete detected points that are too lateral
 			for ( int y = 0; y < frameWellCenters.size(); y++ ) {
@@ -1855,7 +1857,7 @@ public class MoMA {
 		maxs[ 0 ] = xDimLen / 2 + GL_OFFSET_LATERAL / 3; // we use the fact that we know that the GL is in the center of the image given to us
 		final RandomAccessibleInterval<FloatType> centralArea = Views.interval( getImgTemp(), mins, maxs );
 		final List< FloatType > rowTimeAverages = new Loops< FloatType, FloatType >()
-				.forEachHyperslice( centralArea, 1, "sum of rai" );
+				.forEachHyperslice( centralArea, 1, new SumOfRai<FloatType>());
 
 		// compute average of lower half averages
 		float lowerHalfAvg = 0;

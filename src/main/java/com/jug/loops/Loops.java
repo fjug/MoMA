@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.imagej.ImageJ;
+import net.imagej.ops.Op;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.Type;
 import net.imglib2.view.Views;
@@ -28,7 +29,7 @@ public class Loops<IMG_T extends Type< IMG_T >, INNER_RET_T> {
      */
     public List<INNER_RET_T> forEachHyperslice(
 	    RandomAccessibleInterval<IMG_T> rai, int d, 
-	    String op) {
+	    Op op) {
     	
 	final ImageJ ij = new ImageJ();
 	
@@ -56,7 +57,7 @@ public class Loops<IMG_T extends Type< IMG_T >, INNER_RET_T> {
      */
     public List<INNER_RET_T> forEachIntervalSlice(
 	    RandomAccessibleInterval<IMG_T> rai, int d, 
-	    String op) {
+	    Op op) {
     	
 	final ImageJ ij = new ImageJ();
 	
