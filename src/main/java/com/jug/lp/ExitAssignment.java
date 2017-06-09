@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.jug.MoMA;
+import com.jug.export.FactorGraphFileBuilder_SCALAR;
 
 import gurobi.GRB;
 import gurobi.GRBException;

@@ -1,7 +1,7 @@
 /**
  *
  */
-package com.jug.lp;
+package com.jug.export;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -10,6 +10,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import com.jug.lp.DivisionAssignment;
+import com.jug.lp.GrowthLineTrackingILP;
+import com.jug.lp.Hypothesis;
+import com.jug.lp.MappingAssignment;
 
 import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.FloatType;
@@ -53,7 +58,7 @@ public class FactorGraphFileBuilder_PAUL {
 			lines.add( "# #### SEGMENTS (HYPOTHESES) ###################################" );
 		}
 
-		lines.add( "\nt=" + next_t + "\n" );
+		lines.add( "\n# t=" + next_t + "\n" );
 		next_t++;
 		next_hyp_id = 0;
 	}
@@ -65,7 +70,7 @@ public class FactorGraphFileBuilder_PAUL {
 	 * @param hyps
 	 */
 	public void addPathBlockingConstraint( final List< Hypothesis< Component< FloatType, ? > > > hyps ) {
-		String str = "EC ";// + hyps.get( 0 ).getTime();
+		String str = "CONFSET ";// + hyps.get( 0 ).getTime();
 		boolean first = true;
 		for ( final Hypothesis< Component< FloatType, ? > > hyp : hyps ) {
 			if ( first ) {
@@ -73,7 +78,7 @@ public class FactorGraphFileBuilder_PAUL {
 			} else {
 				str += " + ";
 			}
-			str += "" + mapHypId.get( hyp );
+			str += String.format( "%d %d", hyp.getTime(), mapHypId.get( hyp ) );
 		}
 		str += " <= 1";
 		lines.add( str );
@@ -118,10 +123,12 @@ public class FactorGraphFileBuilder_PAUL {
 //		if ( hyp.getTime() == ilp.getGrowthLine().size() - 1 ) {
 //			exitCost = 0;
 //		}
-		lines.add( String.format( "H %d %d %.16f %.16f (%d,%d)", next_hyp_id, hyp.getId(), 0f, exitCost, hyp.getLocation().a, hyp.getLocation().b ) );
+		lines.add( String.format( "H %d %d %.16f (%d,%d)", next_hyp_id, hyp.getId(), 0f, hyp.getLocation().a, hyp.getLocation().b ) );
 																			// the hypcosts are all 0 because we fold them into
 																			// the assignments according to the way we substitute
 																			// the corresponding variable for the ILP anyways.
+		lines.add( String.format( "APP    %.16f", 0f ) );
+		lines.add( String.format( "DISAPP %.16f", exitCost ) );
 		next_hyp_id++;
 		return next_hyp_id - 1;
 	}
@@ -139,7 +146,7 @@ public class FactorGraphFileBuilder_PAUL {
 		if ( cost <= GrowthLineTrackingILP.CUTOFF_COST ) {
 			lines.add(
 					String.format(
-							"MA %d %d %d %d %.16f",
+							"MOVE %d %d %d %d %.16f",
 							t,
 							mapHypId.get( sourceHypothesis ),
 							t + 1,
@@ -168,11 +175,12 @@ public class FactorGraphFileBuilder_PAUL {
 		if ( cost <= GrowthLineTrackingILP.CUTOFF_COST ) {
 			lines.add(
 				String.format(
-						"DA %d %d %d %d %d %.16f",
+						"DIV %d %d %d %d %d %d %.16f",
 						t,
 						mapHypId.get( sourceHypothesis ),
 						t + 1,
 						mapHypId.get( destinationHypothesisUpper ),
+						t + 1,
 						mapHypId.get( destinationHypothesisLower ),
 						cost ) );
 		}

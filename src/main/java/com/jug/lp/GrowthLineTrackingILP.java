@@ -21,6 +21,9 @@ import javax.swing.JOptionPane;
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
 import com.jug.MoMA;
+import com.jug.export.FactorGraphFileBuilder_PASCAL;
+import com.jug.export.FactorGraphFileBuilder_PAUL;
+import com.jug.export.FactorGraphFileBuilder_SCALAR;
 import com.jug.gui.progress.DialogGurobiProgress;
 import com.jug.gui.progress.ProgressListener;
 import com.jug.lp.costs.CostFactory;
@@ -577,7 +580,7 @@ public class GrowthLineTrackingILP {
 	 *         hypothesis (plus the vector of cost contributions/feature
 	 *         values).
 	 */
-	protected Pair< Float, float[] > compatibilityCostOfMapping(
+	public Pair< Float, float[] > compatibilityCostOfMapping(
 			final Hypothesis< Component< FloatType, ? > > from,
 			final Hypothesis< Component< FloatType, ? > > to ) {
 		final long sizeFrom = from.getWrappedHypothesis().size();
@@ -651,7 +654,7 @@ public class GrowthLineTrackingILP {
 	 * @param mappingCosts
 	 * @return
 	 */
-	protected float costModulationForSubstitutedILP(
+	public float costModulationForSubstitutedILP(
 			final float fromCost,
 			final float toCost,
 			final float mappingCosts ) {
@@ -668,7 +671,7 @@ public class GrowthLineTrackingILP {
 	 * @param divisionCosts
 	 * @return
 	 */
-	protected float costModulationForSubstitutedILP(
+	public float costModulationForSubstitutedILP(
 			final float fromCost,
 			final float toUpperCost,
 			final float toLowerCost,
@@ -684,7 +687,7 @@ public class GrowthLineTrackingILP {
 	 *            costs for the segment to exit
 	 * @return the modulated costs.
 	 */
-	protected float costModulationForSubstitutedILP( final float fromCosts ) {
+	public float costModulationForSubstitutedILP( final float fromCosts ) {
 		return Math.min( 0.0f, fromCosts / 4f ); // NOTE: 0 or negative but only hyp/4 to prefer map or div if exists...
 	}
 
@@ -784,7 +787,7 @@ public class GrowthLineTrackingILP {
 	 *         hypothesis (plus the vector of cost contributions/feature
 	 *         values).
 	 */
-	protected Pair< Float, float[] > compatibilityCostOfDivision(
+	public Pair< Float, float[] > compatibilityCostOfDivision(
 			final Hypothesis< Component< FloatType, ? > > from,
 			final Hypothesis< Component< FloatType, ? > > toUpper,
 			final Hypothesis< Component< FloatType, ? > > toLower ) {
@@ -1251,9 +1254,6 @@ public class GrowthLineTrackingILP {
 					dialog.setVisible( false );
 					dialog.dispose();
 				}
-				// LP export for Paul and Bogdan
-				// - - - - - - - - - - - - - - - - - - - -
-//				model.write( "/Users/jug/Dropbox/WorkingData/CSBD/Collaborations/IST_Paul/BES_datasets/lpExport.lp" );
 			} else if ( model.get( GRB.IntAttr.Status ) == GRB.Status.INFEASIBLE ) {
 				status = INFEASIBLE;
 				if ( !MoMA.HEADLESS ) {
@@ -2447,6 +2447,8 @@ public class GrowthLineTrackingILP {
 		FactorGraphFileBuilder_PAUL fgFile;
 		try {
 			fgFile = new FactorGraphFileBuilder_PAUL( model.get( GRB.DoubleAttr.ObjVal ) );
+			System.out.println( "Exporting also LP file (since model is optimized)." );
+			model.write( file.getPath() + ".lp" );
 		} catch ( final GRBException e ) {
 			fgFile = new FactorGraphFileBuilder_PAUL();
 		}
