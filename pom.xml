@@ -17,10 +17,25 @@
 	<version>0.10.9-SNAPSHOT</version>
 
 	<name>MotherMachine_</name>
+	<description>The Mother Machine Analyzer.</description>
+	<url>https://github.com/fjug/MoMA</url>
+	<inceptionYear>20XX</inceptionYear>
+	<organization>
+		<name>XXX</name>
+		<url>XXX</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>XXX</name>
+			<distribution>XXX</distribution>
+		</license>
+</licenses>
 
     <properties>
         <jmathplot.path>${project.basedir}/lib/jmathplot.jar</jmathplot.path>
         <gurobi.path>${project.basedir}/lib/gurobi.jar</gurobi.path>
+        <license.licenseName>XXX</license.licenseName>
+		<license.copyrightOwners>XXX</license.copyrightOwners>
     </properties>
 
 	<dependencies>
@@ -39,35 +54,6 @@
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej-ops</artifactId>
 		</dependency>
-
-		<dependency>
-			<groupId>net.imglib2</groupId>
-			<artifactId>imglib2</artifactId>
-		</dependency>
-	
-		<dependency>
-			<groupId>net.imglib2</groupId>
-			<artifactId>imglib2-ij</artifactId>
-		</dependency>
-		
-		<!-- https://mvnrepository.com/artifact/net.imglib2/imglib2-io -->
-		<dependency>
-		    <groupId>net.imglib2</groupId>
-		    <artifactId>imglib2-io</artifactId>
-		    <version>2.0.0-beta6</version>
-		</dependency>
-		
-		<dependency>
-			<groupId>net.imglib2</groupId>
-			<artifactId>imglib2-algorithm</artifactId>
-		</dependency>
-	
-		<!-- https://mvnrepository.com/artifact/io.scif/scifio -->
-		<dependency>
-		    <groupId>io.scif</groupId>
-		    <artifactId>scifio</artifactId>
-		</dependency>
-
 		
 	<!-- 
 		<dependency>
@@ -150,12 +136,6 @@
 			<artifactId>gson</artifactId>
 		</dependency>
 
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.5</version>
-        </dependency>
-
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -206,12 +186,28 @@
 			<organization>MPI-CBG</organization>
 			<organizationUrl>http://mpi-cbg.de/</organizationUrl>
 			<roles>
-				<role>architect</role>
+				<role>founder</role>
 				<role>developer</role>
 			</roles>
 			<timezone>+1</timezone>
 		</developer>
 	</developers>
+	
+	<contributors>
+		<contributor>
+				<name>XXX</name>
+				<url>XXX</url>
+				<roles><role>developer</role></roles>
+				<properties><id>XXX</id></properties>
+		</contributor>
+	</contributors>
+
+	<mailingLists>
+		<mailingList>
+			<name>ImageJ Forum</name>
+			<archive>http://forum.imagej.net/</archive>
+		</mailingList>
+	</mailingLists>
 
 	<!-- NB: for project parent -->
 	<repositories>
@@ -223,9 +219,17 @@
 
 	<scm>
 		<connection>scm:git:git://github.com/fjug/MoMA.git</connection>
-		<developerConnection>scm:git:git@github.com:fjug/MoMAn.git</developerConnection>
+		<developerConnection>scm:git:git@github.com:fjug/MoMA.git</developerConnection>
 		<tag>HEAD</tag>
 		<url>https://github.com/fjug/MoMA.git</url>
 	</scm>
+	
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/fjug/moMA/issues</url>
+	</issueManagement>
+	<ciManagement>
+		<system>None</system>
+	</ciManagement>
 
 </project>
