@@ -1,8 +1,5 @@
 package com.jug;
 
-import com.jug.util.Util;
-import ij.IJ;
-import ij.ImagePlus;
 import java.awt.FileDialog;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -31,9 +28,9 @@ import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
-import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -58,7 +55,9 @@ import com.jug.util.converter.RealFloatProbMapToSegmentation;
 
 import gurobi.GRBEnv;
 import gurobi.GRBException;
+import ij.IJ;
 import ij.ImageJ;
+import ij.ImagePlus;
 import ij.Prefs;
 import net.imagej.patcher.LegacyInjector;
 import net.imglib2.Cursor;
