@@ -3,44 +3,38 @@
  */
 package com.jug.ops.rai;
 
-import org.scijava.ItemIO;
-import org.scijava.plugin.Parameter;
-import org.scijava.plugin.Plugin;
-
 import com.jug.util.DataMover;
 
-import net.imagej.ops.AbstractOp;
 import net.imagej.ops.Op;
+import net.imagej.ops.special.hybrid.AbstractUnaryHybridCF;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.view.Views;
 
+import org.scijava.plugin.Plugin;
+
 /**
  * @author jug
  *
  */
-@Plugin(type = Op.class, name = "rai square")
-public class RaiSquare<T extends NumericType<T> & NativeType<T> > extends AbstractOp {
-	
-	@Parameter
-	private RandomAccessibleInterval<T> input;
-
-	@Parameter(type = ItemIO.OUTPUT)
-	private RandomAccessibleInterval<T> output;
+@Plugin(type = Op.class)
+public class RaiSquare<T extends NumericType<T> & NativeType<T> > 
+extends AbstractUnaryHybridCF<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>> {
 
 	@Override
-	public void run() {
-	DataMover.copy(input, output);
-	
-	for (T pixel : Views.iterable(output)) {
-	    pixel.mul(pixel);
+	public void compute(RandomAccessibleInterval<T> input, RandomAccessibleInterval<T> output) {
+		DataMover.copy(input, output);
+		
+		for (T pixel : Views.iterable(output)) {
+		    pixel.mul(pixel);
+		}
+		
 	}
-    }
 
-    public RandomAccessibleInterval<T> createEmptyOutput(
-	    RandomAccessibleInterval<T> in) {
-	return DataMover.createEmptyArrayImgLike(in, in.randomAccess().get()); 
-    }
+	@Override
+	public RandomAccessibleInterval<T> createOutput(RandomAccessibleInterval<T> input) {
+		return DataMover.createEmptyArrayImgLike(input, input.randomAccess().get());
+	}
 
 }

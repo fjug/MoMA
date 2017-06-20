@@ -3,49 +3,40 @@
  */
 package com.jug.ops.numerictype;
 
-
-import org.scijava.ItemIO;
-import org.scijava.plugin.Parameter;
-import org.scijava.plugin.Plugin;
-
 import com.jug.ops.rai.RaiMeanSubtractor;
 import com.jug.ops.rai.RaiSquare;
 
-import net.imagej.ImageJ;
-import net.imagej.ops.AbstractOp;
 import net.imagej.ops.Op;
+import net.imagej.ops.special.hybrid.AbstractUnaryHybridCF;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
+
+import org.scijava.plugin.Plugin;
 
 /**
  * @author jug
  *
  */
-@Plugin(type = Op.class, name = "var of rai")
-public class VarOfRai<T extends NumericType<T> & NativeType<T> > extends AbstractOp {
-	
-	@Parameter
-	private RandomAccessibleInterval<T> input;
-
-	@Parameter(type = ItemIO.OUTPUT)
-	private T output;
+@Plugin(type = Op.class)
+public class VarOfRai<T extends NumericType<T> & NativeType<T> > 
+extends AbstractUnaryHybridCF<RandomAccessibleInterval<T>, T> {
 
 	@Override
-	public void run() {
+	public void compute(RandomAccessibleInterval<T> input, T output) {
+			
+		output.setZero();
 		
-	final ImageJ ij = new ImageJ();
+		// Var(X) = < < X - <X> >^2 >
+		RandomAccessibleInterval<T> tmp;
+		tmp = (RandomAccessibleInterval<T>) ops().run(RaiMeanSubtractor.class, input);
+		tmp = (RandomAccessibleInterval<T>) ops().run(RaiSquare.class, tmp); 
+		output = (T) ops().run(MeanOfRai.class, tmp);
 		
-	output.setZero();
-	
-	// Var(X) = < < X - <X> >^2 >
-	RandomAccessibleInterval<T> tmp;
-	tmp = (RandomAccessibleInterval<T>) ij.op().run(new RaiMeanSubtractor<T>(), input);
-	tmp = (RandomAccessibleInterval<T>) ij.op().run(new RaiSquare<T>(), tmp); 
-	output = (T) ij.op().run(new MeanOfRai<T>(), tmp);
-    }
+	}
 
-    public T createEmptyOutput(RandomAccessibleInterval<T> in) {
-	return in.randomAccess().get().createVariable();
-    }
+	@Override
+	public T createOutput(RandomAccessibleInterval<T> input) {
+		return input.randomAccess().get().createVariable();
+	}
 }
