@@ -24,7 +24,7 @@ public class RaiMeanSubtractor<T extends NumericType<T> & NativeType<T> >
 extends AbstractUnaryHybridCF<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>> {
 	
 	@Override
-	public void compute(RandomAccessibleInterval<T> input, RandomAccessibleInterval<T> output) {
+	public void compute(final RandomAccessibleInterval<T> input, final RandomAccessibleInterval<T> output) {
 		T mean = (T) ops().run(MeanOfRai.class, input);
 		DataMover.copy(input, output);
 		

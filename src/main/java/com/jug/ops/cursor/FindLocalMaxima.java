@@ -32,7 +32,7 @@ extends AbstractUnaryHybridCF<RandomAccessibleInterval<IMG_T>, List<Point>> {
 
 
 	@Override
-	public void compute(RandomAccessibleInterval<IMG_T> input, List<Point> output) {
+	public void compute(final RandomAccessibleInterval<IMG_T> input, final List<Point> output) {
 
 		// Credits to Example 4b @ http://imglib2.net/ (Mr. Preibisch and Mr. Pietzsch)
 		// ----------------------------------------------------------------------------

@@ -23,7 +23,7 @@ public class VarOfRai<T extends NumericType<T> & NativeType<T> >
 extends AbstractUnaryHybridCF<RandomAccessibleInterval<T>, T> {
 
 	@Override
-	public void compute(RandomAccessibleInterval<T> input, T output) {
+	public void compute(final RandomAccessibleInterval<T> input, final T output) {
 			
 		output.setZero();
 		
@@ -31,7 +31,7 @@ extends AbstractUnaryHybridCF<RandomAccessibleInterval<T>, T> {
 		RandomAccessibleInterval<T> tmp;
 		tmp = (RandomAccessibleInterval<T>) ops().run(RaiMeanSubtractor.class, input);
 		tmp = (RandomAccessibleInterval<T>) ops().run(RaiSquare.class, tmp); 
-		output = (T) ops().run(MeanOfRai.class, tmp);
+		output.set((T) ops().run(MeanOfRai.class, tmp));
 		
 	}
 

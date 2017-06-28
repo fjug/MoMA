@@ -20,7 +20,7 @@ public class SumOfRai<T extends NumericType< T >>
 extends AbstractUnaryHybridCF<RandomAccessibleInterval<T>, T> {
 
 	@Override
-	public void compute(RandomAccessibleInterval<T> input, T output) {
+	public void compute(final RandomAccessibleInterval<T> input, final T output) {
 		output.setZero();
 		for (T el : Views.iterable(input)) {
 		    output.add(el);

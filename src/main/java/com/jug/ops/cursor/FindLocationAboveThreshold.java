@@ -46,7 +46,7 @@ extends AbstractUnaryHybridCF<RandomAccessibleInterval<IMG_T>, Cursor<IMG_T>> {
      * larger the compare value given at instantiation time.
      */
 	@Override
-	public void compute(RandomAccessibleInterval<IMG_T> input, Cursor<IMG_T> output) {
+	public void compute(final RandomAccessibleInterval<IMG_T> input, final Cursor<IMG_T> output) {
 		while (output.hasNext()) {
 		    IMG_T el = output.next();
 

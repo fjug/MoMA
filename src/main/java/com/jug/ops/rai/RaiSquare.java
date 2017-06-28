@@ -23,7 +23,7 @@ public class RaiSquare<T extends NumericType<T> & NativeType<T> >
 extends AbstractUnaryHybridCF<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>> {
 
 	@Override
-	public void compute(RandomAccessibleInterval<T> input, RandomAccessibleInterval<T> output) {
+	public void compute(final RandomAccessibleInterval<T> input, final RandomAccessibleInterval<T> output) {
 		DataMover.copy(input, output);
 		
 		for (T pixel : Views.iterable(output)) {
