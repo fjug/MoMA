@@ -35,7 +35,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
 
 
     @Override
-    public void run(String s) {
+    public void run(final String s) {
 
         if(!GurobiInstaller.checkInstallation()) {
             IJ.log("Gurobi appears not properly installed. Please check your installation!");
@@ -44,7 +44,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
 
         // -------------------------------------------------------------------------------
         // plugin configuration
-        GenericDialogPlus gd = new GenericDialogPlus("MoMA configuration");
+        final GenericDialogPlus gd = new GenericDialogPlus("MoMA configuration");
         if (s.equals("file")) {
             gd.addFileField("Input_file", currentDir);
         } else {
@@ -74,13 +74,13 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         //int numberOfChannels = (int) gd.getNextNumber();
 
 
-        double varianceThreshold = gd.getNextNumber();
-        int lateralOffset = (int)gd.getNextNumber();
-        int cropWidth = (int)gd.getNextNumber();
+        final double varianceThreshold = gd.getNextNumber();
+        final int lateralOffset = (int)gd.getNextNumber();
+        final int cropWidth = (int)gd.getNextNumber();
 
         currentDir = inputFolder;
 
-        File inputFolderFile = new File(inputFolder);
+        final File inputFolderFile = new File(inputFolder);
         if (!inputFolderFile.exists()) {
             IJ.log("The input folder(" + inputFolder + ") does not exist. Aborting...");
             return;
@@ -136,8 +136,8 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
                 int min_c = Integer.MAX_VALUE;
                 int max_c = Integer.MIN_VALUE;
 
-                for (File image : inputFolderFile.listFiles(FloatTypeImgLoader.tifFilter)) {
-                    int c = FloatTypeImgLoader.getChannelFromFilename(image.getName());
+                for (final File image : inputFolderFile.listFiles(FloatTypeImgLoader.tifFilter)) {
+                    final int c = FloatTypeImgLoader.getChannelFromFilename(image.getName());
                     if (c < min_c) {
                         min_c = c;
                     }
@@ -150,7 +150,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
 
 
                 imp = IJ.getImage();
-                int numberOfSlices = imp.getNSlices();
+                final int numberOfSlices = imp.getNSlices();
                 numberOfTimePoints = numberOfSlices / numberOfChannels;
 
                 hyperStackImp = HyperStackConverter.toHyperStack(imp, numberOfChannels, 1, numberOfTimePoints, "default", "Color");
@@ -168,7 +168,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
                 hyperStackImp = imp;
             }
 
-            ImagePlus registeredStackImp = IJ.getImage();
+            final ImagePlus registeredStackImp = IJ.getImage();
 
             // -------------------------------------------------------------------------------
             // Save intermediate results
@@ -185,18 +185,18 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
             IJ.log("Skipping registration...");
             //numberOfTimePoints = Utilities.countFilesInFolder(registeredFolder) / numberOfChannels;
 
-            File registeredFolderFile = new File(registeredFolder);
-            File[] filelist = registeredFolderFile.listFiles(FloatTypeImgLoader.tifFilter);
+            final File registeredFolderFile = new File(registeredFolder);
+            final File[] filelist = registeredFolderFile.listFiles(FloatTypeImgLoader.tifFilter);
             if (filelist.length == 1) { // registration result saved as single stack file
-                ImagePlus imp = IJ.openImage(filelist[0].getAbsolutePath());
+                final ImagePlus imp = IJ.openImage(filelist[0].getAbsolutePath());
                 numberOfChannels = imp.getNChannels();
                 numberOfTimePoints = imp.getNFrames();
             } else {
                 int min_t = Integer.MAX_VALUE;
                 int max_t = Integer.MIN_VALUE;
-                for (File image : filelist) {
+                for (final File image : filelist) {
 
-                    int t = FloatTypeImgLoader.getChannelFromFilename(image.getName());
+                    final int t = FloatTypeImgLoader.getChannelFromFilename(image.getName());
                     if (t < min_t) {
                         min_t = t;
                     }
@@ -212,17 +212,22 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
             // -------------------------------------------------------------------------------
             // Run MMPreprocess
 
-            String parameters =
+            final String parameters =
                     "input_file=[" + registeredFolder + dataSetName + ".tif" + "]" +
                             " output_folder=[" + splitFolder + "]" +
-                            " number_of_time_points=" + numberOfTimePoints +
+                            " number_of_Time_points=" + numberOfTimePoints +
                             " time_points_start_with=1" +
+                            " auto_rotation" +
                             " variance_threshold=" + varianceThreshold +
+                            " gl_min_length=250" +
+                            " row_smoothing_sigma=20" +
                             " lateral_offset=" + lateralOffset +
-                            " crop_width=" + cropWidth;
+                            " fake_GL_width=20" +
+                            " crop_width=" + cropWidth +
+                            " top_padding=20" +
+                            " bottom_padding=20";
 
-
-
+			System.out.println( "Starting single file preprocessing with: " + parameters );
 
             IJ.run("MoMA pre-processing a single file", parameters);
         } else {
@@ -232,13 +237,13 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
         // -------------------------------------------------------------------------------
         // Dataset selection
 
-        String[] datasets = Utilities.listSubFolderNames(splitFolder);
+        final String[] datasets = Utilities.listSubFolderNames(splitFolder);
 
         if (datasets.length == 0) {
             IJ.log("No data sets found. Consider removing the 2_split subfolder to rerun splitting (MMPreprocess).");
             return;
         }
-        String[] dataSetDescriptions = new String[datasets.length];
+        final String[] dataSetDescriptions = new String[datasets.length];
         int nextIndexToAnalyse = -1;
         for (int i = 0; i < datasets.length; i++) {
             dataSetDescriptions[i] = datasets[i];
@@ -257,17 +262,17 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
             selectedDataset = dataSetDescriptions[nextIndexToAnalyse];
         }
 
-        GenericDialogPlus gdDataSetSelection = new GenericDialogPlus("MoMA dataset selection");
+        final GenericDialogPlus gdDataSetSelection = new GenericDialogPlus("MoMA dataset selection");
         gdDataSetSelection.addChoice("Dataset", dataSetDescriptions, selectedDataset);
         gdDataSetSelection.addMessage("Datasets marked with a * were analysed already.");
         gdDataSetSelection.showDialog();
         if (gdDataSetSelection.wasCanceled()) {
             return;
         }
-        String selectedDataSet = datasets[gdDataSetSelection.getNextChoiceIndex()];
+        final String selectedDataSet = datasets[gdDataSetSelection.getNextChoiceIndex()];
 
-        String momaInputFolder = splitFolder + selectedDataSet + "/";
-        String momaOutputFolder = analysisResultsFolder + selectedDataSet + "/";
+        final String momaInputFolder = splitFolder + selectedDataSet + "/";
+        final String momaOutputFolder = analysisResultsFolder + selectedDataSet + "/";
 
         // -------------------------------------------------------------------------------
         // create MoMA output folder; it would exit if it not exists
@@ -275,7 +280,7 @@ public class MotherMachineDefaultPipelinePlugin implements PlugIn {
 
         // -------------------------------------------------------------------------------
         // Running actual MoMA
-        String momaParameters =
+        final String momaParameters =
                 "input_folder=[" + momaInputFolder + "]" +
                 " output_folder=[" + momaOutputFolder + "]" +
                 " number_of_channels=" + numberOfChannels;

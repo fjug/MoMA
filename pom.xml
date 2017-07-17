@@ -14,43 +14,44 @@
 
 	<groupId>com.jug</groupId>
 	<artifactId>MotherMachine_</artifactId>
-	<version>0.10.9-SNAPSHOT</version>
+	<version>1.0.0</version>
 
 	<name>MotherMachine_</name>
 	<description>The Mother Machine Analyzer.</description>
 	<url>https://github.com/fjug/MoMA</url>
-	<inceptionYear>20XX</inceptionYear>
+	<inceptionYear>2013</inceptionYear>
 	<organization>
-		<name>XXX</name>
-		<url>XXX</url>
+		<name>CSBD (MPI-CBG)</name>
+		<url>www.csbdresden.de</url>
 	</organization>
-	<licenses>
+	<licenses> 
 		<license>
-			<name>XXX</name>
-			<distribution>XXX</distribution>
+			<name>BSD license version 3</name>
+			<distribution>repo</distribution>
 		</license>
 	</licenses>
 
-	<developers>
-		<developer>
-			<id>jug</id>
+	<contributors>
+		<contributor>
 			<name>Florian Jug</name>
-			<email>florian.jug@gmail.com</email>
-			<organization>MPI-CBG</organization>
-			<organizationUrl>http://mpi-cbg.de/</organizationUrl>
+			<url>www.mpi-cbg.de/jug</url>
 			<roles>
 				<role>founder</role>
 				<role>developer</role>
 			</roles>
-			<timezone>+1</timezone>
-		</developer>
-	</developers>
-	<contributors>
+			<properties><id>fjug</id></properties>
+		</contributor>
 		<contributor>
-			<name>XXX</name>
-			<url>XXX</url>
+			<name>Robert Haase</name>
+			<url>www.mpi-cbg.de</url>
 			<roles><role>developer</role></roles>
-			<properties><id>XXX</id></properties>
+			<properties><id>haesleinhuepf</id></properties>
+		</contributor>
+		<contributor>
+			<name>Deborah Schmidt</name>
+			<url>www.frauzufall.de</url>
+			<roles><role>developer</role></roles>
+			<properties><id>frauzufall</id></properties>
 		</contributor>
 	</contributors>
 
@@ -78,8 +79,8 @@
 	<properties>
 		<jmathplot.path>${project.basedir}/lib/jmathplot.jar</jmathplot.path>
 		<gurobi.path>${project.basedir}/lib/gurobi.jar</gurobi.path>
-		<license.licenseName>XXX</license.licenseName>
-		<license.copyrightOwners>XXX</license.copyrightOwners>
+        <license.licenseName>BSD_3</license.licenseName>
+		<license.copyrightOwners>Max-Plack Institute of Molecular Cell Biology and Genetics, Dresden</license.copyrightOwners>
 	</properties>
 
 	<repositories>

@@ -1,10 +1,12 @@
 /**
- * 
+ *
  */
 package com.jug.ops.cursor;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.scijava.plugin.Plugin;
 
 import net.imagej.ops.Op;
 import net.imagej.ops.special.hybrid.AbstractUnaryHybridCF;
@@ -19,15 +21,13 @@ import net.imglib2.util.Intervals;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
-import org.scijava.plugin.Plugin;
-
 /**
  * @author jug
- * 
+ *
  */
 
 @Plugin(type = Op.class)
-public class FindLocalMaxima<IMG_T extends Type< IMG_T > & Comparable< IMG_T >> 
+public class FindLocalMaxima<IMG_T extends Type< IMG_T > & Comparable< IMG_T >>
 extends AbstractUnaryHybridCF<RandomAccessibleInterval<IMG_T>, List<Point>> {
 
 
@@ -76,13 +76,13 @@ extends AbstractUnaryHybridCF<RandomAccessibleInterval<IMG_T>, List<Point>> {
 				output.add( new Point( center ) );
 			}
 		}
-		
+
 	}
 
 
 	@Override
-	public List<Point> createOutput(RandomAccessibleInterval<IMG_T> input) {
-		return new ArrayList<>();
+	public List<Point> createOutput(final RandomAccessibleInterval<IMG_T> input) {
+		return new ArrayList< Point >();
 	}
 
 }

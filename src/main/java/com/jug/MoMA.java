@@ -88,7 +88,7 @@ public class MoMA {
 	/**
 	 * Identifier of current version
 	 */
-	public static final String VERSION_STRING = "MoMA_0.10.7-SNAPSHOT";
+	public static final String VERSION_STRING = "MoMA_1.0.0";
 
 	// -------------------------------------------------------------------------------------
 	// statics
