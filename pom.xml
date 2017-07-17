@@ -14,7 +14,7 @@
 
 	<groupId>com.jug</groupId>
 	<artifactId>MotherMachine_</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1-SNAPSHOT</version>
 
 	<name>MotherMachine_</name>
 	<description>The Mother Machine Analyzer.</description>
