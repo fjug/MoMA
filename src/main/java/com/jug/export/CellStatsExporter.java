@@ -505,7 +505,7 @@ public class CellStatsExporter {
 
 				final GrowthLineFrame glf = gui.model.getCurrentGL().getFrames().get( segmentRecord.frame );
 				final List< Point > centerLine = glf.getImgLocations();
-				final double height = Util.evaluatePolygonLength( centerLine, limits.getA(), limits.getB() );
+//				final double height = Util.evaluatePolygonLength( centerLine, limits.getA(), limits.getB() );
 
 				final int numCells = glf.getSolutionStats_numCells();
 				final int cellPos = glf.getSolutionStats_cellPos( segmentRecord.hyp );
@@ -514,13 +514,12 @@ public class CellStatsExporter {
 
 				// WARNING -- if you change substring 'frame' you need also to change the last-row-deletion procedure below for the ENDOFTRACKING case... yes, this is not clean... ;)
 				linesToExport.add( String.format(
-						"\tframe=%d; pos_in_GL=[%d,%d]; pixel_limits=[%d,%d]; cell_height=%.2f; num_pixels_in_box=%d; genealogy=%s",
+						"\tframe=%d; pos_in_GL=[%d,%d]; pixel_limits=[%d,%d]; num_pixels_in_box=%d; genealogy=%s",
 						segmentRecord.frame,
 						cellPos,
 						numCells,
 						limits.getA(),
 						limits.getB(),
-						height,
 						Util.getSegmentBoxPixelCount( segmentRecord.hyp, firstGLF.getAvgXpos() ),
 						genealogy ) );
 
