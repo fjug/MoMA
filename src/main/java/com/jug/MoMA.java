@@ -79,7 +79,7 @@ import net.imglib2.view.Views;
  * @author jug
  */
 public class MoMA {
-	
+
 
 	static {
 		LegacyInjector.preinit();
@@ -205,8 +205,8 @@ public class MoMA {
 	 */
 	public static boolean EXPORT_DO_TRACK_EXPORT = false;
 	public static boolean EXPORT_USER_INPUTS = true;
-	public static boolean EXPORT_INCLUDE_HISTOGRAMS = true;
-	public static boolean EXPORT_INCLUDE_QUANTILES = true;
+	public static boolean EXPORT_INCLUDE_HISTOGRAMS = false;
+	public static boolean EXPORT_INCLUDE_QUANTILES = false;
 	public static boolean EXPORT_INCLUDE_COL_INTENSITY_SUMS = true;
 	public static boolean EXPORT_INCLUDE_PIXEL_INTENSITIES = false;
 
@@ -502,10 +502,10 @@ public class MoMA {
 			int max_t = Integer.MIN_VALUE;
 			int min_c = Integer.MAX_VALUE;
 			int max_c = Integer.MIN_VALUE;
-			for (File image : inputFolder.listFiles(FloatTypeImgLoader.tifFilter)) {
+			for (final File image : inputFolder.listFiles(FloatTypeImgLoader.tifFilter)) {
 
-				int c = FloatTypeImgLoader.getChannelFromFilename(image.getName());
-				int t = FloatTypeImgLoader.getTimeFromFilename(image.getName());
+				final int c = FloatTypeImgLoader.getChannelFromFilename(image.getName());
+				final int t = FloatTypeImgLoader.getTimeFromFilename(image.getName());
 
 				if (c < min_c) {
 					min_c = c;
@@ -654,7 +654,7 @@ public class MoMA {
 
 
 		OPTIMISATION_INTERVAL_LENGTH = Integer.parseInt( props.getProperty( "OPTIMISATION_INTERVAL_LENGTH", Integer.toString(OPTIMISATION_INTERVAL_LENGTH) ));
-		
+
 
 		if ( !HEADLESS ) {
 			// Iterate over all currently attached monitors and check if sceen
@@ -1259,7 +1259,7 @@ public class MoMA {
 				System.out.println( "ERROR: Could not read user props!" );
 			}
 		} else {
-			File userHomeMMProperties = new File(System.getProperty("user.home") + "/.moma/mmuser.properties");
+			final File userHomeMMProperties = new File(System.getProperty("user.home") + "/.moma/mmuser.properties");
 			if (userHomeMMProperties.canRead()) {
 				System.out.println( "Loading user properties from: " + userHomeMMProperties.getAbsolutePath() );
 				try {
