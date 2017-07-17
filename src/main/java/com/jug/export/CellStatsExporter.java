@@ -268,8 +268,8 @@ public class CellStatsExporter {
 	private final MoMAGui gui;
 	private boolean doTrackExport = false;
 	private boolean doExportUserInputs = true;
-	private boolean includeHistograms = true;
-	private boolean includeQuantiles = true;
+	private boolean includeHistograms = false;
+	private boolean includeQuantiles = false;
 	private boolean includeColIntensitySums = true;
 	private boolean includePixelIntensities = false;
 
