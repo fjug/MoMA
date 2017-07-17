@@ -26,6 +26,7 @@ import com.jug.sbmrm.MMTrainer;
  */
 public class MMTrainerGui extends JFrame implements ActionListener {
 
+	private static final long serialVersionUID = 5194946626178188492L;
 	private final MoMAGui mmGui;
 	private final MMTrainer trainer;
 

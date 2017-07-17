@@ -34,6 +34,7 @@ import com.l2fprod.common.propertysheet.PropertySheetPanel;
  */
 public class DialogPropertiesEditor extends JDialog implements ActionListener {
 
+	private static final long serialVersionUID = -5529104109524798394L;
 	protected static final PropEditedListener propEditListener = new PropEditedListener();
 
 	protected static class PropEditedListener implements PropertyChangeListener {

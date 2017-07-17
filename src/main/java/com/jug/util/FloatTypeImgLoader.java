@@ -11,6 +11,7 @@ import ij.plugin.Duplicator;
 import io.scif.img.ImgIOException;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
@@ -45,8 +46,12 @@ public class FloatTypeImgLoader {
 			throw new FileNotFoundException();
 		}
 
-		if (file.isDirectory()) {
+		File[] list = file.listFiles(tifFilter);
+
+		if (file.isDirectory() && list.length > 1) {
 			return loadTiffsFromFolder( fileOrPathName, minTime, maxTime, minChannel, maxChannel);
+		} else if (file.isDirectory() && list.length == 1) {
+			return loadTiffsFromFile( list[0].getAbsolutePath(), minTime, maxTime, minChannel, maxChannel);
 		} else {
 			return loadTiffsFromFile( fileOrPathName, minTime, maxTime, minChannel, maxChannel);
 		}
@@ -765,11 +770,11 @@ public class FloatTypeImgLoader {
 		return max;
 	}
 
-	static int getTimeFromFilename(String filename) {
+	public static int getTimeFromFilename(String filename) {
 		return getParameterFromFilename(filename, "t");
 	}
 
-	static int getChannelFromFilename(String filename) {
+	public static int getChannelFromFilename(String filename) {
 		return getParameterFromFilename(filename, "c");
 	}
 
@@ -812,5 +817,11 @@ public class FloatTypeImgLoader {
 	}
 
 
+	public static FileFilter tifFilter = new FileFilter() {
+		@Override
+		public boolean accept(File pathname) {
+			return pathname.getName().endsWith(".tif");
+		}
+	};
 
 }

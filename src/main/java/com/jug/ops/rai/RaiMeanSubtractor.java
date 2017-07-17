@@ -3,62 +3,39 @@
  */
 package com.jug.ops.rai;
 
+import com.jug.ops.numerictype.MeanOfRai;
+import com.jug.util.DataMover;
+
+import net.imagej.ops.Op;
+import net.imagej.ops.special.hybrid.AbstractUnaryHybridCF;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.ops.operation.UnaryOutputOperation;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.view.Views;
 
-import com.jug.ops.numerictype.MeanOfRai;
-import com.jug.util.DataMover;
+import org.scijava.plugin.Plugin;
 
 /**
  * @author jug
  *
  */
-public class RaiMeanSubtractor<T extends NumericType<T> & NativeType<T> > implements
-	UnaryOutputOperation< RandomAccessibleInterval<T>, RandomAccessibleInterval<T> > {
-
-    /**
-     * @see net.imglib2.ops.operation.UnaryOperation#compute(java.lang.Object, java.lang.Object)
-     */
-    @Override
-    public RandomAccessibleInterval<T> compute(
-	    RandomAccessibleInterval<T> input,
-	    RandomAccessibleInterval<T> output) {
-	T mean = new MeanOfRai<T>().compute(input);
-	DataMover.copy(input, output);
+@Plugin(type = Op.class)
+public class RaiMeanSubtractor<T extends NumericType<T> & NativeType<T> > 
+extends AbstractUnaryHybridCF<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>> {
 	
-	for (T pixel : Views.iterable(output)) {
-	    pixel.sub(mean);
+	@Override
+	public void compute(final RandomAccessibleInterval<T> input, final RandomAccessibleInterval<T> output) {
+		T mean = (T) ops().run(MeanOfRai.class, input);
+		DataMover.copy(input, output);
+		
+		for (T pixel : Views.iterable(output)) {
+		    pixel.sub(mean);
+		}
 	}
-	return output;
-    }
 
-    /**
-     * @see net.imglib2.ops.operation.UnaryOutputOperation#createEmptyOutput(java.lang.Object)
-     */
-    @Override
-    public RandomAccessibleInterval<T> createEmptyOutput(
-	    RandomAccessibleInterval<T> in) {
-	return DataMover.createEmptyArrayImgLike(in, in.randomAccess().get()); 
-    }
-
-    /**
-     * @see net.imglib2.ops.operation.UnaryOutputOperation#compute(java.lang.Object)
-     */
-    @Override
-    public RandomAccessibleInterval<T> compute(RandomAccessibleInterval<T> in) {
-	return compute( in, createEmptyOutput(in) );
-    }
-
-    /**
-     * @see net.imglib2.ops.operation.UnaryOutputOperation#copy()
-     */
-    @Override
-    public UnaryOutputOperation<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>> copy() {
-	return new RaiMeanSubtractor<T>();
-    }
-
+	@Override
+	public RandomAccessibleInterval<T> createOutput(RandomAccessibleInterval<T> input) {
+		return DataMover.createEmptyArrayImgLike(input, input.randomAccess().get());
+	}
 
 }

@@ -1,1 +1,5 @@
-java -jar MM_MovieToDataset.jar $1 $2
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+java -jar $DIR/MMPreprocess_-0.10.2.jar -i $1 -o $2

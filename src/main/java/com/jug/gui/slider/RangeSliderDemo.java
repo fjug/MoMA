@@ -21,7 +21,8 @@ import javax.swing.event.ChangeListener;
  */
 public class RangeSliderDemo extends JPanel {
 
-    private JLabel rangeSliderLabel1 = new JLabel();
+	private static final long serialVersionUID = 2431987178328113873L;
+	private JLabel rangeSliderLabel1 = new JLabel();
     private JLabel rangeSliderValue1 = new JLabel();
     private JLabel rangeSliderLabel2 = new JLabel();
     private JLabel rangeSliderValue2 = new JLabel();

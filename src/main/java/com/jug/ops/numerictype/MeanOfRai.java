@@ -3,58 +3,37 @@
  */
 package com.jug.ops.numerictype;
 
+import net.imagej.ops.Op;
+import net.imagej.ops.special.hybrid.AbstractUnaryHybridCF;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.ops.operation.UnaryOutputOperation;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.view.Views;
+
+import org.scijava.plugin.Plugin;
 
 /**
  * @author jug
  *
  */
-public class MeanOfRai<T extends NumericType< T >> implements
-	UnaryOutputOperation<RandomAccessibleInterval<T>, T> {
+@Plugin(type = Op.class)
+public class MeanOfRai<T extends NumericType< T >> 
+extends AbstractUnaryHybridCF<RandomAccessibleInterval<T>, T> {
 
-    /**
-     * @see net.imglib2.ops.operation.UnaryOperation#compute(java.lang.Object, java.lang.Object)
-     */
-    @Override
-    public T compute(RandomAccessibleInterval<T> input, T output) {
-	output.setZero();
-	T numEl = output.createVariable();
-	T one   = output.createVariable(); one.setOne();
-	for (T el : Views.iterable(input)) {
-	    output.add(el);
-	    numEl.add(one);
+	@Override
+	public void compute(final RandomAccessibleInterval<T> input, final T output) {
+		output.setZero();
+		T numEl = output.createVariable();
+		T one   = output.createVariable(); one.setOne();
+		for (T el : Views.iterable(input)) {
+		    output.add(el);
+		    numEl.add(one);
+		}
+		output.div(numEl);
 	}
-	output.div(numEl);
-	return output;
-    }
 
-    /**
-     * @see net.imglib2.ops.operation.UnaryOutputOperation#createEmptyOutput(java.lang.Object)
-     */
-    @Override
-    public T createEmptyOutput(RandomAccessibleInterval<T> in) {
-	return in.randomAccess().get().createVariable();
-    }
+	@Override
+	public T createOutput(RandomAccessibleInterval<T> input) {
+		return input.randomAccess().get().createVariable();
+	}
 
-    /**
-     * @see net.imglib2.ops.operation.UnaryOutputOperation#compute(java.lang.Object)
-     */
-    @Override
-    public T compute(RandomAccessibleInterval<T> in) {
-	T ret = createEmptyOutput(in);
-	ret = compute(in, ret);
-	return ret;
-    }
-
-    /**
-     * @see net.imglib2.ops.operation.UnaryOutputOperation#copy()
-     */
-    @Override
-    public UnaryOutputOperation<RandomAccessibleInterval<T>, T> copy() {
-	// TODO Auto-generated method stub
-	return null;
-    }
 }

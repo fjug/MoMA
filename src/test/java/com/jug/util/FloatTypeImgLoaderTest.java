@@ -1,20 +1,19 @@
 package com.jug.util;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+
+import org.junit.Assert;
+import org.junit.Test;
+
 import com.jug.fijiplugins.Utilities;
+
 import ij.IJ;
 import ij.ImagePlus;
 import net.imglib2.Cursor;
 import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.real.FloatType;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.concurrent.SynchronousQueue;
 
 /**
  * Author: Robert Haase, Scientific Computing Facility, MPI-CBG Dresden, rhaase@mpi-cbg.de

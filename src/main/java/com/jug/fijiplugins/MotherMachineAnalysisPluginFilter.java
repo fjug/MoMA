@@ -50,9 +50,7 @@ public class MotherMachineAnalysisPluginFilter implements PlugInFilter {
         String[] args = {
                 "moma",
                 "-i",
-                targetFolder,
-                "-c",
-                "" + imp.getNChannels()
+                targetFolder
         };
 
 
