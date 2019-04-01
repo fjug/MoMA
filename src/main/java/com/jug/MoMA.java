@@ -28,6 +28,7 @@ import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
+import net.imagej.ops.OpService;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -74,6 +75,7 @@ import net.imglib2.type.numeric.integer.ShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
+import org.scijava.Context;
 
 /**
  * @author jug
@@ -337,6 +339,8 @@ public class MoMA {
 	 */
 	public static void main( final String[] args ) {
 		if ( showIJ ) new ImageJ();
+
+		opService = new Context(OpService.class).service(OpService.class);
 
 //		// ===== set look and feel ========================================================================
 //		try {
@@ -774,6 +778,8 @@ public class MoMA {
 	 * The singleton instance of ImageJ.
 	 */
 	public ImageJ ij;
+
+	private static OpService opService;
 
 	private List< Img< FloatType >> rawChannelImgs;
 	private Img< FloatType > imgRaw;
@@ -1550,7 +1556,7 @@ public class MoMA {
 			final IntervalView< FloatType > ivFrame = Views.hyperSlice( imgTemp, 2, frameIdx );
 
 			// Find maxima per image row (per frame)
-			frameWellCenters = new Loops< FloatType, List< Point >>().forEachHyperslice( ivFrame, 1, FindLocalMaxima.class);
+			frameWellCenters = new Loops< FloatType, List< Point >>().forEachHyperslice( ivFrame, 1, FindLocalMaxima.class, opService);
 
 			// Delete detected points that are too lateral
 			for ( int y = 0; y < frameWellCenters.size(); y++ ) {
@@ -1942,7 +1948,7 @@ public class MoMA {
 		maxs[ 0 ] = xDimLen / 2 + GL_OFFSET_LATERAL / 3; // we use the fact that we know that the GL is in the center of the image given to us
 		final RandomAccessibleInterval<FloatType> centralArea = Views.interval( getImgTemp(), mins, maxs );
 		final List< FloatType > rowTimeAverages = new Loops< FloatType, FloatType >()
-				.forEachHyperslice( centralArea, 1, SumOfRai.class);
+				.forEachHyperslice( centralArea, 1, SumOfRai.class, opService);
 
 		// compute average of lower half averages
 		float lowerHalfAvg = 0;
